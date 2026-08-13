@@ -12,7 +12,7 @@ constitution, not a detail — add it deliberately or not at all.
 | Build tool | **Vite** | Already installed. `npm run dev` / `build` / `lint`. |
 | Styling | **Tailwind CSS v4** | Via `@tailwindcss/vite`. Tokens declared with `@theme` in CSS. |
 | Components | **shadcn/ui** | Copied into `src/components/ui/`, owned and edited by us. |
-| Primitives | **Radix UI** | Arrives as shadcn's dependency. Source of a11y for menus, dialogs, popovers, tooltips. |
+| Primitives | **`radix-ui`** | Arrives as shadcn's dependency — the unified package, not per-component `@radix-ui/react-*`. Source of a11y for menus, dialogs, popovers, tooltips. |
 | State | **React Context + `useReducer`** | One board reducer. No external state library. |
 | Persistence | **`usehooks-ts`** | `useLocalStorage` for the board and the theme. |
 | Icons | **`lucide-react`** | shadcn's icon set; nothing else. |
@@ -30,7 +30,18 @@ constitution, not a detail — add it deliberately or not at all.
 - **No new runtime dependency without updating this file first**, with a line explaining
   what it replaced and why nothing already here could do the job.
 - **Every color, radius, shadow and duration comes from a token.** No arbitrary hex values
-  or one-off `[13px]` utilities in components.
+  or one-off `[13px]` utilities in components. Tailwind's stock palette utilities
+  (`bg-stone-200`, `text-gray-500`) are as forbidden as a raw hex value — the tokens in
+  `src/index.css` are the only source.
+- **File and directory names are `snake_case`.** `app_sidebar.tsx`, `note_card.tsx`,
+  `notes_context.tsx`, `use_draggable.ts`. This governs filenames only: React components stay
+  PascalCase (`function AppSidebar`) and hooks stay camelCase (`useDraggable`). Two exemptions,
+  both because the tool owns the file and rewrites it — **`src/components/ui/**`** and
+  **`src/hooks/use-mobile.ts`**, written by `npx shadcn add`. Renaming those breaks `shadcn add`
+  and `shadcn diff` permanently and forces an import rewrite on every future component, so they
+  stay kebab-case. `__tests__` keeps its dunder name; `*.d.ts` files are exempt. The rule is
+  enforced by `src/__tests__/naming_convention.test.ts` rather than by review, and that test
+  pins its own exemption list with an assertion so that growing it is a visible, reviewed act.
 
 ## Setup notes
 
@@ -82,23 +93,39 @@ can never desynchronize from a tag list.
 
 ## State architecture
 
+Filenames follow the `snake_case` rule above; the phase each file arrives in is noted where it
+is not already here.
+
 ```
 src/
+  app.tsx
+  main.tsx
+  index.css              // @theme tokens, @utility grain, base layer
   context/
-    NotesContext.tsx     // provider + useReducer + persistence wiring
-    notesReducer.ts      // pure reducer — unit-testable, no React imports
-    useNotes.ts          // consumer hooks
+    notes_context.tsx    // provider + useReducer + persistence wiring    (P2)
+    notes_reducer.ts     // pure reducer — unit-testable, no React imports (P2)
+    use_notes.ts         // consumer hooks                                (P2)
   hooks/
-    useDraggable.ts      // pointer-events drag
-    useTheme.ts          // light/dark/system, persisted
+    use_draggable.ts     // pointer-events drag                           (P5)
+    use_theme.ts         // light/dark/system, persisted                  (P9)
+    use-mobile.ts        // shadcn-generated — exempt from snake_case
   components/
-    board/               // Board, Note, NoteToolbar, EmptyState
-    ui/                  // shadcn components
+    layout/
+      app_shell.tsx      // SidebarProvider + AppSidebar + SidebarInset
+      app_sidebar.tsx    // header, the Notes destination, slots for P2/P7/P9
+    board/
+      board.tsx          // the cork surface
+      note_card.tsx      // one sheet of paper, presentational
+      mock_notes.ts      // hardcoded fixtures, replaced by real state in P2
+      note_toolbar.tsx   // per-note controls                             (P6)
+      empty_state.tsx    //                                               (P10)
+    ui/                  // shadcn components — exempt from snake_case
   lib/
-    tags.ts              // parse #tags out of body
-    markdown.ts          // render markdown + checkboxes
+    utils.ts
+    tags.ts              // parse #tags out of body                       (P7)
+    markdown.ts          // render markdown + checkboxes                  (P8)
   types/
-    note.ts
+    note.ts              //                                               (P2)
 ```
 
 Two contexts, not one: a **state** context and a **dispatch** context. Dispatch is stable,
