@@ -126,6 +126,47 @@ describe('writing the board', () => {
   })
 })
 
+describe('the round trip', () => {
+  // The phase's central claim, and the automated stand-in for the manual reload check: make
+  // a note, let the write land, throw the whole tree away, mount it again from scratch.
+  it('survives an unmount and remount with its colour, tilt and position intact', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'New Lilac note' }))
+
+    const before = screen.getAllByRole('article')[0]
+    const shape = {
+      className: before.className,
+      left: before.style.left,
+      top: before.style.top,
+      transform: before.style.transform,
+    }
+
+    vi.advanceTimersByTime(400)
+    cleanup()
+    render(<App />)
+
+    const after = screen.getAllByRole('article')[0]
+    expect(after.className).toBe(shape.className)
+    expect(after.style.left).toBe(shape.left)
+    expect(after.style.top).toBe(shape.top)
+    expect(after.style.transform).toBe(shape.transform)
+  })
+
+  it('loses nothing when several notes are made in a row', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'New Sky note' }))
+    fireEvent.click(screen.getByRole('button', { name: 'New Rose note' }))
+    fireEvent.click(screen.getByRole('button', { name: 'New Mint note' }))
+
+    vi.advanceTimersByTime(400)
+    cleanup()
+    render(<App />)
+
+    expect(screen.getAllByRole('article')).toHaveLength(3)
+    expect(screen.getByText('3')).toBeDefined()
+  })
+})
+
 describe('the store contract', () => {
   it('refuses to be read outside the provider', () => {
     // A default empty board would let a component render outside the provider and silently
