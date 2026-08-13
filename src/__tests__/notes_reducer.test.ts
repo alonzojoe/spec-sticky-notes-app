@@ -1,0 +1,217 @@
+import { describe, expect, it } from 'vitest'
+
+import { notesReducer } from '@/context/notes_reducer'
+import { EMPTY_BOARD, type BoardState, type Note, type NoteSeed } from '@/types/note'
+
+const seed = (over: Partial<NoteSeed> = {}): NoteSeed => ({
+  id: 'seed-1',
+  color: 'butter',
+  x: 100,
+  y: 50,
+  tilt: -1.5,
+  at: 1_700_000_000_000,
+  ...over,
+})
+
+const note = (over: Partial<Note> = {}): Note => ({
+  id: 'note-1',
+  body: 'a thought',
+  color: 'sky',
+  x: 10,
+  y: 20,
+  z: 1,
+  tilt: 2,
+  pinned: false,
+  createdAt: 1,
+  updatedAt: 1,
+  ...over,
+})
+
+const board = (notes: Note[]): BoardState => ({ version: 1, notes })
+
+/**
+ * The reducer must never mutate what it is handed. Freezing the board and every note in it
+ * turns a `notes.push(...)` or a `note.pinned = !note.pinned` into a thrown TypeError rather
+ * than a test that quietly passes every other assertion in this file.
+ */
+const frozen = (state: BoardState): BoardState =>
+  Object.freeze({ ...state, notes: Object.freeze(state.notes.map((n) => Object.freeze(n))) as Note[] })
+
+describe('notesReducer · add', () => {
+  it('appends a note built from the seed', () => {
+    const next = notesReducer(frozen(EMPTY_BOARD), { type: 'add', seed: seed() })
+
+    expect(next.notes).toHaveLength(1)
+    expect(next.notes[0]).toMatchObject({
+      id: 'seed-1',
+      body: '',
+      color: 'butter',
+      x: 100,
+      y: 50,
+      tilt: -1.5,
+      pinned: false,
+      createdAt: 1_700_000_000_000,
+      updatedAt: 1_700_000_000_000,
+    })
+  })
+
+  it('does not leak the seed timestamp onto the note as `at`', () => {
+    const next = notesReducer(frozen(EMPTY_BOARD), { type: 'add', seed: seed() })
+
+    expect(next.notes[0]).not.toHaveProperty('at')
+  })
+
+  it('gives the first note on an empty board a z of 1', () => {
+    const next = notesReducer(frozen(EMPTY_BOARD), { type: 'add', seed: seed() })
+
+    expect(next.notes[0].z).toBe(1)
+  })
+
+  it('sets z to the largest z on the board plus one, even when they are not contiguous', () => {
+    const state = frozen(board([note({ id: 'a', z: 2 }), note({ id: 'b', z: 9 }), note({ id: 'c', z: 5 })]))
+
+    const next = notesReducer(state, { type: 'add', seed: seed({ id: 'd' }) })
+
+    expect(next.notes.find((n) => n.id === 'd')?.z).toBe(10)
+  })
+
+  it('appends rather than prepends, because array order is tab order', () => {
+    const state = frozen(board([note({ id: 'a' }), note({ id: 'b' })]))
+
+    const next = notesReducer(state, { type: 'add', seed: seed({ id: 'new' }) })
+
+    expect(next.notes.map((n) => n.id)).toEqual(['a', 'b', 'new'])
+  })
+})
+
+describe('notesReducer · edit_body', () => {
+  it('sets the body and stamps updatedAt from the action', () => {
+    const state = frozen(board([note({ id: 'a', body: 'old', updatedAt: 1 })]))
+
+    const next = notesReducer(state, { type: 'edit_body', id: 'a', body: 'new', at: 500 })
+
+    expect(next.notes[0].body).toBe('new')
+    expect(next.notes[0].updatedAt).toBe(500)
+  })
+
+  it('leaves every other field of the target untouched', () => {
+    const target = note({ id: 'a', body: 'old', pinned: true, createdAt: 7, updatedAt: 7 })
+    const state = frozen(board([target]))
+
+    const next = notesReducer(state, { type: 'edit_body', id: 'a', body: 'new', at: 500 })
+
+    expect(next.notes[0]).toEqual({ ...target, body: 'new', updatedAt: 500 })
+  })
+
+  it('touches no other note', () => {
+    const other = note({ id: 'b', body: 'untouched' })
+    const state = frozen(board([note({ id: 'a' }), other]))
+
+    const next = notesReducer(state, { type: 'edit_body', id: 'a', body: 'new', at: 500 })
+
+    expect(next.notes[1]).toBe(other)
+  })
+
+  it('is a no-op for an id that is not on the board', () => {
+    const state = frozen(board([note({ id: 'a', body: 'kept' })]))
+
+    const next = notesReducer(state, { type: 'edit_body', id: 'ghost', body: 'new', at: 500 })
+
+    expect(next.notes).toEqual(state.notes)
+  })
+})
+
+describe('notesReducer · toggle_pin', () => {
+  it('flips pinned and stamps updatedAt', () => {
+    const state = frozen(board([note({ id: 'a', pinned: false, updatedAt: 1 })]))
+
+    const next = notesReducer(state, { type: 'toggle_pin', id: 'a', at: 500 })
+
+    expect(next.notes[0].pinned).toBe(true)
+    expect(next.notes[0].updatedAt).toBe(500)
+  })
+
+  it('returns to the original pinned value when applied twice', () => {
+    const state = frozen(board([note({ id: 'a', pinned: false })]))
+
+    const once = notesReducer(state, { type: 'toggle_pin', id: 'a', at: 500 })
+    const twice = notesReducer(once, { type: 'toggle_pin', id: 'a', at: 600 })
+
+    expect(twice.notes[0].pinned).toBe(false)
+  })
+
+  it('does not change z — pinning is a render-time layer, not a stored value', () => {
+    const state = frozen(board([note({ id: 'a', z: 3 })]))
+
+    const next = notesReducer(state, { type: 'toggle_pin', id: 'a', at: 500 })
+
+    expect(next.notes[0].z).toBe(3)
+  })
+
+  it('does not move the note', () => {
+    const state = frozen(board([note({ id: 'a', x: 42, y: 84 })]))
+
+    const next = notesReducer(state, { type: 'toggle_pin', id: 'a', at: 500 })
+
+    expect(next.notes[0].x).toBe(42)
+    expect(next.notes[0].y).toBe(84)
+  })
+
+  it('is a no-op for an id that is not on the board', () => {
+    const state = frozen(board([note({ id: 'a' })]))
+
+    const next = notesReducer(state, { type: 'toggle_pin', id: 'ghost', at: 500 })
+
+    expect(next.notes).toEqual(state.notes)
+  })
+})
+
+describe('notesReducer · delete', () => {
+  it('removes exactly the target and keeps the rest in order', () => {
+    const state = frozen(board([note({ id: 'a' }), note({ id: 'b' }), note({ id: 'c' })]))
+
+    const next = notesReducer(state, { type: 'delete', id: 'b' })
+
+    expect(next.notes.map((n) => n.id)).toEqual(['a', 'c'])
+  })
+
+  it('is a no-op for an id that is not on the board', () => {
+    const state = frozen(board([note({ id: 'a' })]))
+
+    const next = notesReducer(state, { type: 'delete', id: 'ghost' })
+
+    expect(next.notes).toEqual(state.notes)
+  })
+
+  it('empties the board when the last note goes', () => {
+    const state = frozen(board([note({ id: 'a' })]))
+
+    const next = notesReducer(state, { type: 'delete', id: 'a' })
+
+    expect(next.notes).toEqual([])
+  })
+})
+
+describe('notesReducer · invariants', () => {
+  it('keeps version at 1 through every action', () => {
+    const state = frozen(board([note({ id: 'a' })]))
+
+    expect(notesReducer(state, { type: 'add', seed: seed() }).version).toBe(1)
+    expect(notesReducer(state, { type: 'edit_body', id: 'a', body: 'x', at: 1 }).version).toBe(1)
+    expect(notesReducer(state, { type: 'toggle_pin', id: 'a', at: 1 }).version).toBe(1)
+    expect(notesReducer(state, { type: 'delete', id: 'a' }).version).toBe(1)
+  })
+
+  it('never mutates the state it is given', () => {
+    const state = frozen(board([note({ id: 'a', body: 'original', pinned: false })]))
+
+    notesReducer(state, { type: 'add', seed: seed() })
+    notesReducer(state, { type: 'edit_body', id: 'a', body: 'changed', at: 1 })
+    notesReducer(state, { type: 'toggle_pin', id: 'a', at: 1 })
+    notesReducer(state, { type: 'delete', id: 'a' })
+
+    expect(state.notes).toHaveLength(1)
+    expect(state.notes[0].body).toBe('original')
+    expect(state.notes[0].pinned).toBe(false)
+  })
+})

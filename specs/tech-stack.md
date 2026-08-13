@@ -64,8 +64,9 @@ The single source of truth. Changing it means bumping `version` and writing a mi
 
 ```ts
 // src/types/note.ts
-export type NoteColor =
-  | 'butter' | 'apricot' | 'rose' | 'lilac' | 'sky' | 'mint'
+// A const tuple, so NoteColor cannot drift from the array the palette iterates.
+export const NOTE_COLORS = ['butter', 'apricot', 'rose', 'lilac', 'sky', 'mint'] as const
+export type NoteColor = (typeof NOTE_COLORS)[number]
 
 export interface Note {
   id: string          // crypto.randomUUID()
@@ -84,7 +85,23 @@ export interface BoardState {
   version: 1
   notes: Note[]
 }
+
+// Not persisted. Everything impure about creating a note, resolved before the reducer
+// sees it, so the reducer stays a function of its arguments.
+export interface NoteSeed {
+  id: string
+  color: NoteColor
+  x: number
+  y: number
+  tilt: number
+  at: number
+}
 ```
+
+P2 shipped this shape whole, including `z` and `pinned`, on the first phase that persisted
+anything — a narrower shape would have guaranteed a `v2` key and a migration in P5 for the
+sake of three lines. `NOTE_COLORS` and `NoteSeed` are additions to the *module*, not to
+`BoardState`, so nothing persisted changed and `version` is still `1`.
 
 `tilt` is stored, not derived. A tilt recomputed during render would make notes twitch on
 every state change — that is a bug, and the mission calls it out by name.
@@ -103,41 +120,55 @@ src/
   main.tsx
   index.css              // @theme tokens, @utility grain, base layer
   context/
-    notes_context.tsx    // provider + useReducer + persistence wiring    (P2)
-    notes_reducer.ts     // pure reducer — unit-testable, no React imports (P2)
-    use_notes.ts         // consumer hooks                                (P2)
+    notes_context.tsx    // the provider component only — nothing else exported
+    notes_reducer.ts     // pure reducer — unit-testable, no React imports
+    use_notes.ts         // the two contexts and their consumer hooks
   hooks/
     use_draggable.ts     // pointer-events drag                           (P5)
     use_theme.ts         // light/dark/system, persisted                  (P9)
     use-mobile.ts        // shadcn-generated — exempt from snake_case
   components/
     layout/
-      app_shell.tsx      // SidebarProvider + AppSidebar + SidebarInset
-      app_sidebar.tsx    // header, the Notes destination, slots for P2/P7/P9
+      app_shell.tsx      // NotesProvider + SidebarProvider + AppSidebar + SidebarInset
+      app_sidebar.tsx    // header, the palette, the Notes destination, slots for P7/P9
+      note_palette.tsx   // six swatches; picking one creates a note
     board/
-      board.tsx          // the cork surface
-      note_card.tsx      // one sheet of paper, presentational
-      mock_notes.ts      // hardcoded fixtures, replaced by real state in P2
-      note_toolbar.tsx   // per-note controls                             (P6)
+      board.tsx          // the cork surface; computes the pin layer
+      note_card.tsx      // one sheet of paper; owns its edit mode and nothing else
+      note_controls.tsx  // per-note pin and delete
       empty_state.tsx    //                                               (P10)
     ui/                  // shadcn components — exempt from snake_case
   lib/
     utils.ts
+    board_storage.ts     // storage keys and the defensive read
+    note_factory.ts      // ids, tilt, spawn position, timestamps
+    paper.ts             // NoteColor -> bg-paper-*, written out for the scanner
     tags.ts              // parse #tags out of body                       (P7)
     markdown.ts          // render markdown + checkboxes                  (P8)
   types/
-    note.ts              //                                               (P2)
+    note.ts
 ```
+
+The contexts live in `use_notes.ts` rather than beside the provider because a module
+exporting both a component and a hook trips `react-refresh/only-export-components`, and P1's
+scoped exemption covers `src/components/ui/**` only. Splitting the file is the fix; widening
+the exemption to our own code is not.
 
 Two contexts, not one: a **state** context and a **dispatch** context. Dispatch is stable,
 so components that only mutate never re-render when the board changes. This is what makes
 Context viable at 100+ notes and is why no state library is needed.
 
-The reducer is pure and imports nothing from React. Every action stamps `updatedAt`.
+The reducer is pure and imports nothing from React. Every mutating action **carries** the
+timestamp it stamps: ids, tilt, spawn position and `Date.now()` are resolved in
+`lib/note_factory.ts` at the dispatch site, so the reducer is a function of its arguments and
+its tests need no fake timers. `src/__tests__/reducer_purity.test.ts` enforces this as a
+source assertion, and every reducer test dispatches against a deeply frozen board so a
+mutation throws rather than passing quietly.
 
 ## Persistence contract
 
-- Board key: `sticky-notes:board:v1` · Theme key: `sticky-notes:theme`
+- Board key: `sticky-notes:board:v1` · Sidebar key: `sticky-notes:sidebar` · Theme key:
+  `sticky-notes:theme` (P9)
 - Written through `useLocalStorage` from `usehooks-ts`.
 - **Writes are debounced ~300ms** so that typing and dragging don't hammer localStorage.
   Dragging must never write on every pointer move — only on drop.

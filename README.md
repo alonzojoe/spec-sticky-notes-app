@@ -32,8 +32,8 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P1 (*the shell and the board*) is complete: the design tokens live in `@theme` and every one of
-them is warm, the app is wrapped in a collapsible shadcn sidebar holding a single **Notes**
-destination, and the board renders three hardcoded notes on a cork surface to prove the paper
-aesthetic. Source files we author are `snake_case`, enforced by a test. There is no state yet —
-P2 makes the notes real.
+P2 (*real notes, remembered*) is complete: notes are created from a six-colour paper palette in
+the sidebar, written on in place with debounced autosave, pinned, and deleted. The board and the
+sidebar collapse both persist to `localStorage` through the contract, and a corrupt stored value
+loads an empty board rather than white-screening. Board state is a pure reducer behind split
+state and dispatch contexts. Notes cannot be moved yet — P5 makes the board spatial.
