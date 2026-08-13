@@ -1,6 +1,5 @@
 import { StickyNote } from 'lucide-react'
 
-import { MOCK_NOTES } from '@/components/board/mock_notes'
 import {
   Sidebar,
   SidebarContent,
@@ -13,6 +12,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
+import { useNotes } from '@/context/use_notes'
 
 // Slots later phases fill. Named here so the sidebar grows by plan rather than by
 // improvisation:
@@ -21,6 +21,8 @@ import {
 //   P9 — the theme toggle, in a SidebarFooter
 // Nothing is rendered for them now. A control that cannot be used should not be drawn.
 export function AppSidebar() {
+  const { notes } = useNotes()
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -43,7 +45,7 @@ export function AppSidebar() {
                   <StickyNote aria-hidden />
                   <span>Notes</span>
                 </SidebarMenuButton>
-                <SidebarMenuBadge>{MOCK_NOTES.length}</SidebarMenuBadge>
+                <SidebarMenuBadge>{notes.length}</SidebarMenuBadge>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>

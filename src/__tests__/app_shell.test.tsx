@@ -3,10 +3,30 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 
 import App from '@/app'
-import { MOCK_NOTES } from '@/components/board/mock_notes'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
+import { BOARD_KEY } from '@/lib/board_storage'
+import type { Note } from '@/types/note'
 
-beforeEach(() => stubMatchMedia())
+const note = (id: string): Note => ({
+  id,
+  body: '',
+  color: 'butter',
+  x: 10,
+  y: 20,
+  z: 1,
+  tilt: -1,
+  pinned: false,
+  createdAt: 1,
+  updatedAt: 1,
+})
+
+const seed = (notes: Note[]) =>
+  window.localStorage.setItem(BOARD_KEY, JSON.stringify({ version: 1, notes }))
+
+beforeEach(() => {
+  stubMatchMedia()
+  window.localStorage.clear()
+})
 afterEach(cleanup)
 
 describe('the application shell', () => {
@@ -34,9 +54,20 @@ describe('the application shell', () => {
     expect(screen.getByRole('button', { name: /notes/i }).tagName).toBe('BUTTON')
   })
 
-  it('badges the destination with the live note count', () => {
+  it('badges an empty board with zero', () => {
     render(<App />)
-    // Read from the array, not a literal — a literal lets badge and board drift apart.
-    expect(screen.getByText(String(MOCK_NOTES.length))).toBeDefined()
+
+    expect(screen.getByText('0')).toBeDefined()
+  })
+
+  // Comparing the badge against a length imported from the same module the component
+  // imported was always circular. This compares it against what is on the board.
+  it('badges the destination with the live note count', () => {
+    seed([note('a'), note('b')])
+
+    render(<App />)
+
+    expect(screen.getByText('2')).toBeDefined()
+    expect(screen.getAllByRole('article')).toHaveLength(2)
   })
 })
