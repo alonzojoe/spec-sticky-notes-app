@@ -54,50 +54,46 @@ are visibly satisfied. No `useState` of ours yet.
 
 ---
 
-## P2 · Create and delete real notes
+## P2 · Real notes, remembered
 
-**Goal:** the app becomes usable.
+**Goal:** the app becomes genuinely usable — capture a thought, and find it there tomorrow.
 
-- `src/types/note.ts` with the `Note` and `BoardState` types.
-- `notesReducer.ts` — pure, handling `add` and `delete`.
-- `NotesContext.tsx` with split state/dispatch providers; in-memory only.
-- An "add note" button; notes spawn at a slightly randomized position with a random tilt.
-- A delete control on each note.
+- `src/types/note.ts` with the committed `Note` and `BoardState` types, whole.
+  `mock_notes.ts` is deleted.
+- `notes_reducer.ts` — pure, handling `add`, `edit_body`, `toggle_pin`, and `delete`. Ids,
+  tilt, spawn position and timestamps are generated in `lib/note_factory.ts` and arrive in
+  the action, so the reducer never calls `Date.now()` or `Math.random()`.
+- `notes_context.tsx` with split state/dispatch providers; the reducer is the source of truth
+  and `localStorage` is a debounced mirror.
+- The board persisted under `sticky-notes:board:v1`, the sidebar collapse under
+  `sticky-notes:sidebar`, both through `useLocalStorage`. Bad JSON or a wrong `version` loads
+  an empty board rather than white-screening.
+- A six-swatch paper palette in the sidebar: one click puts a note on the board in that
+  color, at a randomized position, with a stored tilt, focused and ready for typing.
+- Click a note — or focus it and press Enter — to edit in place in a plain `<textarea>`.
+  Autosave debounced on change, immediate on blur. No Save button.
+- Per-note pin and delete controls, revealed on hover or focus of that note only. Pinned
+  notes render above unpinned ones without their position, array order, or `z` changing.
 
-**Done when:** notes can be added and removed, they keep their tilt across re-renders, and
-the board renders from state rather than hardcoded markup. Refresh still wipes everything —
-that's P3.
-
----
-
-## P3 · It remembers
-
-**Goal:** nothing is ever lost.
-
-- `usehooks-ts` installed; board persisted under `sticky-notes:board:v1`.
-- Debounce writes ~300ms.
-- Defensive read: bad JSON or a wrong `version` falls back to an empty board.
-- Sidebar collapse persisted under `sticky-notes:sidebar`, through the same `useLocalStorage`
-  the board uses. P1 deleted shadcn's `sidebar_state` cookie and deliberately shipped no
-  replacement, so that persistence arrives once through the contract rather than as two
-  competing stores.
-
-**Done when:** notes survive a hard refresh and a browser restart, and manually corrupting
-the localStorage value loads an empty board instead of white-screening.
+**Done when:** a thought can be captured in one click and typing, notes survive a hard
+refresh and a browser restart with identical colors, tilts and stacking, pinned notes are
+still on top afterwards, and corrupting the localStorage value by hand loads an empty board
+instead of white-screening.
 
 ---
 
-## P4 · Write on them
+## P3 · It remembers — *absorbed into P2*
 
-**Goal:** notes hold actual content.
+Persistence shipped with P2: `sticky-notes:board:v1`, `sticky-notes:sidebar`, the ~300ms
+write debounce, and the defensive read. This heading is kept so that phase numbers written
+into P0's and P1's specs still resolve. Nothing is scheduled here.
 
-- Click a note to edit in place; a plain `<textarea>` styled to look like the note itself.
-- Autosave on change (debounced) and on blur. No Save button.
-- New notes open focused and ready for typing.
-- The note grows to fit its text within sane min/max bounds.
+---
 
-**Done when:** a thought can be captured in one click and typing, and it's still there
-after a refresh.
+## P4 · Write on them — *absorbed into P2*
+
+Inline editing with debounced autosave shipped with P2. Markdown rendering was never P4's —
+it is still **P8**. Nothing is scheduled here.
 
 ---
 
@@ -118,16 +114,17 @@ positions survive a refresh, and the whole board is arrangeable without a mouse.
 
 ---
 
-## P6 · Colors and pinning
+## P6 · Change a note's color
 
-**Goal:** visual sorting.
+**Goal:** a note can be recolored after it exists.
 
 - shadcn `dropdown-menu` (or `popover`) as a per-note color picker across the six papers.
-- Pin toggle; pinned notes render above unpinned ones regardless of `z`.
-- Note controls appear on hover/focus of that note only — never on all notes at once.
 
-**Done when:** color and pin state persist, pinned notes stay on top after a refresh, and
-an unhovered board still looks quiet.
+**Done when:** a note's color can be changed without recreating it, and the change persists.
+
+P2 shipped the rest of the original P6: color is chosen at creation from the sidebar
+palette, pinning works, and per-note controls already appear on hover or focus of that note
+alone.
 
 ---
 
