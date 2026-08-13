@@ -25,8 +25,10 @@ the board rearrange itself, it is wrong regardless of how good it looks.
    modal dialog stands between me and a thought.
 3. **Persistent by default.** There is no Save button. State is written as it changes and
    restored exactly on reload — position, stacking, colors, and all.
-4. **Quiet chrome.** The interface is the notes. Toolbars stay minimal and out of the way;
-   controls appear on the note you're touching, not on all of them at once.
+4. **Quiet chrome.** The interface is the notes. Global controls live in one collapsible
+   sidebar and never on the board surface itself; per-note controls appear on the note
+   you're touching, not on all of them at once. The sidebar can be collapsed to a rail, and
+   the board stays fully usable with it collapsed.
 5. **Keyboard-reachable.** Anything the mouse can do — including moving a note — has a
    keyboard path. Beauty that excludes the keyboard isn't finished.
 

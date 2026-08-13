@@ -132,14 +132,17 @@
     /* Layered shadow: tight contact shadow + wide ambient shadow.
        Depth must read as height off the board, which one layer cannot do. */
     --shadow-note:
-        0 1px 2px oklch(0.30 0.03 60 / 0.16),
-        0 4px 10px oklch(0.30 0.03 60 / 0.12);
+        0 1px 1px oklch(0.24 0.03 60 / 0.30),
+        0 4px 8px oklch(0.24 0.03 60 / 0.22),
+        0 12px 24px oklch(0.24 0.03 60 / 0.18);
     --shadow-note-hover:
-        0 2px 4px oklch(0.30 0.03 60 / 0.18),
-        0 10px 22px oklch(0.30 0.03 60 / 0.16);
+        0 2px 3px oklch(0.24 0.03 60 / 0.32),
+        0 8px 16px oklch(0.24 0.03 60 / 0.26),
+        0 20px 36px oklch(0.24 0.03 60 / 0.22);
     --shadow-note-drag:
-        0 3px 6px oklch(0.30 0.03 60 / 0.20),
-        0 20px 40px oklch(0.30 0.03 60 / 0.22);
+        0 3px 5px oklch(0.24 0.03 60 / 0.34),
+        0 14px 28px oklch(0.24 0.03 60 / 0.30),
+        0 34px 56px oklch(0.24 0.03 60 / 0.26);
 
     /* Easing. Never ease-in: it delays the first frame, which is the one being watched. */
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -159,7 +162,7 @@
    mission.md: "The paper has a subtle noise/grain texture; the board behind it reads
    as cork or felt. Neither is a flat single color." */
 @utility texture-paper {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23p)' opacity='0.20'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23p)' opacity='0.55'/%3E%3C/svg%3E");
     background-blend-mode: multiply;
 }
 

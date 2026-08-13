@@ -32,7 +32,8 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P0 (*clear the deck*) is complete: the Vite starter is stripped out, Tailwind CSS v4 is wired
-through `@tailwindcss/vite`, the `@/*` alias resolves in both TypeScript and Vite, and shadcn/ui
-is initialised with zero components installed. The page is intentionally blank — P1 brings the
-design tokens and the board surface.
+P1 (*the shell and the board*) is complete: the design tokens live in `@theme` and every one of
+them is warm, the app is wrapped in a collapsible shadcn sidebar holding a single **Notes**
+destination, and the board renders three hardcoded notes on a cork surface to prove the paper
+aesthetic. Source files we author are `snake_case`, enforced by a test. There is no state yet —
+P2 makes the notes real.
