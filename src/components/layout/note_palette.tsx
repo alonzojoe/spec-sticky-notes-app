@@ -1,6 +1,6 @@
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from '@/components/ui/sidebar'
-import { useNotesDispatch } from '@/context/use_notes'
-import { createNoteSeed } from '@/lib/note_factory'
+import { useNotes, useNotesDispatch } from '@/context/use_notes'
+import { boardBounds, createNoteSeed } from '@/lib/note_factory'
 import { PAPER, paperLabel } from '@/lib/paper'
 import { NOTE_COLORS } from '@/types/note'
 
@@ -18,6 +18,15 @@ import { NOTE_COLORS } from '@/types/note'
  */
 export function NotePalette() {
   const dispatch = useNotesDispatch()
+  const { notes } = useNotes()
+
+  // Measured in the handler, never during a render: a new note has to know how big the
+  // board is and what is already on it, or it lands on top of something.
+  const place = (color: (typeof NOTE_COLORS)[number]) =>
+    dispatch({
+      type: 'add',
+      seed: createNoteSeed(color, { bounds: boardBounds(), taken: notes }),
+    })
 
   return (
     <SidebarGroup>
@@ -30,7 +39,7 @@ export function NotePalette() {
               type="button"
               aria-label={`New ${paperLabel(color)} note`}
               title={`New ${paperLabel(color)} note`}
-              onClick={() => dispatch({ type: 'add', seed: createNoteSeed(color) })}
+              onClick={() => place(color)}
               className={`size-8 rounded-full border border-sidebar-border texture-paper ${PAPER[color]} hover:ring-2 hover:ring-sidebar-ring focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none`}
             />
           ))}

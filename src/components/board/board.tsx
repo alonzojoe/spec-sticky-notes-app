@@ -23,7 +23,10 @@ export function Board() {
       : null
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-cork texture-cork">
+    <div
+      data-slot="board"
+      className="relative h-full w-full overflow-hidden bg-cork texture-cork"
+    >
       {notes.map((note) => (
         <NoteCard
           key={note.id}
