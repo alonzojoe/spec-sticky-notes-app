@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDebounceCallback } from 'usehooks-ts'
 
+import { NoteControls } from '@/components/board/note_controls'
 import { useNotesDispatch } from '@/context/use_notes'
 import { PAPER } from '@/lib/paper'
 import type { Note } from '@/types/note'
@@ -43,6 +44,8 @@ export function NoteCard({
         transform: `rotate(${note.tilt}deg)`,
       }}
     >
+      <NoteControls note={note} />
+
       {editing ? (
         <textarea
           autoFocus
