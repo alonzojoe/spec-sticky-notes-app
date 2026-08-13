@@ -17,9 +17,9 @@ describe('the Vite starter UI', () => {
   })
 
   it.each(['react.svg', 'vite.svg', 'hero.png', 'icons.svg'])(
-    'leaves no reference to %s in App.tsx',
+    'leaves no reference to %s in app.tsx',
     (asset) => {
-      const app = readFileSync(fromRoot('src/App.tsx'), 'utf8')
+      const app = readFileSync(fromRoot('src/app.tsx'), 'utf8')
       expect(app).not.toContain(asset)
     },
   )
