@@ -1,0 +1,41 @@
+import { readFileSync, readdirSync } from 'node:fs'
+import { join, relative } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { describe, expect, it } from 'vitest'
+
+const src = fileURLToPath(new URL('../', import.meta.url))
+const sidebar = readFileSync(join(src, 'components/ui/sidebar.tsx'), 'utf8')
+
+// T5 — D4 and D8. Re-running `shadcn add sidebar` restores every one of these silently.
+describe('the amendments to shadcn sidebar.tsx', () => {
+  it.each(['document.cookie', 'sidebar_state'])('writes no %s (D4)', (fragment) => {
+    expect(sidebar).not.toContain(fragment)
+  })
+
+  it.each(['ease-linear', 'transition-all'])('uses no %s (D8)', (fragment) => {
+    expect(sidebar).not.toContain(fragment)
+  })
+
+  it('uses the drawer easing token instead', () => {
+    expect(sidebar).toContain('ease-drawer')
+  })
+})
+
+// T9 — D9. The six transitive components are dormant until a phase needs them.
+const DORMANT = ['button', 'input', 'tooltip', 'sheet', 'skeleton', 'separator']
+
+const sourceFiles = (dir: string): string[] =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((item) => {
+    const full = join(dir, item.name)
+    if (relative(src, full).startsWith('components/ui')) return []
+    if (item.isDirectory()) return sourceFiles(full)
+    return /\.tsx?$/.test(item.name) ? [full] : []
+  })
+
+describe('the transitive shadcn components', () => {
+  it.each(DORMANT)('is not imported outside the sidebar: %s', (component) => {
+    for (const file of sourceFiles(src)) {
+      expect(readFileSync(file, 'utf8')).not.toContain(`@/components/ui/${component}`)
+    }
+  })
+})
