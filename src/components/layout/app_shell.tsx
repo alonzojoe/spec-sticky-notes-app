@@ -4,13 +4,15 @@ import { Board } from '@/components/board/board'
 import { AppSidebar } from '@/components/layout/app_sidebar'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { NotesProvider } from '@/context/notes_context'
-import { SIDEBAR_KEY } from '@/lib/board_storage'
+import { SIDEBAR_KEY, parseSidebarOpen } from '@/lib/board_storage'
 
 export function AppShell() {
   // P1 deleted shadcn's `sidebar_state` cookie and deliberately shipped no replacement, so
   // that persistence would arrive once, through the contract, rather than as two competing
   // stores. This is that arrival — the control lives here, and sidebar.tsx stays untouched.
-  const [sidebarOpen, setSidebarOpen] = useLocalStorage(SIDEBAR_KEY, true)
+  const [sidebarOpen, setSidebarOpen] = useLocalStorage(SIDEBAR_KEY, true, {
+    deserializer: parseSidebarOpen,
+  })
 
   return (
     <NotesProvider>

@@ -89,6 +89,19 @@ describe('restoring the board', () => {
     expect(screen.getByTestId('count').textContent).toBe('0')
   })
 
+  it('says nothing on the console about a corrupt value', () => {
+    // "does not throw" is not the whole bar. usehooks-ts's default deserializer catches its
+    // own parse error and console.errors it, which fails Gate 3's clean-console check and
+    // leaves the library owning a failure path that D6 says is ours.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    seedStorage('{{{')
+
+    renderProbe()
+
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
   it('loads an empty board from a future version', () => {
     seedStorage({ version: 9, notes: [] })
 

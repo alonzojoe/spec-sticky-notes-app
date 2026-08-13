@@ -23,7 +23,7 @@ export function NotePalette() {
     <SidebarGroup>
       <SidebarGroupLabel>New note</SidebarGroupLabel>
       <SidebarGroupContent>
-        <div className="grid grid-cols-3 gap-1.5 group-data-[collapsible=icon]:grid-cols-1">
+        <div className="grid grid-cols-3 justify-items-center gap-2 group-data-[collapsible=icon]:grid-cols-1">
           {NOTE_COLORS.map((color) => (
             <button
               key={color}
@@ -31,7 +31,7 @@ export function NotePalette() {
               aria-label={`New ${paperLabel(color)} note`}
               title={`New ${paperLabel(color)} note`}
               onClick={() => dispatch({ type: 'add', seed: createNoteSeed(color) })}
-              className={`h-7 rounded-sm border border-sidebar-border texture-paper ${PAPER[color]} hover:ring-2 hover:ring-sidebar-ring focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none`}
+              className={`size-8 rounded-full border border-sidebar-border texture-paper ${PAPER[color]} hover:ring-2 hover:ring-sidebar-ring focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none`}
             />
           ))}
         </div>

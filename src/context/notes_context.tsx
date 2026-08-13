@@ -3,7 +3,7 @@ import { useDebounceCallback, useLocalStorage } from 'usehooks-ts'
 
 import { notesReducer } from '@/context/notes_reducer'
 import { NotesDispatchContext, NotesStateContext } from '@/context/use_notes'
-import { BOARD_KEY, hydrate } from '@/lib/board_storage'
+import { BOARD_KEY, hydrate, parseStored } from '@/lib/board_storage'
 import { EMPTY_BOARD } from '@/types/note'
 
 // tech-stack.md: "Writes are debounced ~300ms so that typing and dragging don't hammer
@@ -13,7 +13,9 @@ const PERSIST_MS = 300
 export function NotesProvider({ children }: { children: ReactNode }) {
   // Typed `unknown` on purpose. Claiming this is a BoardState would be a lie about data that
   // came from outside the program; hydrate is the only thing entitled to make that claim.
-  const [stored, setStored] = useLocalStorage<unknown>(BOARD_KEY, EMPTY_BOARD)
+  const [stored, setStored] = useLocalStorage<unknown>(BOARD_KEY, EMPTY_BOARD, {
+    deserializer: parseStored,
+  })
 
   // Read once, on the first render, so the board is never briefly empty on load.
   const [board, dispatch] = useReducer(notesReducer, stored, hydrate)
