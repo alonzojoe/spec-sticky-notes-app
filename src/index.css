@@ -44,72 +44,143 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --background: oklch(0.963 0.012 84);
+    --foreground: oklch(0.292 0.020 58);
+    --card: oklch(0.978 0.011 88);
+    --card-foreground: oklch(0.292 0.020 58);
+    --popover: oklch(0.978 0.011 88);
+    --popover-foreground: oklch(0.292 0.020 58);
+    --primary: oklch(0.438 0.062 55);
+    --primary-foreground: oklch(0.972 0.013 88);
+    --secondary: oklch(0.918 0.018 82);
+    --secondary-foreground: oklch(0.322 0.022 58);
+    --muted: oklch(0.922 0.016 82);
+    --muted-foreground: oklch(0.532 0.022 60);
+    --accent: oklch(0.906 0.026 80);
+    --accent-foreground: oklch(0.302 0.022 56);
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    --border: oklch(0.878 0.018 80);
+    --input: oklch(0.878 0.018 80);
+    --ring: oklch(0.612 0.074 58);
+    --chart-1: oklch(0.760 0.098 62);
+    --chart-2: oklch(0.712 0.086 96);
+    --chart-3: oklch(0.668 0.074 32);
+    --chart-4: oklch(0.622 0.066 300);
+    --chart-5: oklch(0.582 0.058 228);
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar: oklch(0.948 0.016 84);
+    --sidebar-foreground: oklch(0.302 0.020 58);
+    --sidebar-primary: oklch(0.438 0.062 55);
+    --sidebar-primary-foreground: oklch(0.972 0.013 88);
+    --sidebar-accent: oklch(0.898 0.028 80);
+    --sidebar-accent-foreground: oklch(0.282 0.022 56);
+    --sidebar-border: oklch(0.868 0.020 80);
+    --sidebar-ring: oklch(0.612 0.074 58);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
+    --background: oklch(0.238 0.016 58);
+    --foreground: oklch(0.932 0.014 84);
+    --card: oklch(0.278 0.018 58);
+    --card-foreground: oklch(0.932 0.014 84);
+    --popover: oklch(0.278 0.018 58);
+    --popover-foreground: oklch(0.932 0.014 84);
+    --primary: oklch(0.872 0.038 82);
+    --primary-foreground: oklch(0.262 0.020 56);
+    --secondary: oklch(0.328 0.020 58);
+    --secondary-foreground: oklch(0.932 0.014 84);
+    --muted: oklch(0.328 0.020 58);
+    --muted-foreground: oklch(0.702 0.020 78);
+    --accent: oklch(0.362 0.024 60);
+    --accent-foreground: oklch(0.932 0.014 84);
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --border: oklch(0.932 0.014 84 / 10%);
+    --input: oklch(0.932 0.014 84 / 15%);
+    --ring: oklch(0.558 0.058 60);
+    --chart-1: oklch(0.702 0.086 62);
+    --chart-2: oklch(0.662 0.078 96);
+    --chart-3: oklch(0.618 0.068 32);
+    --chart-4: oklch(0.578 0.060 300);
+    --chart-5: oklch(0.538 0.054 228);
+    --sidebar: oklch(0.262 0.018 58);
+    --sidebar-foreground: oklch(0.932 0.014 84);
+    --sidebar-primary: oklch(0.782 0.062 68);
+    --sidebar-primary-foreground: oklch(0.242 0.018 56);
+    --sidebar-accent: oklch(0.342 0.022 60);
+    --sidebar-accent-foreground: oklch(0.932 0.014 84);
+    --sidebar-border: oklch(0.932 0.014 84 / 10%);
+    --sidebar-ring: oklch(0.558 0.058 60);
+}
+
+@theme {
+    /* Six papers. mission.md § Core scope names these exact six. */
+    --color-paper-butter: oklch(0.941 0.055 96);
+    --color-paper-apricot: oklch(0.906 0.068 62);
+    --color-paper-rose: oklch(0.893 0.052 18);
+    --color-paper-lilac: oklch(0.884 0.048 310);
+    --color-paper-sky: oklch(0.901 0.045 232);
+    --color-paper-mint: oklch(0.918 0.050 162);
+
+    /* The board behind the paper. */
+    --color-cork: oklch(0.632 0.072 62);
+    --color-cork-deep: oklch(0.548 0.068 56);
+
+    /* Warm ink — never pure black. */
+    --color-ink: oklch(0.292 0.020 58);
+    --color-ink-soft: oklch(0.452 0.018 58);
+
+    /* Layered shadow: tight contact shadow + wide ambient shadow.
+       Depth must read as height off the board, which one layer cannot do. */
+    --shadow-note:
+        0 1px 1px oklch(0.24 0.03 60 / 0.30),
+        0 4px 8px oklch(0.24 0.03 60 / 0.22),
+        0 12px 24px oklch(0.24 0.03 60 / 0.18);
+    --shadow-note-hover:
+        0 2px 3px oklch(0.24 0.03 60 / 0.32),
+        0 8px 16px oklch(0.24 0.03 60 / 0.26),
+        0 20px 36px oklch(0.24 0.03 60 / 0.22);
+    --shadow-note-drag:
+        0 3px 5px oklch(0.24 0.03 60 / 0.34),
+        0 14px 28px oklch(0.24 0.03 60 / 0.30),
+        0 34px 56px oklch(0.24 0.03 60 / 0.26);
+
+    /* Easing. Never ease-in: it delays the first frame, which is the one being watched. */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+    /* Durations. Tailwind v4 has no --duration-* namespace, so these are referenced as
+       duration-(--duration-drawer), not duration-drawer. Verified against v4.3: the
+       latter compiles to nothing at all and silently leaves the browser default. */
+    --duration-press: 100ms;
+    --duration-hover: 160ms;
+    --duration-drawer: 200ms;
+    --duration-note: 240ms;
+}
+
+/* Grain. Inline SVG turbulence, so nothing is fetched and nothing can 404.
+   mission.md: "The paper has a subtle noise/grain texture; the board behind it reads
+   as cork or felt. Neither is a flat single color." */
+@utility texture-paper {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23p)' opacity='0.55'/%3E%3C/svg%3E");
+    background-blend-mode: multiply;
+}
+
+@utility texture-cork {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.62' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23c)' opacity='0.36'/%3E%3C/svg%3E");
+    background-blend-mode: multiply;
+}
+
+@layer base {
+  /* Movement goes; opacity and colour transitions stay, because they aid comprehension
+     rather than causing motion sickness. Reduced motion means gentler, not none. */
+  @media (prefers-reduced-motion: reduce) {
+    [data-slot^='sidebar'],
+    [data-slot='note-card'] {
+      transition-property: opacity, background-color, color, box-shadow !important;
+      transition-duration: var(--duration-press) !important;
+    }
+  }
 }
 
 @layer base {

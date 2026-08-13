@@ -18,6 +18,7 @@ constitution, not a detail — add it deliberately or not at all.
 | Icons | **`lucide-react`** | shadcn's icon set; nothing else. |
 | Drag | **Native pointer events** | Hand-rolled `useDraggable`. See "Decisions" below. |
 | Testing | **Vitest** | devDependency. Shares Vite's config and resolver. See "Decisions" below. |
+| DOM testing | **`jsdom` + `@testing-library/react`** | devDependencies. Opted into per file with a `// @vitest-environment jsdom` docblock, so the Vite build test stays in node. |
 
 ## Hard rules
 
@@ -171,6 +172,19 @@ and compiles Tailwind through the same plugin chain the app ships with. Jest wou
 parallel resolver and transform config, and the two could drift apart without either failing —
 which is precisely the class of bug these tests exist to catch. It is a devDependency, so the
 no-backend and no-state-library rules are untouched.
+
+**`jsdom` + `@testing-library/react` for component tests.** They replace nothing — through P0,
+acceptance was filesystem and build assertions, which is all a phase with no components can
+honestly check. From P1 the repo renders UI whose criteria are structural: a `<nav>` landmark, an
+`aria-current` marker, a real `<button>` rather than a clickable `div`, a tilt that survives a
+re-render. A source-text grep cannot assert any of those, and "acceptance by eye" does not
+survive ten phases. Both are devDependencies, so the no-backend and no-state-library rules are
+untouched.
+
+`@testing-library/jest-dom` is deliberately absent: its matchers are convenience over
+`expect(el.getAttribute('aria-current')).toBe('page')`, at the cost of a third dependency and a
+`types` entry in `tsconfig.app.json`. Vitest also runs without globals here, so every component
+test calls `afterEach(cleanup)` explicitly — the automatic hook never registers.
 
 **Markdown rendering.** Deferred to the phase that needs it (P8). Whatever is chosen must
 be small, must escape HTML by default, and must support task-list checkboxes. Record the

@@ -10,13 +10,15 @@ const root = fileURLToPath(new URL('../../', import.meta.url))
 
 // Tailwind scans every source file, this one included, so a class named literally here
 // would be emitted and defeat its own assertion. The positive cases are read out of
-// App.tsx at runtime; the negative one is assembled from fragments that are not
+// board.tsx at runtime; the negative one is assembled from fragments that are not
 // themselves candidates.
 const utilitiesUsedInApp = () => {
-  const app = readFileSync(join(root, 'src/App.tsx'), 'utf8')
+  const app = readFileSync(join(root, 'src/components/board/board.tsx'), 'utf8')
   const classNames = app.match(/className="([^"]+)"/)?.[1]
-  if (!classNames) throw new Error('App.tsx declares no className to assert against')
-  return classNames.split(/\s+/)
+  if (!classNames) throw new Error('board.tsx declares no className to assert against')
+  // `md:flex` is emitted as `.md\:flex`; asserting the unescaped form would fail against
+  // a correct stylesheet. Restrict the positive assertion to plain utilities.
+  return classNames.split(/\s+/).filter((utility) => /^[a-z][a-z0-9-]*$/.test(utility))
 }
 
 const unusedUtility = ['bg', 'lime', '300'].join('-')
@@ -41,7 +43,7 @@ beforeAll(async () => {
 }, 60_000)
 
 describe('the Tailwind pipeline', () => {
-  it('emits a rule for every utility App.tsx uses', () => {
+  it('emits a rule for every utility board.tsx uses', () => {
     const used = utilitiesUsedInApp()
     expect(used.length).toBeGreaterThan(0)
     for (const utility of used) {

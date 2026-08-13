@@ -30,18 +30,27 @@ demonstrably works, an `@/` import resolves, and the build is clean.
 
 ---
 
-## P1 · The board exists
+## P1 · The shell and the board
 
-**Goal:** paper and cork on screen, with no state behind them.
+**Goal:** the application shell, and paper and cork on screen, with no state behind them.
 
-- Define the design tokens in `@theme`: six paper colors, cork backdrop, warm text, the
-  layered shadow scale, radii, and spring durations.
+- Rename every source file we author to `snake_case`; `src/components/ui/**` and
+  `src/hooks/use-mobile.ts` are exempt because `shadcn add` regenerates them. Enforce the
+  rule with a test rather than by review.
+- Define the design tokens in `@theme`: six paper colors, cork backdrop, warm ink, the
+  layered shadow scale, easing curves, and durations. Replace shadcn's achromatic defaults
+  rather than adding alongside them.
+- `npx shadcn@latest add sidebar`. Delete its cookie persistence and its `ease-linear`
+  motion; host `TooltipProvider` inside it so the collapsed rail works.
+- Build the shell: a collapsible sidebar holding one nav item, **Notes**, plus named slots
+  for the New-note (P2), search (P7), and theme (P9) controls. The board fills the rest.
 - Build the board surface with its cork/felt texture and the paper grain utility.
-- Render two or three **hardcoded** notes to prove the visual language: layered shadow,
-  tilt, grain, padding.
+- Render three **hardcoded** notes to prove the visual language: layered shadow, tilt,
+  grain, padding.
 
-**Done when:** the mockup notes look like paper on a board, and the shadow/tilt/grain
-criteria in `mission.md` are visibly satisfied. No `useState` yet.
+**Done when:** the sidebar collapses cleanly and holds the only chrome on screen, the
+mockup notes look like paper on a board, and the shadow/tilt/grain criteria in `mission.md`
+are visibly satisfied. No `useState` of ours yet.
 
 ---
 
@@ -68,6 +77,10 @@ that's P3.
 - `usehooks-ts` installed; board persisted under `sticky-notes:board:v1`.
 - Debounce writes ~300ms.
 - Defensive read: bad JSON or a wrong `version` falls back to an empty board.
+- Sidebar collapse persisted under `sticky-notes:sidebar`, through the same `useLocalStorage`
+  the board uses. P1 deleted shadcn's `sidebar_state` cookie and deliberately shipped no
+  replacement, so that persistence arrives once through the contract rather than as two
+  competing stores.
 
 **Done when:** notes survive a hard refresh and a browser restart, and manually corrupting
 the localStorage value loads an empty board instead of white-screening.
