@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 
 import App from '@/app'
+import { MOCK_NOTES } from '@/components/board/mock_notes'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 
 beforeEach(() => stubMatchMedia())
@@ -11,6 +12,31 @@ afterEach(cleanup)
 describe('the application shell', () => {
   it('renders exactly one main landmark for the board region', () => {
     render(<App />)
+    // SidebarInset is itself a <main>. Two landmarks would be an a11y defect.
     expect(screen.getAllByRole('main')).toHaveLength(1)
+  })
+
+  it('exposes a named navigation landmark', () => {
+    render(<App />)
+    expect(screen.getByRole('navigation', { name: 'Board sections' })).toBeDefined()
+  })
+
+  it('offers exactly one destination, named Notes and marked current', () => {
+    render(<App />)
+    const items = screen.getAllByRole('button', { name: /notes/i })
+    // Not "at least one" — a second destination is still out of scope in mission.md.
+    expect(items).toHaveLength(1)
+    expect(items[0].getAttribute('aria-current')).toBe('page')
+  })
+
+  it('makes the destination a real button, not a clickable div', () => {
+    render(<App />)
+    expect(screen.getByRole('button', { name: /notes/i }).tagName).toBe('BUTTON')
+  })
+
+  it('badges the destination with the live note count', () => {
+    render(<App />)
+    // Read from the array, not a literal — a literal lets badge and board drift apart.
+    expect(screen.getByText(String(MOCK_NOTES.length))).toBeDefined()
   })
 })

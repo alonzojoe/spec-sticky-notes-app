@@ -1,5 +1,7 @@
+import { AppShell } from '@/components/layout/app_shell'
+
 function App() {
-  return <main className="min-h-dvh bg-stone-200" />
+  return <AppShell />
 }
 
 export default App

@@ -19,6 +19,14 @@ describe('the amendments to shadcn sidebar.tsx', () => {
   it('uses the drawer easing token instead', () => {
     expect(sidebar).toContain('ease-drawer')
   })
+
+  // SidebarMenuButton renders a Tooltip whenever the sidebar is collapsed, and this
+  // version of the registry leaves the provider to the consumer. Hosting it here keeps
+  // the tooltip dependency inside ui/, which is what lets the T9 dormancy rule hold.
+  // Without it the collapsed rail throws rather than showing a label.
+  it('hosts the TooltipProvider itself rather than pushing it onto the app', () => {
+    expect(sidebar).toContain('<TooltipProvider>')
+  })
 })
 
 // T9 — D9. The six transitive components are dormant until a phase needs them.
