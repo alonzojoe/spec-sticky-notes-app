@@ -28,6 +28,7 @@ export interface BoardState {
 export interface NoteSeed {
   id: string
   color: NoteColor
+  body: string
   x: number
   y: number
   tilt: number

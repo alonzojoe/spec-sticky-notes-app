@@ -167,12 +167,13 @@ const findSpot = ({ bounds, taken }: Placement): Spot => {
  * is a function of its arguments. `placement` is passed in as data for the same reason: the
  * caller measures the board, so this stays testable without a DOM.
  */
-export function createNoteSeed(color: NoteColor, placement?: Placement): NoteSeed {
+export function createNoteSeed(color: NoteColor, placement?: Placement, body = ''): NoteSeed {
   const { x, y } = findSpot(placement ?? { bounds: DEFAULT_BOUNDS, taken: [] })
 
   return {
     id: crypto.randomUUID(),
     color,
+    body,
     x,
     y,
     tilt: Number((Math.random() * TILT * 2 - TILT).toFixed(2)),
