@@ -232,9 +232,18 @@
      rather than causing motion sickness. Reduced motion means gentler, not none. */
   @media (prefers-reduced-motion: reduce) {
     [data-slot^='sidebar'],
-    [data-slot^='dialog'],
-    [data-slot='note-card'] {
+    [data-slot^='dialog'] {
       transition-property: opacity, background-color, color, box-shadow !important;
+      transition-duration: var(--duration-press) !important;
+    }
+
+    /* A deliberate exception. P5 made a note's transform its position in the grid, so
+       dropping transform here would teleport every note after a deleted one instead of
+       moving it. A note that jumps across the board is more disorienting than one that
+       moves quickly, so the movement is kept and shortened. Reduced motion means gentler,
+       not unreadable. */
+    [data-slot='note-card'] {
+      transition-property: transform, opacity, background-color, color, box-shadow !important;
       transition-duration: var(--duration-press) !important;
     }
 
