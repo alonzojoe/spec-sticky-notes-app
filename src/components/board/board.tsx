@@ -1,6 +1,7 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { NoteCard } from '@/components/board/note_card'
+import { NoteViewDialog } from '@/components/layout/note_view_dialog'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
 import { useDraggable, type DragTarget } from '@/hooks/use_draggable'
 import { MIN_COLUMN } from '@/lib/grid'
@@ -27,9 +28,36 @@ export function Board() {
     (a: string, b: string) => dispatch({ type: 'swap_order', a, b, at: Date.now() }),
     [dispatch],
   )
-  const { drag, start, move, end } = useDraggable(swap)
+  const { drag, start, move, end, isDragging } = useDraggable(swap)
+
+  // The id, not the note: the open note is then always a live lookup and never a stale copy of
+  // one that has since been edited, recoloured or redated.
+  const [openId, setOpenId] = useState<string | null>(null)
+  const open = notes.find((note) => note.id === openId) ?? null
 
   const ordered = arrange(notes)
+
+  /**
+   * A note created with an empty body opens straight away. P2 through P5 expressed this as
+   * "born focused on its textarea"; the textarea moved into the view, so the note is born open.
+   *
+   * The test is "an id that was not here a moment ago", not P2's
+   * `body === '' && createdAt === updatedAt`. That heuristic cannot tell a note created just
+   * now from one loaded out of localStorage, which was harmless while it only chose where focus
+   * went and is not harmless now that it opens a modal: reloading a board whose newest note was
+   * empty would pop the dialog every time, and Radix would aria-hide the board behind it.
+   */
+  const seen = useRef<Set<string> | null>(null)
+  useEffect(() => {
+    if (seen.current === null) {
+      // First render: everything already on the board is old news.
+      seen.current = new Set(notes.map((note) => note.id))
+      return
+    }
+    const fresh = notes.find((note) => !seen.current?.has(note.id))
+    notes.forEach((note) => seen.current?.add(note.id))
+    if (fresh !== undefined && fresh.body === '') setOpenId(fresh.id)
+  }, [notes])
 
   /**
    * The cards a drag hit-tests against, read from the DOM once when the press begins.
@@ -79,6 +107,11 @@ export function Board() {
           onPointerDown={(event) => start(event, note.id, candidates())}
           onPointerMove={move}
           onPointerUp={end}
+          // Only when the gesture stayed a click. useDraggable's 4px threshold is what
+          // separates the two, and without this check every drop would open a note.
+          onOpen={() => {
+            if (!isDragging()) setOpenId(note.id)
+          }}
           onReorder={(direction) => {
             const columns = columnCount()
             const step =
@@ -93,13 +126,10 @@ export function Board() {
                     (ordered[index + step] ?? null)
             if (other !== null && other.id !== note.id) swap(note.id, other.id)
           }}
-          startEditing={
-            // The one note that is new and untouched opens focused. At most one note can
-            // satisfy this, so creating a note never steals focus from one being written on.
-            note.body === '' && note.createdAt === note.updatedAt && index === 0
-          }
         />
       ))}
+
+      <NoteViewDialog note={open} onOpenChange={(next) => setOpenId(next ? openId : null)} />
     </div>
   )
 }
