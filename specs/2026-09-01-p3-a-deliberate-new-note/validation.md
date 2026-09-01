@@ -63,11 +63,15 @@ disappearing:
   anywhere in the shell. This is the assertion that would have quietly passed if the palette had
   merely been hidden.
 
-### T8–T10 · carried forward, unchanged
+### T8 and T10 · carried forward, unchanged
 
-T9 asserts the dormant shadcn components stay dormant. `dialog.tsx` becomes a *used* component this
-phase, so if T9 enumerates unused files, `dialog` is added to the used side rather than the dormant
-side. If T9 instead only asserts nothing imports the dormant set, no edit is needed.
+### T9 · The dormant components stay dormant — *list corrected*
+
+P3 legitimately wakes `button`: the toolbar's New note control and the dialog's footer are both real
+uses. It comes off `DORMANT`, which now reads
+`['input', 'tooltip', 'sheet', 'skeleton', 'separator']`. `dialog` was never on the list — it
+arrived in P3 already in use. **The list is corrected, not weakened:** the five remaining entries are
+still asserted, and the test comment records why `button` left.
 
 ### T11 · The reducer is correct — *extended for decision D4*
 

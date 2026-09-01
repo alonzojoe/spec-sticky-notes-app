@@ -276,6 +276,35 @@ not zero.
   § Data model gains `body`.
 - **`README.md`** — status line moves to P3.
 
+### D9 · The note is handed over one macrotask after the dialog closes
+
+Found while building, not while planning, and it changes a line of the implementation rather
+than any of the decisions above.
+
+Dispatching `add` inside the submit handler mounts the new note while the dialog is still
+mounted. The note therefore lands inside Radix's focus scope, which pulls focus back out of
+it; the textarea blurs, `note_card.tsx`'s blur handler closes edit mode, and the note that was
+supposed to be *"focused and ready for typing"* is sitting there closed. The failure is silent
+— the note exists, the colour is right, the text is right — which is exactly the kind of thing
+that ships.
+
+`setTimeout(…, 0)` after `close()` puts the note on a board with nothing competing for focus.
+Two alternatives were tried and rejected: dispatching from `onCloseAutoFocus` works under
+`user-event` but never fires under `fireEvent`, so it fails in the two suites that drive the
+app with fake timers; and `preventDefault` on that same event stops Radix restoring focus to
+the trigger but does not stop the focus scope's teardown from blurring the note first.
+
+The cost is that any test creating a note through the dialog with fake timers must flush that
+macrotask. `note_editing.test.tsx` and `persistence.test.tsx` do so in their `addNote` helper,
+and say why.
+
+### D10 · `@testing-library/user-event` is a new devDependency
+
+`fireEvent` dispatches one event at a time and cannot express a roving-tabindex radiogroup or
+a modifier chord. **D1**'s amendment made the keyboard path a *condition* of the carve-out, so
+asserting it with synthesised single events would be asserting the wrong thing. `user-event`
+is a devDependency and reaches no bundle; it is recorded in `tech-stack.md`'s stack table.
+
 ## Constraints inherited from the constitution
 
 - **One phase, one commit.** Work in as many commits as the plan needs; the PR squashes.
@@ -294,6 +323,18 @@ not zero.
 **The amendment is the phase's real content.** If **D1**'s rewrite is not accepted, deliverables
 2–6 are all wrong and no amount of good implementation rescues them. This is why the amendment is
 deliverable 1 and why the plan writes it before the button.
+
+**The generated animation classes were dead on arrival — confirmed, not a risk any more.**
+`shadcn add dialog` shipped `animate-in`, `fade-in-0` and `zoom-in-95`, which come from
+`tw-animate-css`. This project has never installed it, so those utilities compiled to nothing.
+They also key off `data-open` / `data-closed`, while Radix emits `data-state="open"` /
+`data-state="closed"`. The generated dialog — and the `sheet` P1 shipped — therefore had no
+animation at all. **D7**'s audit is consequently a rewrite rather than a tidy-up: four
+`@keyframes` in `index.css` on the existing duration and easing tokens, keyframes rather than
+transitions because Radix waits on `animationend` before unmounting and an exit transition
+never gets to run. The dead classes are stripped from `dialog.tsx`. The same latent problem
+still exists in `sheet.tsx`; fixing it is not this phase's scope, and it is written down here
+so the next phase to touch the mobile sidebar knows.
 
 **`shadcn add dialog` may overwrite or regenerate neighbouring files.** P2 installed nothing, so
 this is the first `add` since P1. The plan pins the pre-install state and diffs afterwards

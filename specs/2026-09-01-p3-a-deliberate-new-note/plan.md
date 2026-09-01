@@ -343,7 +343,25 @@ note, and no sidebar control creates notes any more.
 
 ## Status
 
-Specified, not started. Group 0 has not run.
+**Complete.** All six groups executed. `npm run build`, `npm run lint` and `npm test` are clean:
+16 suites, 369 assertions.
+
+Two things came out differently from the plan, both recorded as decisions in
+[requirements.md](./requirements.md):
+
+- **§ 2.4's audit became a rewrite (D7).** The generated animation utilities come from
+  `tw-animate-css`, which this project has never installed, and they key off `data-open`
+  rather than Radix's `data-state`. They compiled to nothing. `index.css` now owns the
+  dialog's motion in four `@keyframes` on the existing tokens.
+- **§ 3.6's submit handler defers the dispatch by one macrotask (D9).** A note added while the
+  dialog is still mounted lands inside Radix's focus scope and gets its edit mode closed by
+  the resulting blur.
+
+One dependency was added that the plan did not anticipate: `@testing-library/user-event`, a
+devDependency, for the keyboard assertions the amendment made load-bearing (**D10**).
+
+T9's dormancy list also lost `button`, which P3 legitimately wakes. The list was corrected
+rather than weakened, and the test comment says so.
 
 ## Landing
 
