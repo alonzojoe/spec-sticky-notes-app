@@ -7,6 +7,21 @@ import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { BOARD_KEY } from '@/lib/board_storage'
 import type { Note } from '@/types/note'
 
+// P3 replaced the sidebar palette with a dialog, so every note in this file is made through
+// it. The assertions below are about what lands on the board, not about the control that
+// put it there.
+const addNote = (color: string) => {
+  fireEvent.click(screen.getByRole('button', { name: 'New note' }))
+  fireEvent.click(screen.getByRole('radio', { name: color }))
+  fireEvent.click(screen.getByRole('button', { name: 'Add note' }))
+  // The dialog hands the note over one macrotask after it closes, so that it mounts onto a
+  // board with nothing competing for focus. See new_note_dialog.tsx.
+  act(() => {
+    vi.advanceTimersByTime(0)
+  })
+}
+
+
 const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
@@ -89,7 +104,7 @@ describe('entering edit mode', () => {
   it('opens a freshly created note ready for typing', () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'New Butter note' }))
+    addNote('Butter')
 
     expect(document.activeElement).toBe(textarea())
   })
@@ -97,8 +112,8 @@ describe('entering edit mode', () => {
   it('opens only the newest note when a second is created', () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'New Butter note' }))
-    fireEvent.click(screen.getByRole('button', { name: 'New Sky note' }))
+    addNote('Butter')
+    addNote('Sky')
 
     // startEditing is an initial value, not a binding. The new textarea's autoFocus blurs
     // the old one, which saves and closes it. That cascade is what keeps this at one.
