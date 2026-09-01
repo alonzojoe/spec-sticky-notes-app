@@ -171,14 +171,81 @@
     background-blend-mode: multiply;
 }
 
+/* The dialog's motion, written here rather than left to the classes `shadcn add dialog`
+   generated. Two things were wrong with those: they use tw-animate-css utilities
+   (`animate-in`, `fade-in-0`, `zoom-in-95`) which this project has never installed, so they
+   compile to nothing at all; and they key off `data-open` / `data-closed`, while Radix emits
+   `data-state="open"` / `data-state="closed"`. The generated dialog — and the sheet P1
+   shipped — therefore had no animation whatsoever. Keyframes rather than transitions because
+   Radix waits on `animationend` before unmounting, so an exit transition never gets to run.
+
+   mission.md's motion criteria, and index.css's own note that ease-in delays the frame being
+   watched, both apply here. Enter is 200ms; exit is faster at 160ms, because the user has
+   already decided. */
+@keyframes dialog-overlay-in {
+    from { opacity: 0; }
+}
+
+@keyframes dialog-overlay-out {
+    to { opacity: 0; }
+}
+
+@keyframes dialog-content-in {
+    from {
+        opacity: 0;
+        /* Never scale(0). Nothing in the real world appears from nothing. */
+        transform: translate(-50%, -50%) scale(0.96);
+    }
+}
+
+@keyframes dialog-content-out {
+    to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.96);
+    }
+}
+
+@layer base {
+    /* A modal is not anchored to a trigger, so it scales from its own centre. This is the
+       one place the origin-follows-the-trigger rule does not apply. */
+    [data-slot='dialog-overlay'][data-state='open'] {
+        animation: dialog-overlay-in var(--duration-hover) var(--ease-out);
+    }
+
+    [data-slot='dialog-overlay'][data-state='closed'] {
+        animation: dialog-overlay-out var(--duration-hover) var(--ease-out);
+    }
+
+    [data-slot='dialog-content'][data-state='open'] {
+        animation: dialog-content-in var(--duration-drawer) var(--ease-out);
+        transform-origin: center;
+    }
+
+    [data-slot='dialog-content'][data-state='closed'] {
+        animation: dialog-content-out var(--duration-hover) var(--ease-out);
+        transform-origin: center;
+    }
+}
+
 @layer base {
   /* Movement goes; opacity and colour transitions stay, because they aid comprehension
      rather than causing motion sickness. Reduced motion means gentler, not none. */
   @media (prefers-reduced-motion: reduce) {
     [data-slot^='sidebar'],
+    [data-slot^='dialog'],
     [data-slot='note-card'] {
       transition-property: opacity, background-color, color, box-shadow !important;
       transition-duration: var(--duration-press) !important;
+    }
+
+    /* The dialog enters on a keyframe, not a transition, so overriding transition-property
+       above would leave the scale running. These keep the fade and drop the movement. */
+    [data-slot='dialog-content'][data-state='open'] {
+      animation-name: dialog-overlay-in !important;
+    }
+
+    [data-slot='dialog-content'][data-state='closed'] {
+      animation-name: dialog-overlay-out !important;
     }
   }
 }

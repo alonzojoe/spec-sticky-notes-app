@@ -70,4 +70,28 @@ describe('the application shell', () => {
     expect(screen.getByText('2')).toBeDefined()
     expect(screen.getAllByRole('article')).toHaveLength(2)
   })
+
+  // P3 moved creation to the toolbar. Asserting the palette's swatch label is absent is the
+  // assertion that would have quietly passed had the palette merely been hidden.
+  it('offers a New note control in the toolbar', () => {
+    render(<App />)
+
+    expect(screen.getByRole('button', { name: 'New note' })).toBeDefined()
+  })
+
+  it('keeps the New note control out of the board surface', () => {
+    render(<App />)
+
+    // mission.md principle 4's board-surface clause is not amended: chrome never sits on the
+    // board itself.
+    const board = screen.getByRole('main').querySelector('[data-slot="board"]')
+    expect(board?.contains(screen.getByRole('button', { name: 'New note' }))).toBe(false)
+  })
+
+  it('no longer creates notes from the sidebar', () => {
+    render(<App />)
+
+    expect(screen.queryByRole('button', { name: 'New butter note' })).toBeNull()
+    expect(screen.queryByText('New note', { selector: 'div' })).toBeNull()
+  })
 })

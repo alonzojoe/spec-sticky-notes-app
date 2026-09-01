@@ -19,6 +19,7 @@ constitution, not a detail — add it deliberately or not at all.
 | Drag | **Native pointer events** | Hand-rolled `useDraggable`. See "Decisions" below. |
 | Testing | **Vitest** | devDependency. Shares Vite's config and resolver. See "Decisions" below. |
 | DOM testing | **`jsdom` + `@testing-library/react`** | devDependencies. Opted into per file with a `// @vitest-environment jsdom` docblock, so the Vite build test stays in node. |
+| Interaction testing | **`@testing-library/user-event`** | devDependency, added in P3. `fireEvent` cannot express a roving-tabindex radiogroup or a modifier chord; the dialog's keyboard path is a condition of the amended principle 2, so it is asserted with real key sequences. |
 
 ## Hard rules
 
@@ -91,12 +92,18 @@ export interface BoardState {
 export interface NoteSeed {
   id: string
   color: NoteColor
+  body: string
   x: number
   y: number
   tilt: number
   at: number
 }
 ```
+
+`body` joined `NoteSeed` in P3, when the new-note dialog began choosing colour and text
+together. It keeps creation a single dispatch: `add` followed by `edit_body` would leave
+`updatedAt !== createdAt`, and that equality is what `board.tsx` reads to decide which note
+opens focused.
 
 P2 shipped this shape whole, including `z` and `pinned`, on the first phase that persisted
 anything — a narrower shape would have guaranteed a `v2` key and a migration in P5 for the
@@ -129,9 +136,10 @@ src/
     use-mobile.ts        // shadcn-generated — exempt from snake_case
   components/
     layout/
-      app_shell.tsx      // NotesProvider + SidebarProvider + AppSidebar + SidebarInset
-      app_sidebar.tsx    // header, the palette, the Notes destination, slots for P7/P9
-      note_palette.tsx   // six swatches; picking one creates a note
+      app_shell.tsx      // NotesProvider + SidebarProvider + AppSidebar + SidebarInset;
+                         //   owns the toolbar, the New note button and the `n` shortcut
+      app_sidebar.tsx    // header, the Notes destination, slots for P7/P9
+      new_note_dialog.tsx // colour radiogroup + textarea; creates the note  (P3)
     board/
       board.tsx          // the cork surface; computes the pin layer
       note_card.tsx      // one sheet of paper; owns its edit mode and nothing else

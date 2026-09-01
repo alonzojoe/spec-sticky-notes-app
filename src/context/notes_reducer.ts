@@ -12,10 +12,10 @@ export function notesReducer(state: BoardState, action: NoteAction): BoardState 
   switch (action.type) {
     case 'add': {
       // Destructured rather than spread: `seed.at` is not a Note field and must not leak in.
-      const { id, color, x, y, tilt, at } = action.seed
+      const { id, color, body, x, y, tilt, at } = action.seed
       const note: Note = {
         id,
-        body: '',
+        body,
         color,
         x,
         y,

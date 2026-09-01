@@ -6,6 +6,7 @@ import { EMPTY_BOARD, type BoardState, type Note, type NoteSeed } from '@/types/
 const seed = (over: Partial<NoteSeed> = {}): NoteSeed => ({
   id: 'seed-1',
   color: 'butter',
+  body: '',
   x: 100,
   y: 50,
   tilt: -1.5,
@@ -213,5 +214,30 @@ describe('notesReducer · invariants', () => {
     expect(state.notes).toHaveLength(1)
     expect(state.notes[0].body).toBe('original')
     expect(state.notes[0].pinned).toBe(false)
+  })
+})
+
+// P3 · D4. The dialog chooses colour and text together, so `body` rides in on the seed and
+// creation stays one dispatch. Dispatching `add` then `edit_body` would leave
+// `updatedAt !== createdAt`, which is the equality board.tsx reads to decide what opens
+// focused.
+describe('notesReducer · add carries the seed body', () => {
+  it('writes the body the seed arrived with', () => {
+    const next = notesReducer(frozen(EMPTY_BOARD), { type: 'add', seed: seed({ body: 'buy milk' }) })
+
+    expect(next.notes[0].body).toBe('buy milk')
+  })
+
+  it('leaves createdAt equal to updatedAt even when the note is born with text', () => {
+    const next = notesReducer(frozen(EMPTY_BOARD), { type: 'add', seed: seed({ body: 'buy milk' }) })
+    const [note] = next.notes
+
+    expect(note.createdAt).toBe(note.updatedAt)
+  })
+
+  it('still produces an empty body when the seed carries none', () => {
+    const next = notesReducer(frozen(EMPTY_BOARD), { type: 'add', seed: seed() })
+
+    expect(next.notes[0].body).toBe('')
   })
 })

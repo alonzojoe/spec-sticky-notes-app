@@ -69,7 +69,8 @@ are visibly satisfied. No `useState` of ours yet.
   `sticky-notes:sidebar`, both through `useLocalStorage`. Bad JSON or a wrong `version` loads
   an empty board rather than white-screening.
 - A six-swatch paper palette in the sidebar: one click puts a note on the board in that
-  color, at a randomized position, with a stored tilt, focused and ready for typing.
+  color, at a randomized position, with a stored tilt, focused and ready for typing —
+  replaced by the new-note dialog in P3.
 - Click a note — or focus it and press Enter — to edit in place in a plain `<textarea>`.
   Autosave debounced on change, immediate on blur. No Save button.
 - Per-note pin and delete controls, revealed on hover or focus of that note only. Pinned
@@ -80,13 +81,30 @@ refresh and a browser restart with identical colors, tilts and stacking, pinned 
 still on top afterwards, and corrupting the localStorage value by hand loads an empty board
 instead of white-screening.
 
+P2 also absorbed the original **P3 · It remembers** and **P4 · Write on them**: persistence
+and inline editing both shipped here, so a P3 or P4 reference written into P0's or P1's specs
+resolves to this section.
+
 ---
 
-## P3 · It remembers — *absorbed into P2*
+## P3 · A deliberate new note
 
-Persistence shipped with P2: `sticky-notes:board:v1`, `sticky-notes:sidebar`, the ~300ms
-write debounce, and the defensive read. This heading is kept so that phase numbers written
-into P0's and P1's specs still resolve. Nothing is scheduled here.
+**Goal:** creating a note becomes an explicit act, and the sidebar stops being a toolbar.
+
+- Amend `mission.md` principle 2: the modal ban is scoped to editing a note that already
+  exists, and creation gets a carve-out conditional on the keyboard path. Principle 4 is
+  widened to name the toolbar.
+- A shadcn `Button` at the right of the shell's header opens a shadcn `dialog`.
+- The dialog carries a six-swatch radiogroup and a textarea; colour and text are both chosen
+  before the note exists.
+- `NoteSeed` gains `body`, so creation stays one dispatch and one storage write, and
+  `createdAt === updatedAt` still holds for a note born with text.
+- `n` opens the dialog from anywhere outside a text field.
+- `note_palette.tsx` is deleted; the sidebar keeps its nav group and rail.
+
+**Done when:** a note with text and a chosen colour reaches the board in one submit,
+`Tab, Tab, type, Cmd+Enter` creates one without a mouse, `n` is inert while typing on a note,
+and no sidebar control creates notes any more.
 
 ---
 
@@ -122,9 +140,9 @@ positions survive a refresh, and the whole board is arrangeable without a mouse.
 
 **Done when:** a note's color can be changed without recreating it, and the change persists.
 
-P2 shipped the rest of the original P6: color is chosen at creation from the sidebar
-palette, pinning works, and per-note controls already appear on hover or focus of that note
-alone.
+P2 shipped the rest of the original P6: pinning works, and per-note controls already appear
+on hover or focus of that note alone. Colour is chosen at creation in the new-note dialog
+(P3); this phase is about changing it afterwards.
 
 ---
 
