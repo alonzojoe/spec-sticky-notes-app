@@ -1,6 +1,5 @@
 import { StickyNote } from 'lucide-react'
 
-import { NotePalette } from '@/components/layout/note_palette'
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +14,8 @@ import {
 } from '@/components/ui/sidebar'
 import { useNotes } from '@/context/use_notes'
 
-// Slots later phases fill. Named here so the sidebar grows by plan rather than by
+// P3 moved note creation out of here and into the toolbar's dialog, so the sidebar is down
+// to its nav group. Slots later phases fill, named here so it grows by plan rather than by
 // improvisation:
 //   P7 — the search field and tag list, as a SidebarGroup below the nav group
 //   P9 — the theme toggle, in a SidebarFooter
@@ -35,8 +35,6 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <NotePalette />
-
         {/* shadcn's Sidebar emits no landmark of its own. */}
         <nav aria-label="Board sections">
           <SidebarGroup>
