@@ -1,3 +1,4 @@
+import { todayISO } from '@/lib/dates'
 import type { NoteColor, NoteSeed } from '@/types/note'
 
 /**
@@ -11,11 +12,17 @@ import type { NoteColor, NoteSeed } from '@/types/note'
  * amended tactility criterion. What is left is an id, a clock reading, and the stamp that
  * puts the note in the first slot.
  */
-export function createNoteSeed(color: NoteColor, topOrder: number, body = ''): NoteSeed {
+export function createNoteSeed(
+  color: NoteColor,
+  topOrder: number,
+  body = '',
+  date = todayISO(),
+): NoteSeed {
   return {
     id: crypto.randomUUID(),
     color,
     body,
+    date,
     // Above every existing note, so it takes slot 0. One note is written; the rest move
     // because the derived layout shifted, not because anything rewrote them.
     order: topOrder + 1,

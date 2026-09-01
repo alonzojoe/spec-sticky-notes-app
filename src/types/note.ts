@@ -8,6 +8,9 @@ export interface Note {
   id: string // crypto.randomUUID()
   body: string // raw markdown; #tags live inline in this text
   color: NoteColor
+  // Stored ISO `YYYY-MM-DD`, shown `MM/DD/YYYY`. lib/dates.ts owns both directions and never
+  // builds a Date from a stored value — see the comment there for why that matters.
+  date: string
   // Higher is EARLIER in the grid. The board sorts descending, so slot 0 holds the largest
   // stamp. Nothing renumbers: a dense grid falls out of ranking a sparse sequence, so a
   // delete closes its gap at render rather than by rewriting every note after it.
@@ -29,6 +32,7 @@ export interface NoteSeed {
   id: string
   color: NoteColor
   body: string
+  date: string
   order: number
   at: number
 }

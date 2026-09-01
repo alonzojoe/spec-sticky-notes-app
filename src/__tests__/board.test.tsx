@@ -14,6 +14,7 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
   color: 'butter',
+  date: '2026-09-01',
   order: 1,
   pinned: false,
   createdAt: 1,
@@ -133,13 +134,15 @@ describe('the board', () => {
   // Tilt now comes from the store rather than a fixture, which makes the original risk real
   // for the first time: a Math.random() in a render path survives the assertion above and
   // dies here, because an unrelated board change re-renders every card.
-  it('keeps every tilt identical when an unrelated note is added', () => {
+  it('leaves the existing cards alone when an unrelated note is added', () => {
     renderBoard()
     const before = transforms(['a', 'b'])
 
     fireEvent.click(screen.getByRole('button', { name: 'add' }))
 
-    expect(screen.getAllByRole('article')).toHaveLength(3)
+    // P1 asserted stable tilts here; P5 removed the tilt and P6 removed the positioning, so
+    // what is left to assert is that neither existing card acquired a transform of its own.
+    expect(screen.getAllByTestId(/^note-/)).toHaveLength(3)
     expect(transforms(['a', 'b'])).toEqual(before)
   })
 })

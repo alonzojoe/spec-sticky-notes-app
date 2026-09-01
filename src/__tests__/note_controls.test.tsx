@@ -11,6 +11,7 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
   color: 'butter',
+  date: '2026-09-01',
   order: 1,
   pinned: false,
   createdAt: 1,
@@ -251,7 +252,7 @@ describe('the textarea is uncontrolled', () => {
   it('keeps in-progress text when an unrelated board change re-renders it', () => {
     seed([note({ id: 'a' }), note({ id: 'b', body: 'other' })])
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'a thought' }))
+    fireEvent.click(screen.getAllByTestId('open')[0])
     const textarea = screen.getByRole('textbox', { name: 'Note text' }) as HTMLTextAreaElement
     fireEvent.change(textarea, { target: { value: 'half a sent' } })
 

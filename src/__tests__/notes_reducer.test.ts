@@ -6,6 +6,7 @@ import { EMPTY_BOARD, type BoardState, type Note, type NoteSeed } from '@/types/
 const seed = (over: Partial<NoteSeed> = {}): NoteSeed => ({
   id: 'seed-1',
   color: 'butter',
+  date: '2026-09-01',
   body: '',
   order: 1,
   at: 1_700_000_000_000,
@@ -16,6 +17,7 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'note-1',
   body: 'a thought',
   color: 'sky',
+  date: '2026-09-01',
   order: 1,
   pinned: false,
   createdAt: 1,
@@ -42,6 +44,7 @@ describe('notesReducer · add', () => {
       id: 'seed-1',
       body: '',
       color: 'butter',
+      date: '2026-09-01',
       order: 1,
       pinned: false,
       createdAt: 1_700_000_000_000,
@@ -284,5 +287,62 @@ describe('notesReducer · ordering', () => {
     expect(notesReducer(state, { type: 'swap_order', a: 'a', b: 'a', at: 900 })).toBe(state)
     expect(notesReducer(state, { type: 'swap_order', a: 'a', b: 'ghost', at: 900 })).toBe(state)
     expect(notesReducer(state, { type: 'swap_order', a: 'ghost', b: 'b', at: 900 })).toBe(state)
+  })
+})
+
+// T39 — the date rides in on the seed and is edited by its own action, and neither reorders
+// anything. mission.md principle 1 survived P5 with one clause intact: the board reorders on
+// create, delete and pin and on nothing else.
+describe('T39 · notesReducer · the date', () => {
+  it('writes the date the seed arrived with', () => {
+    const next = notesReducer(frozen(EMPTY_BOARD), {
+      type: 'add',
+      seed: seed({ date: '2026-09-01' }),
+    })
+
+    expect(next.notes[0].date).toBe('2026-09-01')
+  })
+
+  it('set_date changes one note and stamps its updatedAt', () => {
+    const state = frozen(board([note({ id: 'a', date: '2026-09-01' }), note({ id: 'b' })]))
+
+    const next = notesReducer(state, { type: 'set_date', id: 'a', date: '2026-12-25', at: 900 })
+
+    expect(next.notes.find((n) => n.id === 'a')?.date).toBe('2026-12-25')
+    expect(next.notes.find((n) => n.id === 'a')?.updatedAt).toBe(900)
+  })
+
+  it('set_date leaves every other note untouched', () => {
+    const other = note({ id: 'b', date: '2026-01-01', updatedAt: 1 })
+    const state = frozen(board([note({ id: 'a' }), other]))
+
+    const next = notesReducer(state, { type: 'set_date', id: 'a', date: '2026-12-25', at: 900 })
+
+    expect(next.notes.find((n) => n.id === 'b')).toEqual(other)
+  })
+
+  it('set_date leaves the order alone, so nothing moves', () => {
+    const state = frozen(board([note({ id: 'a', order: 1 }), note({ id: 'b', order: 2 })]))
+
+    const next = notesReducer(state, { type: 'set_date', id: 'a', date: '2020-01-01', at: 900 })
+
+    expect(next.notes.map((n) => n.order)).toEqual([1, 2])
+  })
+
+  it('set_date is a no-op for an id that is not on the board', () => {
+    const state = frozen(board([note({ id: 'a' })]))
+
+    expect(notesReducer(state, { type: 'set_date', id: 'ghost', date: '2026-12-25', at: 900 }))
+      .toEqual(state)
+  })
+
+  it('set_color recolours one note without reordering', () => {
+    const state = frozen(board([note({ id: 'a', color: 'butter', order: 1 }), note({ id: 'b', order: 2 })]))
+
+    const next = notesReducer(state, { type: 'set_color', id: 'a', color: 'mint', at: 900 })
+
+    expect(next.notes.find((n) => n.id === 'a')?.color).toBe('mint')
+    expect(next.notes.find((n) => n.id === 'a')?.updatedAt).toBe(900)
+    expect(next.notes.map((n) => n.order)).toEqual([1, 2])
   })
 })

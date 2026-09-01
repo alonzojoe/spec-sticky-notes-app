@@ -14,7 +14,15 @@ export function NoteControls({ note }: { note: Note }) {
   const dispatch = useNotesDispatch()
 
   return (
-    <div className="absolute top-1 right-1 flex gap-1">
+    // P6 made the whole card a control that opens the note, and P5 made it draggable. Both
+    // listen on the article, so without stopping propagation here a click on delete would open
+    // the note it just removed, and a press on pin would begin dragging the card. Stopped once
+    // on the container rather than twice per button.
+    <div
+      className="absolute top-1 right-1 flex gap-1"
+      onClick={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+    >
       <button
         type="button"
         data-testid="pin"

@@ -23,10 +23,9 @@ the board rearrange itself, it is wrong regardless of how good it looks.
    first slot and pushes the rest along; deleting one closes the gap. The order is mine to
    change — dragging a note onto another swaps the two of them, permanently — and nothing
    else reorders the board.
-2. **Direct manipulation.** Drag the note itself. Edit text in place on the note — no
-   dialog stands between me and a thought I am already writing. Creating a note may ask
-   for colour and text first, as long as the keyboard can open it, fill it, and dismiss it
-   without touching the mouse.
+2. **Direct manipulation.** Drag the note itself to reorder it. A card is a summary —
+   click it and the note opens for reading and editing, with its colour and its date.
+   Whatever opens a note must open, fill and dismiss from the keyboard alone.
 3. **Persistent by default.** There is no Save button. State is written as it changes and
    restored exactly on reload — position, stacking, colors, and all.
 4. **Quiet chrome.** The interface is the notes. Global controls live in the sidebar and
@@ -65,7 +64,8 @@ These are in the constitution. They ship.
 
 - **Ordered board** — create, drag to reorder, and pin; the grid never rearranges itself
   except to open or close a slot.
-- **Inline editing with autosave** — click a note, type on it, it saves itself.
+- **Open and edit** — click a note to read it in full and edit it; it saves itself, with
+  no Save button.
 - **Colors + pin** — a curated paper palette per note; pinned notes stay above the pile.
 - **Search + tags** — a live filter box, and `#tags` parsed out of note text and clickable.
 - **Markdown + checklists** — bold, italic, links, lists, and `- [ ]` checkboxes that can

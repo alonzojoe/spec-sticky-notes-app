@@ -1,12 +1,7 @@
-import { useState } from 'react'
-import { useDebounceCallback } from 'usehooks-ts'
-
 import { NoteControls } from '@/components/board/note_controls'
-import { useNotesDispatch } from '@/context/use_notes'
+import { formatDate } from '@/lib/dates'
 import { PAPER } from '@/lib/paper'
 import type { Note } from '@/types/note'
-
-const AUTOSAVE_MS = 300
 
 export type ReorderDirection = 'left' | 'right' | 'up' | 'down' | 'first' | 'last'
 
@@ -19,11 +14,26 @@ const REORDER_KEYS: Record<string, ReorderDirection> = {
   End: 'last',
 }
 
+/**
+ * A card is a summary, not an editor. P6 moved the textarea into the note's own view, so this
+ * file lost its debounce, its blur handler and its local editing state — one way to edit, one
+ * place to maintain it.
+ *
+ * Fixed height and a clamped body are the point of the change: a grid of a one-line note beside
+ * a ten-line note had ragged rows, and a long note was unreadable because the card *was* the
+ * reader. `line-clamp` rather than `overflow: hidden` so the ellipsis lands on the last visible
+ * line — that is what signals "there is more" instead of looking like the text stopped.
+ *
+ * Four gestures share this element and each has a deliberate answer. The body is a real button,
+ * so clicking or pressing Enter on it opens the note — but only if the gesture did not become a
+ * drag. The pin and delete controls stop propagation, or deleting a note would open the note it
+ * just deleted. The arrow keys on the article itself still reorder.
+ */
 export function NoteCard({
   note,
   dragging,
   isDropTarget,
-  startEditing,
+  onOpen,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -32,23 +42,12 @@ export function NoteCard({
   note: Note
   dragging: { dx: number; dy: number } | null
   isDropTarget: boolean
-  startEditing: boolean
+  onOpen: () => void
   onPointerDown: (event: React.PointerEvent) => void
   onPointerMove: (event: React.PointerEvent) => void
   onPointerUp: (event: React.PointerEvent) => void
   onReorder: (direction: ReorderDirection) => void
 }) {
-  const dispatch = useNotesDispatch()
-
-  // Ephemeral interaction state, so it stays local: what must survive a refresh belongs to
-  // the reducer, and a note that was mid-edit when the tab closed should reopen closed.
-  const [editing, setEditing] = useState(startEditing)
-
-  const save = useDebounceCallback(
-    (body: string) => dispatch({ type: 'edit_body', id: note.id, body, at: Date.now() }),
-    AUTOSAVE_MS,
-  )
-
   return (
     <article
       data-slot="note-card"
@@ -60,66 +59,46 @@ export function NoteCard({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onKeyDown={(event) => {
-        // Only when the article itself has focus. Inside the textarea the arrow keys move the
-        // caret, and Home and End go to the ends of a line — reordering there would make the
-        // note unwritable.
+        // Only when the article itself has focus, so a control inside it keeps its own keys.
         if (event.target !== event.currentTarget) return
         const direction = REORDER_KEYS[event.key]
         if (direction === undefined) return
         event.preventDefault()
         onReorder(direction)
       }}
-      className={`group flex min-h-32 flex-col rounded-lg p-4 text-ink texture-paper ${PAPER[note.color]} ${
+      className={`group flex h-44 cursor-pointer flex-col overflow-hidden rounded-lg p-4 text-left text-ink texture-paper ${PAPER[note.color]} ${
         dragging !== null
           ? // Tracks the pointer exactly. A transition on the thing following your hand is
             // the classic mistake, and mission.md asks for a distinct lift while dragging.
             'relative z-50 cursor-grabbing shadow-note-drag'
-          : 'cursor-grab shadow-note transition-[transform,box-shadow] duration-(--duration-note) ease-out hover:shadow-note-hover'
+          : 'shadow-note transition-[transform,box-shadow] duration-(--duration-note) ease-out hover:shadow-note-hover'
       } ${isDropTarget ? 'ring-2 ring-ring' : ''}`}
       style={
-        // The card sits in its grid cell and is not positioned by us — the layout engine
-        // places it. The only transform is the offset while it is being dragged, and the
-        // rotation is gone: mission.md's tilt criterion was amended in P5 because a tilt
-        // reads as deliberate only when nothing around it is aligned.
         dragging !== null ? { transform: `translate(${dragging.dx}px, ${dragging.dy}px)` } : undefined
       }
     >
       <NoteControls note={note} />
 
-      {editing ? (
-        <textarea
-          autoFocus
-          // Uncontrolled: a keystroke re-renders this note instead of the whole board, and
-          // the caret cannot jump. Nothing else writes `body` in this phase.
-          defaultValue={note.body}
-          aria-label="Note text"
-          rows={4}
-          className="field-sizing-content max-h-72 min-h-24 w-full resize-none bg-transparent text-sm leading-relaxed text-ink outline-none"
-          onChange={(event) => save(event.target.value)}
-          onPointerDown={(event) => event.stopPropagation()}
-          onBlur={(event) => {
-            // Cancel the pending debounce and write now, so the last keystroke before
-            // leaving a note is never the one that is lost.
-            save.cancel()
-            dispatch({ type: 'edit_body', id: note.id, body: event.target.value, at: Date.now() })
-            setEditing(false)
-          }}
-          onKeyDown={(event) => {
-            // Escape blurs rather than closing directly: one exit path, so the save cannot
-            // be skipped by choosing the wrong one.
-            if (event.key === 'Escape') event.currentTarget.blur()
-          }}
-        />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="w-full cursor-text text-left text-sm leading-relaxed whitespace-pre-wrap"
-        >
+      {/* A real button rather than a click handler on the article. The article keeps its
+          landmark role, and the thing that opens the note is announced as a control and
+          answers Enter and Space for free — none of which is true of a clickable <div>. */}
+      <button
+        type="button"
+        data-testid="open"
+        aria-label={`Open note from ${formatDate(note.date)}`}
+        onClick={onOpen}
+        className="flex flex-1 cursor-pointer flex-col overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {/* tabular-nums so a column of dates does not jitter between a 1 and a 0. */}
+        <time dateTime={note.date} className="text-xs text-ink-soft tabular-nums">
+          {formatDate(note.date)}
+        </time>
+
+        <span className="mt-3 line-clamp-4 text-sm leading-relaxed whitespace-pre-wrap">
           {/* Rendered, never stored. An empty note's body stays ''. */}
           {note.body === '' ? <span className="text-ink-soft">Empty note</span> : note.body}
-        </button>
-      )}
+        </span>
+      </button>
     </article>
   )
 }

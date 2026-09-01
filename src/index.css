@@ -205,6 +205,37 @@
     }
 }
 
+/* The popover's motion, on the same terms as the dialog's above and for the same reason:
+   the classes `shadcn add popover` generated come from tw-animate-css, which this project has
+   never installed, and they key off `data-open` while Radix emits `data-state`. They compiled
+   to nothing.
+
+   Unlike the dialog this one IS anchored to a trigger, so it scales from the origin Radix
+   computes rather than from its own centre. A popover that grows from the middle of itself
+   reads as unrelated to the control that opened it. */
+@keyframes popover-in {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+}
+
+@layer base {
+    [data-slot='popover-content'] {
+        transform-origin: var(--radix-popover-content-transform-origin);
+    }
+
+    [data-slot='popover-content'][data-state='open'] {
+        animation: popover-in var(--duration-hover) var(--ease-out);
+    }
+
+    /* No exit animation, deliberately. Radix keeps a closing layer mounted until its exit
+       animation ends, and with one defined the calendar's popover was observed staying in the
+       DOM indefinitely at `data-state="closed"` — still on the dismissable-layer stack and
+       still carrying role="dialog", so a screen reader inside the note view was offered two
+       dialogs, one of them invisible. An instant exit costs a 100ms fade on a calendar. */
+}
+
 @layer base {
     /* A modal is not anchored to a trigger, so it scales from its own centre. This is the
        one place the origin-follows-the-trigger rule does not apply. */
@@ -232,7 +263,8 @@
      rather than causing motion sickness. Reduced motion means gentler, not none. */
   @media (prefers-reduced-motion: reduce) {
     [data-slot^='sidebar'],
-    [data-slot^='dialog'] {
+    [data-slot^='dialog'],
+    [data-slot^='popover'] {
       transition-property: opacity, background-color, color, box-shadow !important;
       transition-duration: var(--duration-press) !important;
     }
@@ -255,6 +287,11 @@
 
     [data-slot='dialog-content'][data-state='closed'] {
       animation-name: dialog-overlay-out !important;
+    }
+
+    /* Same reasoning for the popover: keep the fade, drop the scale. */
+    [data-slot='popover-content'][data-state='open'] {
+      animation-name: dialog-overlay-in !important;
     }
   }
 }

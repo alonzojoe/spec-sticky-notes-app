@@ -1,3 +1,4 @@
+import { isISODate, isoFromEpoch } from '@/lib/dates'
 import { EMPTY_BOARD, NOTE_COLORS, type BoardState, type Note } from '@/types/note'
 
 export const BOARD_KEY = 'sticky-notes:board:v1'
@@ -8,7 +9,7 @@ export const SIDEBAR_KEY = 'sticky-notes:sidebar'
  * exactly as it always was — a board that is malformed in any other way is still rejected
  * whole.
  */
-type StoredNote = Omit<Note, 'order'> & { order?: unknown }
+type StoredNote = Omit<Note, 'order' | 'date'> & { order?: unknown; date?: unknown }
 
 const isNote = (value: unknown): value is StoredNote => {
   if (typeof value !== 'object' || value === null) return false
@@ -57,11 +58,21 @@ export const parseSidebarOpen = (raw: string): boolean => parseStored(raw) !== f
  * note at `x: undefined`. Nothing ships older builds, so the exposure is a developer checking
  * out an old commit.
  */
+/**
+ * P6's repair. A note saved before this phase has no `date`; one saved by a build in between
+ * might have a malformed one. Either way it is derived from `createdAt`, because a malformed
+ * date is recoverable and losing the whole board over it is not.
+ */
+const dateOf = (note: StoredNote): string =>
+  isISODate(note.date) ? note.date : isoFromEpoch(note.createdAt)
+
 const withOrder = (notes: StoredNote[]): Note[] => {
   if (notes.every((note) => typeof note.order === 'number')) {
     return notes.map((note) => {
-      const { id, body, color, pinned, createdAt, updatedAt } = note
-      return { id, body, color, pinned, createdAt, updatedAt, order: note.order as number }
+      const { id, body, color, pinned, createdAt, updatedAt } = note as Omit<StoredNote, 'date'> & {
+        date?: unknown
+      }
+      return { id, body, color, pinned, createdAt, updatedAt, date: dateOf(note), order: note.order as number }
     })
   }
 
@@ -70,8 +81,10 @@ const withOrder = (notes: StoredNote[]): Note[] => {
   return notes.map((note) => {
     // Rebuilt rather than spread-and-overwritten, so `x` and `y` from a pre-P5 board have
     // nowhere to survive.
-    const { id, body, color, pinned, createdAt, updatedAt } = note
-    return { id, body, color, pinned, createdAt, updatedAt, order: rank.indexOf(id) + 1 }
+    const { id, body, color, pinned, createdAt, updatedAt } = note as Omit<StoredNote, 'date'> & {
+        date?: unknown
+      }
+    return { id, body, color, pinned, createdAt, updatedAt, date: dateOf(note), order: rank.indexOf(id) + 1 }
   })
 }
 

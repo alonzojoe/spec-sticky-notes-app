@@ -11,6 +11,7 @@ const note = (id: string): Note => ({
   id,
   body: '',
   color: 'butter',
+  date: '2026-09-01',
   order: 1,
   pinned: false,
   createdAt: 1,

@@ -137,17 +137,26 @@ rest along, deleting one closes the gap, dragging one onto another swaps them pe
 same reordering is reachable from the keyboard, and a board saved under P3 opens ordered rather
 than scattered.
 
-## P6 · Change a note's color
+## P6 · A note with a date
 
-**Goal:** a note can be recolored after it exists.
+**Goal:** a card becomes a summary you can scan, and the note itself becomes the place you read
+and write.
 
-- shadcn `dropdown-menu` (or `popover`) as a per-note color picker across the six papers.
+- Amend `mission.md` principle 2 a third time: a card is a summary, and clicking it opens the
+  note. Principle 3 is **not** amended — "there is no Save button" constrains this phase.
+- `Note` gains `date`, stored ISO `YYYY-MM-DD` and shown `MM/DD/YYYY`. Nothing constructs a
+  `Date` from a stored value.
+- shadcn `calendar` + `popover`; the create dialog defaults the date to today, recomputed each
+  time it opens.
+- Every card the same height, the date top-left in tabular figures, the body `line-clamp`ed.
+- A note view carrying the full body, the colour swatches and the date. It autosaves; there is
+  no Save and no Cancel.
+- The card stops being an editor: no textarea, no debounce, no blur handler.
+- The defensive read derives a missing `date` from `createdAt`.
 
-**Done when:** a note's color can be changed without recreating it, and the change persists.
-
-P2 shipped the rest of the original P6: pinning works, and per-note controls already appear
-on hover or focus of that note alone. Colour is chosen at creation in the new-note dialog
-(P3); this phase is about changing it afterwards.
+**Done when:** every note shows its date top-left as `MM/DD/YYYY`, cards are uniform with their
+bodies truncated by an ellipsis, clicking one opens it for reading and editing, and there is no
+Save button anywhere.
 
 ---
 
@@ -220,6 +229,8 @@ and reloading in dark mode never flashes light.
 Ideas that are allowed to exist but are not commitments. Anything here needs a mission
 amendment before it gets built.
 
+- Recolouring an existing note from the card itself. P6's note view carries the six swatches,
+  which discharges most of what the original P6 was for; a per-card control is what is left.
 - Multi-select and group drag
 - Session undo/redo
 - Export the board to markdown or JSON

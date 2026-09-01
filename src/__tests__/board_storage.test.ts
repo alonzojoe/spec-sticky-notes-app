@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import { BOARD_KEY, SIDEBAR_KEY, hydrate } from '@/lib/board_storage'
+import { isISODate, isoFromEpoch } from '@/lib/dates'
 import { EMPTY_BOARD, type Note } from '@/types/note'
 
 const valid: Note = {
   id: 'a',
   body: 'a thought',
   color: 'butter',
+  date: '2026-09-01',
   order: 1,
   pinned: false,
   createdAt: 1,
@@ -88,5 +90,46 @@ describe('hydrate · accepts a well-formed board', () => {
     const stored = { version: 1, notes: [valid] }
 
     expect(hydrate(stored)).toEqual(hydrate(stored))
+  })
+})
+
+// T40 — decision D7. A malformed date is recoverable; losing the whole board over one is not.
+describe('T40 · a board saved before the date', () => {
+  const legacy = (over: Record<string, unknown> = {}) => ({
+    id: 'legacy',
+    body: 'written earlier',
+    color: 'butter',
+    order: 1,
+    pinned: false,
+    createdAt: Date.parse('2026-03-04T12:00:00'),
+    updatedAt: Date.parse('2026-03-04T12:00:00'),
+    ...over,
+  })
+
+  it('derives a missing date from createdAt', () => {
+    const board = hydrate({ version: 1, notes: [legacy()] })
+
+    expect(board.notes).toHaveLength(1)
+    expect(board.notes[0].date).toBe(isoFromEpoch(Date.parse('2026-03-04T12:00:00')))
+  })
+
+  it.each([['not a date'], [12345], [null], [{}], [''], ['2026-3-4']])(
+    'repairs the malformed date %s rather than rejecting the board',
+    (date) => {
+      const board = hydrate({ version: 1, notes: [legacy({ date })] })
+
+      expect(board.notes).toHaveLength(1)
+      expect(isISODate(board.notes[0].date)).toBe(true)
+    },
+  )
+
+  it('keeps a well-formed date exactly as stored', () => {
+    const board = hydrate({ version: 1, notes: [legacy({ date: '2026-09-01' })] })
+
+    expect(board.notes[0].date).toBe('2026-09-01')
+  })
+
+  it('leaves version at 1', () => {
+    expect(hydrate({ version: 1, notes: [legacy()] }).version).toBe(1)
   })
 })
