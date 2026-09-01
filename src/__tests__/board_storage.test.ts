@@ -7,10 +7,7 @@ const valid: Note = {
   id: 'a',
   body: 'a thought',
   color: 'butter',
-  x: 10,
-  y: 20,
-  z: 1,
-  tilt: -1.2,
+  order: 1,
   pinned: false,
   createdAt: 1,
   updatedAt: 2,
@@ -41,8 +38,12 @@ describe('hydrate · rejects anything that is not a board', () => {
     ['notes that are not an array', { version: 1, notes: 'nope' }],
     ['a note missing most of its fields', { version: 1, notes: [{ id: 'a' }] }],
     ['a note with an unknown colour', { version: 1, notes: [{ ...valid, color: 'chartreuse' }] }],
-    ['a note with a string where a number belongs', { version: 1, notes: [{ ...valid, x: '10' }] }],
     ['a note with a null body', { version: 1, notes: [{ ...valid, body: null }] }],
+    ['a note with a non-boolean pinned', { version: 1, notes: [{ ...valid, pinned: 'yes' }] }],
+    [
+      'a note with a string where a timestamp belongs',
+      { version: 1, notes: [{ ...valid, createdAt: '10' }] },
+    ],
   ])('returns an empty board for %s', (_label, stored) => {
     expect(hydrate(stored)).toEqual(EMPTY_BOARD)
   })

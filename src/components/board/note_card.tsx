@@ -8,20 +8,40 @@ import type { Note } from '@/types/note'
 
 const AUTOSAVE_MS = 300
 
+export type ReorderDirection = 'left' | 'right' | 'up' | 'down' | 'first' | 'last'
+
+const REORDER_KEYS: Record<string, ReorderDirection> = {
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  Home: 'first',
+  End: 'last',
+}
+
 export function NoteCard({
   note,
-  layer,
+  dragging,
+  isDropTarget,
   startEditing,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onReorder,
 }: {
   note: Note
-  layer: number
+  dragging: { dx: number; dy: number } | null
+  isDropTarget: boolean
   startEditing: boolean
+  onPointerDown: (event: React.PointerEvent) => void
+  onPointerMove: (event: React.PointerEvent) => void
+  onPointerUp: (event: React.PointerEvent) => void
+  onReorder: (direction: ReorderDirection) => void
 }) {
   const dispatch = useNotesDispatch()
 
   // Ephemeral interaction state, so it stays local: what must survive a refresh belongs to
   // the reducer, and a note that was mid-edit when the tab closed should reopen closed.
-  // `startEditing` is an initial value, not a binding — see the blur path below.
   const [editing, setEditing] = useState(startEditing)
 
   const save = useDebounceCallback(
@@ -33,16 +53,36 @@ export function NoteCard({
     <article
       data-slot="note-card"
       data-testid={`note-${note.id}`}
-      className={`group absolute w-56 rounded-lg p-4 text-ink shadow-note texture-paper ${PAPER[note.color]} transition-[box-shadow] duration-(--duration-hover) ease-out hover:shadow-note-hover`}
-      style={{
-        // Position, stacking and tilt are per-note data, not design tokens. This is the one
-        // place a style attribute is correct — and the tilt is read straight from the store,
-        // never recomputed, so it cannot twitch between renders.
-        left: `${note.x}px`,
-        top: `${note.y}px`,
-        zIndex: layer,
-        transform: `rotate(${note.tilt}deg)`,
+      data-note-id={note.id}
+      data-dragging={dragging !== null ? '' : undefined}
+      tabIndex={0}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onKeyDown={(event) => {
+        // Only when the article itself has focus. Inside the textarea the arrow keys move the
+        // caret, and Home and End go to the ends of a line — reordering there would make the
+        // note unwritable.
+        if (event.target !== event.currentTarget) return
+        const direction = REORDER_KEYS[event.key]
+        if (direction === undefined) return
+        event.preventDefault()
+        onReorder(direction)
       }}
+      className={`group flex min-h-32 flex-col rounded-lg p-4 text-ink texture-paper ${PAPER[note.color]} ${
+        dragging !== null
+          ? // Tracks the pointer exactly. A transition on the thing following your hand is
+            // the classic mistake, and mission.md asks for a distinct lift while dragging.
+            'relative z-50 cursor-grabbing shadow-note-drag'
+          : 'cursor-grab shadow-note transition-[transform,box-shadow] duration-(--duration-note) ease-out hover:shadow-note-hover'
+      } ${isDropTarget ? 'ring-2 ring-ring' : ''}`}
+      style={
+        // The card sits in its grid cell and is not positioned by us — the layout engine
+        // places it. The only transform is the offset while it is being dragged, and the
+        // rotation is gone: mission.md's tilt criterion was amended in P5 because a tilt
+        // reads as deliberate only when nothing around it is aligned.
+        dragging !== null ? { transform: `translate(${dragging.dx}px, ${dragging.dy}px)` } : undefined
+      }
     >
       <NoteControls note={note} />
 
@@ -50,13 +90,13 @@ export function NoteCard({
         <textarea
           autoFocus
           // Uncontrolled: a keystroke re-renders this note instead of the whole board, and
-          // the caret cannot jump. Nothing else writes `body` in this phase; when P8 adds a
-          // second writer this needs a key or needs to become controlled.
+          // the caret cannot jump. Nothing else writes `body` in this phase.
           defaultValue={note.body}
           aria-label="Note text"
           rows={4}
           className="field-sizing-content max-h-72 min-h-24 w-full resize-none bg-transparent text-sm leading-relaxed text-ink outline-none"
           onChange={(event) => save(event.target.value)}
+          onPointerDown={(event) => event.stopPropagation()}
           onBlur={(event) => {
             // Cancel the pending debounce and write now, so the last keystroke before
             // leaving a note is never the one that is lost.

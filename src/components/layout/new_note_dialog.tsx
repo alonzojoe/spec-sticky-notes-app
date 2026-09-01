@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
-import { boardBounds, createNoteSeed } from '@/lib/note_factory'
+import { createNoteSeed, topOrder } from '@/lib/note_factory'
 import { PAPER, paperLabel } from '@/lib/paper'
 import { NOTE_COLORS, type NoteColor } from '@/types/note'
 
@@ -49,9 +49,9 @@ export function NewNoteDialog({
   }
 
   const submit = () => {
-    // Measured in the handler, never during a render: a new note has to know how big the
-    // board is and what is already on it, or it lands on top of something.
-    const seed = createNoteSeed(color, { bounds: boardBounds(), taken: notes }, body.trim())
+    // Read in the handler, never during a render. The new note only needs to beat the
+    // highest stamp on the board; where it lands is the grid's business, not this file's.
+    const seed = createNoteSeed(color, topOrder(notes), body.trim())
     close()
     // Added after the dialog has gone, not with it still up, and the ordering is the whole
     // reason. A note created empty opens focused on the board — board.tsx picks it with

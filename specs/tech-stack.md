@@ -131,7 +131,7 @@ src/
     notes_reducer.ts     // pure reducer — unit-testable, no React imports
     use_notes.ts         // the two contexts and their consumer hooks
   hooks/
-    use_draggable.ts     // pointer-events drag                           (P5)
+    use_draggable.ts     // pointer-events drag; owns the gesture, dispatches nothing
     use_theme.ts         // light/dark/system, persisted                  (P9)
     use-mobile.ts        // shadcn-generated — exempt from snake_case
   components/
@@ -141,12 +141,13 @@ src/
       app_sidebar.tsx    // header, the Notes destination, slots for P7/P9
       new_note_dialog.tsx // colour radiogroup + textarea; creates the note  (P3)
     board/
-      board.tsx          // the cork surface; computes the pin layer
+      board.tsx          // the cork surface; measures its width and lays out the grid
       note_card.tsx      // one sheet of paper; owns its edit mode and nothing else
       note_controls.tsx  // per-note pin and delete
       empty_state.tsx    //                                               (P10)
     ui/                  // shadcn components — exempt from snake_case
   lib/
+    grid.ts              // pure slot geometry: columns, slots, rows              (P5)
     utils.ts
     board_storage.ts     // storage keys and the defensive read
     note_factory.ts      // ids, tilt, spawn position, timestamps

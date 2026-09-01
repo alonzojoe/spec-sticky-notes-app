@@ -8,10 +8,10 @@ export interface Note {
   id: string // crypto.randomUUID()
   body: string // raw markdown; #tags live inline in this text
   color: NoteColor
-  x: number // px from board origin, top-left of the note
-  y: number
-  z: number // stacking order; click sets it to max + 1                              (P5)
-  tilt: number // -3..3 degrees, assigned once at creation, never recomputed
+  // Higher is EARLIER in the grid. The board sorts descending, so slot 0 holds the largest
+  // stamp. Nothing renumbers: a dense grid falls out of ranking a sparse sequence, so a
+  // delete closes its gap at render rather than by rewriting every note after it.
+  order: number
   pinned: boolean
   createdAt: number // epoch ms
   updatedAt: number // epoch ms
@@ -29,9 +29,7 @@ export interface NoteSeed {
   id: string
   color: NoteColor
   body: string
-  x: number
-  y: number
-  tilt: number
+  order: number
   at: number
 }
 

@@ -11,10 +11,7 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
   color: 'butter',
-  x: 10,
-  y: 20,
-  z: 1,
-  tilt: -1,
+  order: 1,
   pinned: false,
   createdAt: 1,
   updatedAt: 2,
@@ -22,9 +19,9 @@ const note = (over: Partial<Note> = {}): Note => ({
 })
 
 const THREE = [
-  note({ id: 'a', x: 10, y: 20, z: 1 }),
-  note({ id: 'b', x: 90, y: 60, z: 2 }),
-  note({ id: 'c', x: 170, y: 120, z: 3 }),
+  note({ id: 'a', order: 1 }),
+  note({ id: 'b', order: 2 }),
+  note({ id: 'c', order: 3 }),
 ]
 
 const seed = (notes: Note[]) =>
@@ -34,11 +31,6 @@ const readNotes = (): Note[] => JSON.parse(window.localStorage.getItem(BOARD_KEY
 
 const card = (id: string) => screen.getByTestId(`note-${id}`)
 const order = () => [...document.querySelectorAll('[data-slot="note-card"]')].map((el) => el.id || el.getAttribute('data-testid'))
-const shapeOf = (id: string) => {
-  const el = card(id)
-  return { left: el.style.left, top: el.style.top, transform: el.style.transform }
-}
-const layer = (id: string) => Number(card(id).style.zIndex)
 
 const pinButton = (id: string) => {
   const button = card(id).querySelector('[data-testid="pin"]')
@@ -62,15 +54,17 @@ afterEach(() => {
   cleanup()
 })
 
-describe('pinning raises stacking', () => {
-  it('lifts a pinned note above every unpinned one', () => {
+describe('pinning leads the grid', () => {
+  // P2 expressed "pinned notes are on top" with z-index, because notes overlapped. A grid
+  // does not stack, so the same promise is now expressed by slot: pinned notes lead. `z`
+  // survives with one job left — lifting the note under the pointer during a drag.
+  it('puts a pinned note ahead of every unpinned one', () => {
     seed(THREE)
     render(<App />)
 
     fireEvent.click(pinButton('b'))
 
-    expect(layer('b')).toBeGreaterThan(layer('a'))
-    expect(layer('b')).toBeGreaterThan(layer('c'))
+    expect(order()[0]).toBe('note-b')
   })
 
   it('keeps relative order among two pinned notes', () => {
@@ -80,56 +74,48 @@ describe('pinning raises stacking', () => {
     fireEvent.click(pinButton('a'))
     fireEvent.click(pinButton('c'))
 
-    // Pinning is a layer, not a flattening: c had the larger z and still does.
-    expect(layer('c')).toBeGreaterThan(layer('a'))
-    expect(layer('a')).toBeGreaterThan(layer('b'))
-  })
-
-  it('returns the note to exactly its previous layer when unpinned', () => {
-    seed(THREE)
-    render(<App />)
-    const before = layer('b')
-
-    fireEvent.click(pinButton('b'))
-    fireEvent.click(pinButton('b'))
-
-    expect(layer('b')).toBe(before)
+    // Pinning is a group, not a flattening: c had the larger stamp and still leads a.
+    expect(order()).toEqual(['note-c', 'note-a', 'note-b'])
   })
 })
 
-describe('pinning moves nothing', () => {
-  // mission.md principle 1: "Notes stay where I put them. No auto-layout, no reflow."
-  // A wrong implementation of pinning looks correct on screen and fails here.
-  it('leaves the pinned note at exactly the same position', () => {
+describe('pinning reorders, and only within the pinned group', () => {
+  // P2 asserted the opposite here, and was right to: mission.md principle 1 then read
+  // "Notes stay where I put them. No auto-layout, no reflow." P5 rewrote that principle —
+  // notes live in a grid and pinned notes lead it. What survived the rewrite is the clause
+  // these tests now defend: the board reorders on create, delete and pin, and on nothing
+  // else, and a pin never rewrites a stamp.
+  it('moves the pinned note to the first slot', () => {
     seed(THREE)
     render(<App />)
-    const before = shapeOf('b')
 
     fireEvent.click(pinButton('b'))
 
-    expect(shapeOf('b')).toEqual(before)
+    expect(order()).toEqual(['note-b', 'note-c', 'note-a'])
   })
 
-  it('leaves every other note where it was', () => {
+  it('leaves every other note in its previous relative order', () => {
     seed(THREE)
     render(<App />)
-    const before = { a: shapeOf('a'), c: shapeOf('c') }
 
     fireEvent.click(pinButton('b'))
 
-    expect(shapeOf('a')).toEqual(before.a)
-    expect(shapeOf('c')).toEqual(before.c)
+    // c before a, exactly as it was before the pin — pinning lifted b out, it did not sort.
+    expect(order().filter((id) => id !== 'note-b')).toEqual(['note-c', 'note-a'])
   })
 
-  it('leaves DOM order untouched, so tab order cannot reshuffle', () => {
+  it('renders in visual order, so tab order follows the grid', () => {
     seed(THREE)
     render(<App />)
-    const before = order()
 
     fireEvent.click(pinButton('b'))
 
-    // A sort would pass every assertion above and fail this one.
-    expect(order()).toEqual(before)
+    // P5 makes DOM order the sorted order. That is a change from P2, and it is the right
+    // one: reading order and tab order now match what is on screen.
+    const slots = order().map((id) =>
+      Number(card(id!.replace('note-', '')).style.transform.match(/translate\((\d+)px, (\d+)px\)/)?.[1]),
+    )
+    expect([...slots].sort((x, y) => x - y)).toEqual(slots)
   })
 
   it('writes pinned and updatedAt, and nothing else', () => {
@@ -140,16 +126,24 @@ describe('pinning moves nothing', () => {
     vi.advanceTimersByTime(400)
 
     const stored = readNotes()
-    expect(stored.map((n) => n.z)).toEqual([1, 2, 3])
-    expect(stored.map((n) => [n.x, n.y])).toEqual([
-      [10, 20],
-      [90, 60],
-      [170, 120],
-    ])
+    // The stamp is untouched, which is what makes pin/unpin lossless: un-pinning returns the
+    // note to exactly its place among the rest.
+    expect(stored.map((n) => n.order)).toEqual([1, 2, 3])
     expect(stored.find((n) => n.id === 'b')?.pinned).toBe(true)
   })
 
-  it('survives a reload still pinned and still on top', () => {
+  it('returns the note to its old place when unpinned', () => {
+    seed(THREE)
+    render(<App />)
+    const before = order()
+
+    fireEvent.click(pinButton('b'))
+    fireEvent.click(pinButton('b'))
+
+    expect(order()).toEqual(before)
+  })
+
+  it('survives a reload still pinned and still first', () => {
     seed(THREE)
     render(<App />)
     fireEvent.click(pinButton('b'))
@@ -158,7 +152,7 @@ describe('pinning moves nothing', () => {
     cleanup()
     render(<App />)
 
-    expect(layer('b')).toBeGreaterThan(layer('c'))
+    expect(order()[0]).toBe('note-b')
     expect(readNotes().find((n) => n.id === 'b')?.pinned).toBe(true)
   })
 })

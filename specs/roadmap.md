@@ -46,10 +46,10 @@ demonstrably works, an `@/` import resolves, and the build is clean.
   for the New-note (P2), search (P7), and theme (P9) controls. The board fills the rest.
 - Build the board surface with its cork/felt texture and the paper grain utility.
 - Render three **hardcoded** notes to prove the visual language: layered shadow, tilt,
-  grain, padding.
+  grain, padding. (P5 dropped the tilt when the board became a grid.)
 
 **Done when:** the sidebar collapses cleanly and holds the only chrome on screen, the
-mockup notes look like paper on a board, and the shadow/tilt/grain criteria in `mission.md`
+mockup notes look like paper on a board, and the shadow/grain criteria in `mission.md`
 are visibly satisfied. No `useState` of ours yet.
 
 ---
@@ -115,22 +115,27 @@ it is still **P8**. Nothing is scheduled here.
 
 ---
 
-## P5 · Move them around
+## P5 · A board that lines up
 
-**Goal:** the corkboard becomes spatial.
+**Goal:** the board becomes a grid — formal, never overlapping, and still arranged by hand.
 
-- `useDraggable` on pointer events: `pointerdown` / `pointermove` / `pointerup` with
-  pointer capture.
-- Position updates live during drag; **localStorage is written on drop only**.
-- Clicking or dragging a note sets its `z` to max + 1.
-- Lift shadow while dragging; spring settle on release.
-- **Keyboard:** notes are focusable, arrow keys move by 8px, Shift+arrow by 32px.
-- Notes are clamped so they can't be dragged fully off the board.
+- Amend `mission.md` principle 1: *Spatial, not sorted* becomes *Ordered, not scattered*. The
+  board reorders on create, delete and pin, and on nothing else.
+- `Note` gains `order` and loses `x`/`y`. Position is derived from the stamp and the column
+  count, so it survives a resize; a persisted pixel position would not.
+- `lib/grid.ts` — pure geometry. A slot index cannot collide with another slot index, which
+  is what makes "notes never overlap" provable rather than observable.
+- `useDraggable` on pointer events with pointer capture. Dropping a note onto another swaps
+  their stamps, permanently. **localStorage is written on drop only.**
+- A 4px threshold before a press becomes a drag, so clicking a note to write on it still
+  works.
+- **Keyboard:** arrow keys move a focused note one slot, `Home`/`End` to the ends, no wrap.
+- The defensive read stamps `order` onto boards saved before this phase, newest first.
 
-**Done when:** notes drag smoothly at 60fps, stacking follows the last note touched,
-positions survive a refresh, and the whole board is arrangeable without a mouse.
-
----
+**Done when:** notes fill a grid newest-first, a new note takes the first slot and pushes the
+rest along, deleting one closes the gap, dragging one onto another swaps them permanently, the
+same reordering is reachable from the keyboard, and a board saved under P3 opens ordered rather
+than scattered.
 
 ## P6 · Change a note's color
 
@@ -202,7 +207,8 @@ and reloading in dark mode never flashes light.
 - Full a11y pass: focus rings everywhere, sensible tab order, live-region announcements for
   add/delete, keyboard drag verified.
 - Responsive pass — usable on a narrow screen, not optimized for one.
-- Performance check with 100+ notes: smooth drag, no jank while typing.
+- Performance check with 100+ notes: smooth drag, no jank while typing, and the grid's
+  hit test still O(1) per pointer event.
 - Delete confirmation for a note with content (shadcn `alert-dialog`).
 
 **Done when:** every "Done means" bullet in `mission.md` is true.
