@@ -46,10 +46,10 @@ demonstrably works, an `@/` import resolves, and the build is clean.
   for the New-note (P2), search (P7), and theme (P9) controls. The board fills the rest.
 - Build the board surface with its cork/felt texture and the paper grain utility.
 - Render three **hardcoded** notes to prove the visual language: layered shadow, tilt,
-  grain, padding.
+  grain, padding. (P5 dropped the tilt when the board became a grid.)
 
 **Done when:** the sidebar collapses cleanly and holds the only chrome on screen, the
-mockup notes look like paper on a board, and the shadow/tilt/grain criteria in `mission.md`
+mockup notes look like paper on a board, and the shadow/grain criteria in `mission.md`
 are visibly satisfied. No `useState` of ours yet.
 
 ---

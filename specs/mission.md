@@ -44,8 +44,10 @@ criteria, not suggestions.
 - **Layered shadows.** Every note carries a two-or-three-layer shadow (tight contact
   shadow + wide ambient shadow). On hover the note lifts slightly; while dragging it
   lifts distinctly further. Shadow depth must read as height off the board.
-- **Tilt.** Each note gets a random rotation between −3° and +3° at creation and keeps it
-  forever. Notes never sit perfectly square, and a note's tilt must not change on re-render.
+- **Square, not scattered.** Notes sit straight in their grid cells. P5's earlier draft kept
+  the −3°..+3° tilt from the freeform board; on a grid it reads as sloppy rather than
+  tactile, because a tilt only looks deliberate when nothing around it is aligned. The paper
+  still carries grain and layered shadow — the tactility comes from those, not from rotation.
 - **Grain.** The paper has a subtle noise/grain texture; the board behind it reads as cork
   or felt. Neither is a flat single color.
 - **Spring motion.** Pick-up, drop, and settle animate with spring easing, not linear or
