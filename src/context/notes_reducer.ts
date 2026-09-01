@@ -1,8 +1,10 @@
-import type { BoardState, Note, NoteSeed } from '@/types/note'
+import type { BoardState, Note, NoteColor, NoteSeed } from '@/types/note'
 
 export type NoteAction =
   | { type: 'add'; seed: NoteSeed }
   | { type: 'edit_body'; id: string; body: string; at: number }
+  | { type: 'set_date'; id: string; date: string; at: number }
+  | { type: 'set_color'; id: string; color: NoteColor; at: number }
   | { type: 'toggle_pin'; id: string; at: number }
   | { type: 'swap_order'; a: string; b: string; at: number }
   | { type: 'delete'; id: string }
@@ -11,11 +13,12 @@ export function notesReducer(state: BoardState, action: NoteAction): BoardState 
   switch (action.type) {
     case 'add': {
       // Destructured rather than spread: `seed.at` is not a Note field and must not leak in.
-      const { id, color, body, order, at } = action.seed
+      const { id, color, body, date, order, at } = action.seed
       const note: Note = {
         id,
         body,
         color,
+        date,
         order,
         pinned: false,
         createdAt: at,
@@ -32,6 +35,25 @@ export function notesReducer(state: BoardState, action: NoteAction): BoardState 
         ...state,
         notes: state.notes.map((note) =>
           note.id === action.id ? { ...note, body: action.body, updatedAt: action.at } : note,
+        ),
+      }
+
+    // Neither of these reorders anything. mission.md principle 1 survived P5 with one clause
+    // intact — the board reorders on create, delete and pin and on nothing else — and a date
+    // or a colour change must not be the thing that finally breaks it.
+    case 'set_date':
+      return {
+        ...state,
+        notes: state.notes.map((note) =>
+          note.id === action.id ? { ...note, date: action.date, updatedAt: action.at } : note,
+        ),
+      }
+
+    case 'set_color':
+      return {
+        ...state,
+        notes: state.notes.map((note) =>
+          note.id === action.id ? { ...note, color: action.color, updatedAt: action.at } : note,
         ),
       }
 
