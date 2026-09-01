@@ -29,8 +29,7 @@ const stored: Note = {
   id: 'stored-1',
   body: 'written before this session',
   color: 'mint',
-  x: 12,
-  y: 34,
+  order: 1,
   z: 4,
   tilt: 1.1,
   pinned: false,
@@ -61,7 +60,7 @@ function Probe() {
     <div>
       <span data-testid="count">{notes.length}</span>
       <span data-testid="bodies">{notes.map((note) => note.body).join('|')}</span>
-      <button type="button" onClick={() => dispatch({ type: 'add', seed: createNoteSeed('butter') })}>
+      <button type="button" onClick={() => dispatch({ type: 'add', seed: createNoteSeed('butter', 0) })}>
         add
       </button>
     </div>

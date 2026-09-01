@@ -7,6 +7,7 @@ import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { NotesProvider } from '@/context/notes_context'
 import { useNotesDispatch } from '@/context/use_notes'
 import { BOARD_KEY } from '@/lib/board_storage'
+import { MARGIN } from '@/lib/grid'
 import { createNoteSeed } from '@/lib/note_factory'
 import type { Note } from '@/types/note'
 
@@ -14,8 +15,7 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
   color: 'butter',
-  x: 10,
-  y: 20,
+  order: 1,
   z: 1,
   tilt: -2.1,
   pinned: false,
@@ -30,7 +30,7 @@ const SEEDED = [note({ id: 'a', tilt: -2.1 }), note({ id: 'b', tilt: 1.4, z: 2 }
 function AddOne() {
   const dispatch = useNotesDispatch()
   return (
-    <button type="button" onClick={() => dispatch({ type: 'add', seed: createNoteSeed('sky') })}>
+    <button type="button" onClick={() => dispatch({ type: 'add', seed: createNoteSeed('sky', 0) })}>
       add
     </button>
   )
@@ -68,12 +68,23 @@ describe('the board', () => {
     expect(screen.queryAllByRole('article')).toHaveLength(0)
   })
 
-  it('places each note at its stored position', () => {
-    renderBoard([note({ id: 'a', x: 123, y: 45 })])
+  // P5 replaced stored coordinates with a stamp. Position is derived, so the assertion is
+  // about which slot a note lands in, not about a number it carried.
+  it('places the first note at the grid origin', () => {
+    renderBoard([note({ id: 'a', order: 1 })])
 
-    const card = screen.getByTestId('note-a')
-    expect(card.style.left).toBe('123px')
-    expect(card.style.top).toBe('45px')
+    expect(screen.getByTestId('note-a').style.transform).toContain(
+      `translate(${MARGIN}px, ${MARGIN}px)`,
+    )
+  })
+
+  it('orders notes newest first, by stamp', () => {
+    renderBoard([note({ id: 'old', order: 1 }), note({ id: 'new', order: 9 })])
+
+    const rendered = [...document.querySelectorAll('[data-slot="note-card"]')].map((el) =>
+      el.getAttribute('data-testid'),
+    )
+    expect(rendered).toEqual(['note-new', 'note-old'])
   })
 
   it('gives every note a tilt within the -3..3 range, and never zero', () => {

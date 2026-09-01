@@ -7,8 +7,7 @@ const seed = (over: Partial<NoteSeed> = {}): NoteSeed => ({
   id: 'seed-1',
   color: 'butter',
   body: '',
-  x: 100,
-  y: 50,
+  order: 1,
   tilt: -1.5,
   at: 1_700_000_000_000,
   ...over,
@@ -18,8 +17,7 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'note-1',
   body: 'a thought',
   color: 'sky',
-  x: 10,
-  y: 20,
+  order: 1,
   z: 1,
   tilt: 2,
   pinned: false,
@@ -47,8 +45,7 @@ describe('notesReducer · add', () => {
       id: 'seed-1',
       body: '',
       color: 'butter',
-      x: 100,
-      y: 50,
+      order: 1,
       tilt: -1.5,
       pinned: false,
       createdAt: 1_700_000_000_000,
@@ -149,13 +146,14 @@ describe('notesReducer · toggle_pin', () => {
     expect(next.notes[0].z).toBe(3)
   })
 
-  it('does not move the note', () => {
-    const state = frozen(board([note({ id: 'a', x: 42, y: 84 })]))
+  // P5: pinning moves a note to the front of the pinned group at render and never rewrites
+  // its stamp, so un-pinning returns it to exactly its place among the rest.
+  it('does not change the note\'s place in the order', () => {
+    const state = frozen(board([note({ id: 'a', order: 42 })]))
 
     const next = notesReducer(state, { type: 'toggle_pin', id: 'a', at: 500 })
 
-    expect(next.notes[0].x).toBe(42)
-    expect(next.notes[0].y).toBe(84)
+    expect(next.notes[0].order).toBe(42)
   })
 
   it('is a no-op for an id that is not on the board', () => {
@@ -239,5 +237,73 @@ describe('notesReducer · add carries the seed body', () => {
     const next = notesReducer(frozen(EMPTY_BOARD), { type: 'add', seed: seed() })
 
     expect(next.notes[0].body).toBe('')
+  })
+})
+
+// T27-T29 — the ordering rules. `order` is descending: higher is earlier in the grid.
+describe('notesReducer · ordering', () => {
+  it('T27 · add stamps above every existing note and renumbers nothing', () => {
+    const state = frozen(
+      board([note({ id: 'a', order: 1 }), note({ id: 'b', order: 2 }), note({ id: 'c', order: 3 })]),
+    )
+
+    const next = notesReducer(state, { type: 'add', seed: seed({ id: 'd', order: 7 }) })
+
+    expect(next.notes.find((n) => n.id === 'd')?.order).toBe(7)
+    expect(next.notes.filter((n) => n.id !== 'd').map((n) => n.order)).toEqual([1, 2, 3])
+  })
+
+  it('T28 · delete renumbers nothing; the gap closes at render, by rank', () => {
+    const state = frozen(
+      board([
+        note({ id: 'a', order: 1 }),
+        note({ id: 'b', order: 2 }),
+        note({ id: 'c', order: 3 }),
+        note({ id: 'd', order: 4 }),
+        note({ id: 'e', order: 5 }),
+      ]),
+    )
+
+    const next = notesReducer(state, { type: 'delete', id: 'c' })
+
+    // A reducer that renumbered here would touch updatedAt on notes nobody edited.
+    expect(next.notes.map((n) => [n.id, n.order])).toEqual([
+      ['a', 1],
+      ['b', 2],
+      ['d', 4],
+      ['e', 5],
+    ])
+  })
+
+  it('T29 · swap_order exchanges two stamps and stamps both updatedAt', () => {
+    const state = frozen(
+      board([note({ id: 'a', order: 1 }), note({ id: 'b', order: 5 }), note({ id: 'c', order: 3 })]),
+    )
+
+    const next = notesReducer(state, { type: 'swap_order', a: 'a', b: 'b', at: 900 })
+
+    expect(next.notes.find((n) => n.id === 'a')?.order).toBe(5)
+    expect(next.notes.find((n) => n.id === 'b')?.order).toBe(1)
+    expect(next.notes.find((n) => n.id === 'a')?.updatedAt).toBe(900)
+    expect(next.notes.find((n) => n.id === 'b')?.updatedAt).toBe(900)
+  })
+
+  it('T29 · leaves every other note completely alone', () => {
+    const untouched = note({ id: 'c', order: 3, updatedAt: 1 })
+    const state = frozen(board([note({ id: 'a', order: 1 }), note({ id: 'b', order: 5 }), untouched]))
+
+    const next = notesReducer(state, { type: 'swap_order', a: 'a', b: 'b', at: 900 })
+
+    expect(next.notes.find((n) => n.id === 'c')).toEqual(untouched)
+  })
+
+  // The drop handler hit tests against rendered geometry, so a stale id is a miss rather than
+  // a bug worth crashing the board over.
+  it('T29 · is a no-op for a self-swap or an id that is not on the board', () => {
+    const state = frozen(board([note({ id: 'a', order: 1 }), note({ id: 'b', order: 5 })]))
+
+    expect(notesReducer(state, { type: 'swap_order', a: 'a', b: 'a', at: 900 })).toBe(state)
+    expect(notesReducer(state, { type: 'swap_order', a: 'a', b: 'ghost', at: 900 })).toBe(state)
+    expect(notesReducer(state, { type: 'swap_order', a: 'ghost', b: 'b', at: 900 })).toBe(state)
   })
 })
