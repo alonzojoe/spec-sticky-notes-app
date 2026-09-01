@@ -19,8 +19,10 @@ the board rearrange itself, it is wrong regardless of how good it looks.
 
 ## Principles
 
-1. **Spatial, not sorted.** Notes stay where I put them. No auto-layout, no reflow, no
-   "smart" ordering. The only thing that changes stacking is me clicking a note.
+1. **Ordered, not scattered.** Notes live in a grid, newest first. A new note takes the
+   first slot and pushes the rest along; deleting one closes the gap. The order is mine to
+   change — dragging a note onto another swaps the two of them, permanently — and nothing
+   else reorders the board.
 2. **Direct manipulation.** Drag the note itself. Edit text in place on the note — no
    dialog stands between me and a thought I am already writing. Creating a note may ask
    for colour and text first, as long as the keyboard can open it, fill it, and dismiss it
@@ -59,7 +61,8 @@ criteria, not suggestions.
 
 These are in the constitution. They ship.
 
-- **Freeform board** — create, drag, and stack notes anywhere; click to bring to front.
+- **Ordered board** — create, drag to reorder, and pin; the grid never rearranges itself
+  except to open or close a slot.
 - **Inline editing with autosave** — click a note, type on it, it saves itself.
 - **Colors + pin** — a curated paper palette per note; pinned notes stay above the pile.
 - **Search + tags** — a live filter box, and `#tags` parsed out of note text and clickable.
