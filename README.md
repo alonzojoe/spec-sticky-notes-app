@@ -32,10 +32,10 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P5 (*a board that lines up*) is complete: notes sit in a grid, newest first. A new note takes
-the first slot and pushes the rest along, deleting one closes the gap, and dragging a note onto
-another swaps the two of them permanently — the same reordering is on the arrow keys. Notes are
-created from a toolbar dialog or the `n` key, written on in place with debounced autosave,
-pinned, and deleted. The board and the sidebar collapse both persist to `localStorage` through
-the contract, a corrupt stored value loads an empty board rather than white-screening, and a
-board saved before the grid is stamped with an order on read.
+P6 (*a note with a date*) is complete: every note carries a date, shown top-left on the card as
+`MM/DD/YYYY` and defaulted to today when the note is created. Cards are all the same height with
+their bodies truncated by an ellipsis, and clicking one opens the note — the full text, its
+colour and its date, editable, saving itself with no Save button. Notes still sit in a grid,
+newest first, and dragging one onto another swaps them permanently. The board persists to
+`localStorage` through the contract; a corrupt value loads an empty board rather than
+white-screening, and a board saved before the grid or before the date is repaired on read.

@@ -12,6 +12,7 @@ constitution, not a detail — add it deliberately or not at all.
 | Build tool | **Vite** | Already installed. `npm run dev` / `build` / `lint`. |
 | Styling | **Tailwind CSS v4** | Via `@tailwindcss/vite`. Tokens declared with `@theme` in CSS. |
 | Components | **shadcn/ui** | Copied into `src/components/ui/`, owned and edited by us. |
+| Dates | **`react-day-picker`** | Arrives with shadcn's `calendar` in P6. The first dependency that is not a shadcn primitive — a real component library with its own cadence. If its styling proves hard to keep warm, the fallback is a native `<input type="date">`. |
 | Primitives | **`radix-ui`** | Arrives as shadcn's dependency — the unified package, not per-component `@radix-ui/react-*`. Source of a11y for menus, dialogs, popovers, tooltips. |
 | State | **React Context + `useReducer`** | One board reducer. No external state library. |
 | Persistence | **`usehooks-ts`** | `useLocalStorage` for the board and the theme. |
@@ -73,6 +74,7 @@ export interface Note {
   id: string          // crypto.randomUUID()
   body: string        // raw markdown; #tags live inline in this text
   color: NoteColor
+  date: string // 'YYYY-MM-DD'; shown MM/DD/YYYY. lib/dates.ts owns both directions  (P6)
   x: number           // px from board origin, top-left of the note
   y: number
   z: number           // stacking order; click sets it to max + 1
@@ -139,7 +141,10 @@ src/
       app_shell.tsx      // NotesProvider + SidebarProvider + AppSidebar + SidebarInset;
                          //   owns the toolbar, the New note button and the `n` shortcut
       app_sidebar.tsx    // header, the Notes destination, slots for P7/P9
-      new_note_dialog.tsx // colour radiogroup + textarea; creates the note  (P3)
+      new_note_dialog.tsx // date + colour + textarea; creates the note      (P3)
+      note_view_dialog.tsx // a note opened: full body, colour, date; autosaves (P6)
+      date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
+      paper_radiogroup.tsx // the six swatches, shared by both dialogs        (P6)
     board/
       board.tsx          // the cork surface; measures its width and lays out the grid
       note_card.tsx      // one sheet of paper; owns its edit mode and nothing else
@@ -147,7 +152,8 @@ src/
       empty_state.tsx    //                                               (P10)
     ui/                  // shadcn components — exempt from snake_case
   lib/
-    grid.ts              // pure slot geometry: columns, slots, rows              (P5)
+    grid.ts              // the one column-width the stylesheet cannot infer        (P5)
+    dates.ts             // ISO in, MM/DD/YYYY out; never builds a Date from a store (P6)
     utils.ts
     board_storage.ts     // storage keys and the defensive read
     note_factory.ts      // ids, tilt, spawn position, timestamps
