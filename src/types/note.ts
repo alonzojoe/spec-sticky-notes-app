@@ -12,8 +12,6 @@ export interface Note {
   // stamp. Nothing renumbers: a dense grid falls out of ranking a sparse sequence, so a
   // delete closes its gap at render rather than by rewriting every note after it.
   order: number
-  z: number // only lifts the note being dragged; a grid does not stack               (P5)
-  tilt: number // -3..3 degrees, assigned once at creation, never recomputed
   pinned: boolean
   createdAt: number // epoch ms
   updatedAt: number // epoch ms
@@ -32,7 +30,6 @@ export interface NoteSeed {
   color: NoteColor
   body: string
   order: number
-  tilt: number
   at: number
 }
 

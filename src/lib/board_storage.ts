@@ -18,8 +18,6 @@ const isNote = (value: unknown): value is StoredNote => {
     typeof note.body === 'string' &&
     typeof note.color === 'string' &&
     (NOTE_COLORS as readonly string[]).includes(note.color) &&
-    typeof note.z === 'number' &&
-    typeof note.tilt === 'number' &&
     typeof note.pinned === 'boolean' &&
     typeof note.createdAt === 'number' &&
     typeof note.updatedAt === 'number'
@@ -47,11 +45,11 @@ export const parseSidebarOpen = (raw: string): boolean => parseStored(raw) !== f
 /**
  * P5's migration, and the reason `version` did not have to move to 2.
  *
- * A board written before P5 carries `x` and `y` and no `order`. Rather than a second storage
+ * A board written before P5 carries `x`, `y`, `z` and `tilt`, and no `order`. Rather than a second storage
  * key and a migration branch maintained forever for a fix that runs once, the read repairs
  * what it finds: notes lacking a numeric `order` are stamped newest-first by `createdAt`, so
  * the board a user comes back to obeys the same rule the grid enforces from then on. `x` and
- * `y` are dropped on the way through — the read already reconstructs the note object, so
+ * `y`, `z` and `tilt` are dropped on the way through — the read reconstructs the note object, so
  * there is nowhere for them to survive.
  *
  * This is a schema change under an unchanged version number, and requirements.md § Risks says
@@ -61,12 +59,20 @@ export const parseSidebarOpen = (raw: string): boolean => parseStored(raw) !== f
  */
 const withOrder = (notes: StoredNote[]): Note[] => {
   if (notes.every((note) => typeof note.order === 'number')) {
-    return notes.map(({ order, ...rest }) => ({ ...rest, order: order as number }))
+    return notes.map((note) => {
+      const { id, body, color, pinned, createdAt, updatedAt } = note
+      return { id, body, color, pinned, createdAt, updatedAt, order: note.order as number }
+    })
   }
 
   // Newest first: the highest stamp goes to the most recently created note, which is slot 0.
   const rank = [...notes].sort((a, b) => a.createdAt - b.createdAt).map((note) => note.id)
-  return notes.map(({ order: _order, ...rest }) => ({ ...rest, order: rank.indexOf(rest.id) + 1 }))
+  return notes.map((note) => {
+    // Rebuilt rather than spread-and-overwritten, so `x` and `y` from a pre-P5 board have
+    // nowhere to survive.
+    const { id, body, color, pinned, createdAt, updatedAt } = note
+    return { id, body, color, pinned, createdAt, updatedAt, order: rank.indexOf(id) + 1 }
+  })
 }
 
 /**

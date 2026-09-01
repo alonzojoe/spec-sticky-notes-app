@@ -1,17 +1,15 @@
 import type { NoteColor, NoteSeed } from '@/types/note'
 
-// mission.md: "a random rotation between -3 and +3 degrees at creation, kept forever".
-const TILT = 3
-
 /**
- * The impure boundary. This is the only place in the app that calls crypto.randomUUID,
- * Math.random, or Date.now for a note — everything downstream of it, the reducer included, is
+ * The impure boundary. This is the only place in the app that calls crypto.randomUUID or
+ * Date.now for a note — everything downstream of it, the reducer included, is
  * a function of its arguments.
  *
  * P5 emptied this file out. It used to hold a placement search that measured the board and
  * hunted for a spot clear of every existing note; the grid made that unnecessary, and the
- * search was deleted rather than left behind half-used. What is left is what was always
- * impure: an id, a tilt, a clock reading, and the stamp that puts the note in the first slot.
+ * search was deleted rather than left behind half-used, and the tilt went with mission.md's
+ * amended tactility criterion. What is left is an id, a clock reading, and the stamp that
+ * puts the note in the first slot.
  */
 export function createNoteSeed(color: NoteColor, topOrder: number, body = ''): NoteSeed {
   return {
@@ -21,7 +19,6 @@ export function createNoteSeed(color: NoteColor, topOrder: number, body = ''): N
     // Above every existing note, so it takes slot 0. One note is written; the rest move
     // because the derived layout shifted, not because anything rewrote them.
     order: topOrder + 1,
-    tilt: Number((Math.random() * TILT * 2 - TILT).toFixed(2)),
     at: Date.now(),
   }
 }

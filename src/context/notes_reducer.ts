@@ -7,20 +7,16 @@ export type NoteAction =
   | { type: 'swap_order'; a: string; b: string; at: number }
   | { type: 'delete'; id: string }
 
-const ceilingOf = (notes: Note[]) => notes.reduce((top, note) => Math.max(top, note.z), 0)
-
 export function notesReducer(state: BoardState, action: NoteAction): BoardState {
   switch (action.type) {
     case 'add': {
       // Destructured rather than spread: `seed.at` is not a Note field and must not leak in.
-      const { id, color, body, order, tilt, at } = action.seed
+      const { id, color, body, order, at } = action.seed
       const note: Note = {
         id,
         body,
         color,
         order,
-        z: ceilingOf(state.notes) + 1,
-        tilt,
         pinned: false,
         createdAt: at,
         updatedAt: at,
