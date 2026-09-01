@@ -54,14 +54,18 @@ describe('T20 · colour and text are chosen before the note exists', () => {
     expect(stored.body).toBe('buy milk')
   })
 
-  it('closes itself once the note is made', async () => {
+  it('hands over to the note view once the note is made', async () => {
     const user = userEvent.setup()
     render(<App />)
     await open(user)
 
     await user.click(screen.getByRole('button', { name: 'Add note' }))
 
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    // P6: the create dialog closes and the new note's own view opens in its place, because a
+    // note created empty is one you are about to write on. The dialog on screen afterwards is
+    // a different one — it carries the note's textarea, not a New note title.
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Add note' })).toBeNull())
+    expect(screen.getByRole('textbox', { name: 'Note text' })).toBeDefined()
   })
 })
 
@@ -189,21 +193,21 @@ describe('T24 · n opens the dialog, and is inert while typing', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('lets n reach a note being written on instead of opening a dialog', async () => {
+  it('lets n reach a note being written on instead of opening the create dialog', async () => {
     const user = userEvent.setup()
     render(<App />)
 
-    // Make a note, then type in it. The board opens a brand-new empty note focused.
+    // Make a note; P6 opens its view straight away, focused on the textarea.
     await user.keyboard('n')
     await screen.findByRole('dialog')
     await user.click(screen.getByRole('button', { name: 'Add note' }))
-    await screen.findAllByRole('article')
 
     const body = await screen.findByRole('textbox', { name: 'Note text' })
     await user.click(body)
     await user.keyboard('note')
 
-    expect(screen.queryByRole('dialog')).toBeNull()
+    // The `n` reached the textarea rather than opening a second, nested create dialog.
+    expect(screen.queryByRole('button', { name: 'Add note' })).toBeNull()
     expect((body as HTMLTextAreaElement).value).toBe('note')
   })
 })

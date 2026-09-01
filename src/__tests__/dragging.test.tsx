@@ -11,6 +11,7 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
   color: 'butter',
+  date: '2026-09-01',
   order: 1,
   pinned: false,
   createdAt: 1,
@@ -174,7 +175,7 @@ describe('T35 · a click is not a drag', () => {
 
     fireEvent.pointerDown(card('a'), { button: 0, pointerId: 1, ...centreOf(0) })
     fireEvent.pointerUp(card('a'), { pointerId: 1, ...centreOf(0) })
-    fireEvent.click(screen.getByRole('button', { name: /written/ }))
+    fireEvent.click(screen.getAllByTestId('open')[0])
 
     expect(screen.getByRole('textbox', { name: 'Note text' })).toBeDefined()
   })
@@ -237,7 +238,7 @@ describe('T36 · the keyboard reorders', () => {
     render(<App />)
     layOutBoard()
 
-    fireEvent.click(screen.getByRole('button', { name: /one/ }))
+    fireEvent.click(screen.getAllByTestId('open')[0])
     const textarea = screen.getByRole('textbox', { name: 'Note text' })
     fireEvent.keyDown(textarea, { key: 'ArrowRight' })
     fireEvent.keyDown(textarea, { key: 'End' })
@@ -252,6 +253,7 @@ describe('T37 · a board saved before the grid opens ordered', () => {
     id,
     body: id,
     color: 'butter',
+    date: '2026-09-01',
     x: 10,
     y: 20,
     pinned: false,

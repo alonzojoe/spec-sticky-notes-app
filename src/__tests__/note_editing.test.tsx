@@ -7,25 +7,11 @@ import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { BOARD_KEY } from '@/lib/board_storage'
 import type { Note } from '@/types/note'
 
-// P3 replaced the sidebar palette with a dialog, so every note in this file is made through
-// it. The assertions below are about what lands on the board, not about the control that
-// put it there.
-const addNote = (color: string) => {
-  fireEvent.click(screen.getByRole('button', { name: 'New note' }))
-  fireEvent.click(screen.getByRole('radio', { name: color }))
-  fireEvent.click(screen.getByRole('button', { name: 'Add note' }))
-  // The dialog hands the note over one macrotask after it closes, so that it mounts onto a
-  // board with nothing competing for focus. See new_note_dialog.tsx.
-  act(() => {
-    vi.advanceTimersByTime(0)
-  })
-}
-
-
 const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
   color: 'butter',
+  date: '2026-09-01',
   order: 1,
   pinned: false,
   createdAt: 1,
@@ -38,8 +24,25 @@ const seed = (notes: Note[]) =>
 
 const readNotes = (): Note[] => JSON.parse(window.localStorage.getItem(BOARD_KEY) ?? '{}').notes ?? []
 
-const body = () => screen.getByRole('button', { name: /a thought|Empty note/ })
+const body = () => screen.getAllByTestId('open')[0]
 const textarea = () => screen.getByRole('textbox', { name: 'Note text' })
+const view = () => screen.queryByRole('dialog')
+const openNote = (index = 0) => fireEvent.click(screen.getAllByTestId('open')[index])
+/**
+ * Two debounces chain, deliberately: the view coalesces keystrokes into a dispatch, then the
+ * provider coalesces board changes into a write. Neither is redundant — the first keeps the
+ * reducer quiet, the second keeps localStorage quiet — so a test that reads storage has to let
+ * the second one land even when the first was cancelled.
+ */
+const flush = () =>
+  act(() => {
+    vi.advanceTimersByTime(400)
+  })
+
+const dismiss = () => {
+  const dialog = view()
+  if (dialog !== null) fireEvent.keyDown(dialog, { key: 'Escape' })
+}
 
 beforeEach(() => {
   stubMatchMedia()
@@ -52,154 +55,227 @@ afterEach(() => {
   cleanup()
 })
 
-describe('a note that is not being edited', () => {
-  it('renders its body inside a real button, not a div with a handler', () => {
+/**
+ * P6 moved reading and editing off the card and into the note's own view. Every claim this
+ * file used to make is still a claim this app makes — autosave on change, an immediate write
+ * on dismissal, text that survives a reload, and no other note touched — so the suite is
+ * rewritten against the new control rather than deleted. Only where the editing happens
+ * changed.
+ */
+describe('a card is a summary', () => {
+  it('shows its body inside a real button, not a div with a handler', () => {
     seed([note()])
-
     render(<App />)
 
     expect(body().tagName).toBe('BUTTON')
+    expect(body().textContent).toContain('a thought')
   })
 
   it('shows a placeholder for an empty note without storing it', () => {
     seed([note({ body: '' })])
-
     render(<App />)
 
-    expect(screen.getByText('Empty note')).toBeDefined()
+    expect(body().textContent).toContain('Empty note')
     expect(readNotes()[0].body).toBe('')
   })
 
-  it('shows no textarea until it is asked for', () => {
+  it('carries no textarea of its own', () => {
     seed([note()])
-
     render(<App />)
 
+    // D6: the card stopped being an editor. A hidden textarea would pass every other
+    // assertion here and fail this one.
     expect(screen.queryByRole('textbox')).toBeNull()
+  })
+
+  it('shows the date top-left, formatted MM/DD/YYYY', () => {
+    seed([note({ date: '2026-09-01' })])
+    render(<App />)
+
+    expect(screen.getByText('09/01/2026')).toBeDefined()
+  })
+
+  it('clamps the body rather than growing the card', () => {
+    seed([note({ body: 'a very long note\n'.repeat(40) }), note({ id: 'b', body: 'short' })])
+    render(<App />)
+
+    // jsdom runs no layout, so heights are all zero and a rect comparison would pass
+    // vacuously. The clamp and the fixed height are asserted from the classes that cause them.
+    const cards = screen.getAllByRole('article')
+    for (const card of cards) expect(card.className).toContain('h-44')
+    expect(document.querySelector('.line-clamp-4')).not.toBeNull()
   })
 })
 
-describe('entering edit mode', () => {
-  it('swaps the body for a textarea carrying the current text', () => {
-    seed([note()])
+describe('opening a note', () => {
+  it('opens the view with the full body, including what the card clamped', () => {
+    seed([note({ body: 'a thought that goes on' })])
     render(<App />)
 
-    fireEvent.click(body())
+    openNote()
 
-    expect((textarea() as HTMLTextAreaElement).value).toBe('a thought')
+    expect(view()).not.toBeNull()
+    expect((textarea() as HTMLTextAreaElement).value).toBe('a thought that goes on')
   })
 
   it('focuses the textarea so typing can start immediately', () => {
     seed([note()])
     render(<App />)
 
-    fireEvent.click(body())
+    openNote()
 
     expect(document.activeElement).toBe(textarea())
   })
 
-  it('opens a freshly created note ready for typing', () => {
+  it('shows the right note when a second one is opened', () => {
+    seed([note({ id: 'a', body: 'first', order: 2 }), note({ id: 'b', body: 'second', order: 1 })])
     render(<App />)
 
-    addNote('Butter')
+    openNote(0)
+    expect((textarea() as HTMLTextAreaElement).value).toBe('first')
+    dismiss()
 
+    openNote(1)
+    // The dialog does not unmount between notes the way the card did, so without a key on the
+    // textarea this still reads 'first'. Invisible without a second note.
+    expect((textarea() as HTMLTextAreaElement).value).toBe('second')
+  })
+
+  it('opens a freshly created note straight away', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'New note' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add note' }))
+    act(() => {
+      vi.advanceTimersByTime(0)
+    })
+
+    expect(view()).not.toBeNull()
     expect(document.activeElement).toBe(textarea())
   })
 
-  it('opens only the newest note when a second is created', () => {
+  it('does not open anything when a stored board is merely loaded', () => {
+    // The heuristic P2 used could not tell a note made just now from one read out of storage.
+    // That was harmless while it only chose where focus went; opening a modal on every reload
+    // is not.
+    seed([note({ id: 'a', body: '', createdAt: 5, updatedAt: 5 })])
     render(<App />)
 
-    addNote('Butter')
-    addNote('Sky')
-
-    // startEditing is an initial value, not a binding. The new textarea's autoFocus blurs
-    // the old one, which saves and closes it. That cascade is what keeps this at one.
-    expect(screen.getAllByRole('textbox')).toHaveLength(1)
+    expect(view()).toBeNull()
   })
 })
 
 describe('saving what was typed', () => {
-  it('persists on blur without waiting for the debounce', () => {
+  it('persists on dismissal without waiting for the debounce', () => {
     seed([note()])
     render(<App />)
-    fireEvent.click(body())
 
-    fireEvent.change(textarea(), { target: { value: 'a better thought' } })
-    fireEvent.blur(textarea())
-
-    // No timer advance. The last keystroke before leaving a note is the one most easily
-    // lost, and this is the assertion that it is not.
-    expect(screen.getByRole('button', { name: 'a better thought' })).toBeDefined()
-  })
-
-  it('persists while typing once both debounces elapse, without blurring', () => {
-    seed([note()])
-    render(<App />)
-    fireEvent.click(body())
-
-    fireEvent.change(textarea(), { target: { value: 'still typing' } })
-
-    // Two debounces chain here, deliberately: the card coalesces keystrokes into a dispatch,
-    // then the provider coalesces board changes into a write. Neither is redundant — the
-    // first keeps the reducer quiet, the second keeps localStorage quiet — but together they
-    // mean a write while typing lands up to ~600ms after the last keystroke. Blurring skips
-    // the first, which is why the test above needs no timers at all.
-    // act() because the debounced callback dispatches: a state update fired from a timer
-    // rather than an event is not flushed otherwise, and the effect that writes never runs.
-    act(() => void vi.advanceTimersByTime(400))
-    expect(screen.getByRole('textbox')).toBeDefined()
-
-    act(() => void vi.advanceTimersByTime(400))
-    expect(readNotes()[0].body).toBe('still typing')
-  })
-
-  it('writes the text through to storage', () => {
-    seed([note()])
-    render(<App />)
-    fireEvent.click(body())
-
+    openNote()
     fireEvent.change(textarea(), { target: { value: 'written down' } })
-    fireEvent.blur(textarea())
-    vi.advanceTimersByTime(400)
+    dismiss()
 
+    // The dispatch is immediate — the card shows it before any timer runs, which is the claim
+    // that the last keystroke before dismissal is never the one that is lost.
+    expect(body().textContent).toContain('written down')
+    flush()
     expect(readNotes()[0].body).toBe('written down')
   })
 
-  it('leaves edit mode on blur', () => {
+  it('persists while typing once both debounces elapse, without dismissing', () => {
     seed([note()])
     render(<App />)
-    fireEvent.click(body())
 
-    fireEvent.blur(textarea())
+    openNote()
+    fireEvent.change(textarea(), { target: { value: 'still typing' } })
+    // Advanced twice on purpose. The first advance fires the view's debounce, which dispatches;
+    // React commits that update after the advance returns, and only then is the provider's
+    // write debounce scheduled. One long advance runs the first timer and schedules the second
+    // without ever reaching it.
+    flush()
+    flush()
 
-    expect(screen.queryByRole('textbox')).toBeNull()
+    // ~600ms after the last keystroke, both debounces having elapsed. Dismissing skips the
+    // wait; typing on does not.
+    expect(readNotes()[0].body).toBe('still typing')
   })
 
-  it('leaves edit mode on Escape and keeps what was typed', () => {
+  it('offers no Save button, and no Cancel', () => {
     seed([note()])
     render(<App />)
-    fireEvent.click(body())
 
+    openNote()
+
+    // mission.md principle 3 was NOT amended by this phase: "There is no Save button. State is
+    // written as it changes." A Save button would create the state where what is on screen is
+    // not what is stored, which is the state the persistence contract exists to prevent.
+    expect(screen.queryByRole('button', { name: /save/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /cancel/i })).toBeNull()
+  })
+
+  it('closes and keeps what was typed on Escape', () => {
+    seed([note()])
+    render(<App />)
+
+    openNote()
     fireEvent.change(textarea(), { target: { value: 'escaped but kept' } })
-    fireEvent.keyDown(textarea(), { key: 'Escape' })
+    dismiss()
+    flush()
 
-    expect(screen.queryByRole('textbox')).toBeNull()
-    expect(screen.getByRole('button', { name: 'escaped but kept' })).toBeDefined()
+    expect(view()).toBeNull()
+    expect(readNotes()[0].body).toBe('escaped but kept')
+  })
+
+  it('saves through the same path when Done is pressed', () => {
+    seed([note()])
+    render(<App />)
+
+    openNote()
+    fireEvent.change(textarea(), { target: { value: 'done with it' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    flush()
+
+    expect(view()).toBeNull()
+    expect(readNotes()[0].body).toBe('done with it')
   })
 
   it('does not touch any other note', () => {
-    seed([note({ id: 'a' }), note({ id: 'b', body: 'untouched' })])
+    seed([note({ id: 'a', body: 'first', order: 2 }), note({ id: 'b', body: 'second', order: 1 })])
     render(<App />)
 
-    fireEvent.click(body())
+    openNote(0)
     fireEvent.change(textarea(), { target: { value: 'changed' } })
-    fireEvent.blur(textarea())
-    vi.advanceTimersByTime(400)
+    dismiss()
+    flush()
 
-    expect(readNotes().find((n) => n.id === 'b')?.body).toBe('untouched')
+    expect(readNotes().find((n) => n.id === 'b')?.body).toBe('second')
   })
 })
 
-// The proof that the textarea is uncontrolled lives in note_controls.test.tsx: it needs an
-// unrelated board change to re-render the note, and pinning another note is the only one
-// that does not also move focus.
+describe('editing the colour and the date from the view', () => {
+  it('recolours the note immediately, without a debounce', () => {
+    seed([note({ color: 'butter' })])
+    render(<App />)
+
+    openNote()
+    fireEvent.click(screen.getByRole('radio', { name: 'Mint' }))
+    flush()
+
+    // Not typed, so not debounced at the view: there is no keystroke storm to absorb. Only the
+    // provider's write debounce stands between the click and storage.
+    expect(readNotes()[0].color).toBe('mint')
+  })
+
+  it('leaves the note where it is when its colour or date changes', () => {
+    seed([note({ id: 'a', order: 2 }), note({ id: 'b', order: 1 })])
+    render(<App />)
+    const before = screen.getAllByRole('article').map((c) => c.getAttribute('data-testid'))
+
+    openNote(1)
+    fireEvent.click(screen.getByRole('radio', { name: 'Sky' }))
+    dismiss()
+
+    // mission.md principle 1 survived P5 with one clause intact: the board reorders on create,
+    // delete and pin, and on nothing else. A date or colour change must not be what breaks it.
+    expect(screen.getAllByRole('article').map((c) => c.getAttribute('data-testid'))).toEqual(before)
+  })
+})

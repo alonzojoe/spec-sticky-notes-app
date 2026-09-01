@@ -22,6 +22,10 @@ const addNote = (color: string) => {
   act(() => {
     vi.advanceTimersByTime(0)
   })
+  // P6: a note created empty opens its view straight away. Dismiss it — these suites are about
+  // what reaches the board, not about the view.
+  const view = screen.queryByRole('dialog')
+  if (view !== null) fireEvent.keyDown(view, { key: 'Escape' })
 }
 
 
@@ -29,6 +33,7 @@ const stored: Note = {
   id: 'stored-1',
   body: 'written before this session',
   color: 'mint',
+  date: '2026-09-01',
   order: 1,
   pinned: false,
   createdAt: 1,
