@@ -1,5 +1,7 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 
+import { DateField } from '@/components/layout/date_field'
+import { PaperRadiogroup } from '@/components/layout/paper_radiogroup'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -10,10 +12,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
+import { todayISO } from '@/lib/dates'
 import { createNoteSeed, topOrder } from '@/lib/note_factory'
-import { PAPER, paperLabel } from '@/lib/paper'
 import { NOTE_COLORS, type NoteColor } from '@/types/note'
-
 /**
  * Creation became a deliberate act in P3, which is a change the constitution had to make
  * room for: mission.md principle 2 used to forbid any dialog between the user and a thought,
@@ -38,7 +39,16 @@ export function NewNoteDialog({
 
   const [color, setColor] = useState<NoteColor>(NOTE_COLORS[0])
   const [body, setBody] = useState('')
-  const swatches = useRef<(HTMLButtonElement | null)[]>([])
+  const [date, setDate] = useState(todayISO)
+
+  // Recomputed when the dialog opens, not once at mount: a tab left open overnight must not
+  // offer yesterday. Adjusted during render rather than in an effect — React's own pattern for
+  // "state that depends on a prop changing", and the one the lint rule is pointing at.
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) setDate(todayISO())
+  }
 
   const close = () => {
     onOpenChange(false)
@@ -46,12 +56,13 @@ export function NewNoteDialog({
     // cancelled draft is not a draft.
     setColor(NOTE_COLORS[0])
     setBody('')
+    setDate(todayISO())
   }
 
   const submit = () => {
     // Read in the handler, never during a render. The new note only needs to beat the
     // highest stamp on the board; where it lands is the grid's business, not this file's.
-    const seed = createNoteSeed(color, topOrder(notes), body.trim())
+    const seed = createNoteSeed(color, topOrder(notes), body.trim(), date)
     close()
     // Added after the dialog has gone, not with it still up, and the ordering is the whole
     // reason. A note created empty opens focused on the board — board.tsx picks it with
@@ -63,31 +74,7 @@ export function NewNoteDialog({
     setTimeout(() => dispatch({ type: 'add', seed }), 0)
   }
 
-  // Selection follows focus. Correct for a radiogroup of six equivalent options: choosing one
-  // costs nothing, so making the user confirm a colour they have already arrowed onto would be
-  // a second decision for no information.
-  const moveTo = (index: number) => {
-    const next = (index + NOTE_COLORS.length) % NOTE_COLORS.length
-    setColor(NOTE_COLORS[next])
-    swatches.current[next]?.focus()
-  }
 
-  const onSwatchKeyDown = (event: React.KeyboardEvent, index: number) => {
-    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key]
-    if (step !== undefined) {
-      event.preventDefault()
-      moveTo(index + step)
-      return
-    }
-    if (event.key === 'Home') {
-      event.preventDefault()
-      moveTo(0)
-    }
-    if (event.key === 'End') {
-      event.preventDefault()
-      moveTo(NOTE_COLORS.length - 1)
-    }
-  }
 
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
@@ -114,33 +101,9 @@ export function NewNoteDialog({
           }}
           className="flex flex-col gap-4"
         >
-          <div
-            role="radiogroup"
-            aria-label="Paper colour"
-            className="flex flex-wrap items-center gap-3"
-          >
-            {NOTE_COLORS.map((swatch, index) => (
-              <button
-                key={swatch}
-                ref={(node) => {
-                  swatches.current[index] = node
-                }}
-                type="button"
-                role="radio"
-                aria-checked={swatch === color}
-                aria-label={paperLabel(swatch)}
-                // One tab stop for the whole group; the arrow keys move inside it.
-                tabIndex={swatch === color ? 0 : -1}
-                onClick={() => setColor(swatch)}
-                onKeyDown={(event) => onSwatchKeyDown(event, index)}
-                className={`size-8 rounded-full border border-border texture-paper ${PAPER[swatch]} transition-[box-shadow] duration-(--duration-hover) ease-out outline-none ${
-                  // A ring, not a tick. A checkmark drawn on paper is a different visual
-                  // language from the rest of the board.
-                  swatch === color ? 'ring-2 ring-ring ring-offset-2 ring-offset-popover' : ''
-                } focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-popover`}
-              />
-            ))}
-          </div>
+          <DateField value={date} onChange={setDate} />
+
+          <PaperRadiogroup value={color} onChange={setColor} />
 
           <textarea
             autoFocus
