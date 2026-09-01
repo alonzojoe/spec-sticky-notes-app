@@ -31,12 +31,11 @@ describe('createNoteSeed', () => {
     expect(createNoteSeed('rose', 0, 'a thought').body).toBe('a thought')
   })
 
-  it('gives every note a tilt inside the -3..3 range the mission specifies', () => {
-    for (let i = 0; i < 200; i += 1) {
-      const { tilt } = createNoteSeed('mint', 0)
-      expect(tilt).toBeGreaterThanOrEqual(-3)
-      expect(tilt).toBeLessThanOrEqual(3)
-    }
+  // The tilt assertion that lived here went with mission.md's amended tactility criterion:
+  // on a grid a rotation reads as sloppy rather than tactile. The seed carries no rotation at
+  // all now, so there is nothing left to bound.
+  it('carries no rotation', () => {
+    expect(createNoteSeed('mint', 0)).not.toHaveProperty('tilt')
   })
 
   it('gives every note a distinct id', () => {

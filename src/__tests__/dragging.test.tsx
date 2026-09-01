@@ -5,7 +5,6 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import App from '@/app'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { BOARD_KEY } from '@/lib/board_storage'
-import { CELL, GUTTER, MARGIN } from '@/lib/grid'
 import type { Note } from '@/types/note'
 
 const note = (over: Partial<Note> = {}): Note => ({
@@ -13,8 +12,6 @@ const note = (over: Partial<Note> = {}): Note => ({
   body: 'a thought',
   color: 'butter',
   order: 1,
-  z: 1,
-  tilt: -1,
   pinned: false,
   createdAt: 1,
   updatedAt: 2,
@@ -36,23 +33,41 @@ const rendered = () =>
 const card = (id: string) => screen.getByTestId(`note-${id}`)
 
 /**
- * jsdom measures every element at zero width, so `columnsFor` gives the board a single
- * column and the grid runs straight down. That is genuinely what the component computes here,
- * so the hit test is exercised against the real arithmetic rather than a mocked layout — a
- * stubbed rectangle would prove the board agrees with the stub, which is not the claim.
+ * jsdom runs no layout, so every rectangle is zero and the board's hit test has nothing real
+ * to read. The board reads rects straight off the rendered cards, so injecting them here
+ * exercises the production path unchanged — a mocked drag hook would only prove the mock
+ * agrees with itself.
+ *
+ * One column, stacked, which is what a zero-width board would give anyway.
  */
-const COLUMNS = 1
+const CARD = { width: 224, height: 120 }
+const GAP_Y = 16
 
-/** The centre of slot `index`, in the coordinates the board hit-tests against. */
-const centreOf = (index: number) => ({
-  clientX: MARGIN + (index % COLUMNS) * (CELL.width + GUTTER) + CELL.width / 2,
-  clientY: MARGIN + Math.floor(index / COLUMNS) * (CELL.height + GUTTER) + CELL.height / 2,
-})
-
-/** Kept as a named no-op so each test reads as "the board has been laid out" at a glance. */
 const layOutBoard = () => {
-  if (document.querySelector('[data-slot="board"]') === null) throw new Error('no board rendered')
+  const cards = [...document.querySelectorAll('[data-slot="note-card"]')]
+  if (cards.length === 0) throw new Error('no cards rendered')
+  cards.forEach((card, index) => {
+    const top = index * (CARD.height + GAP_Y)
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top,
+      right: CARD.width,
+      bottom: top + CARD.height,
+      width: CARD.width,
+      height: CARD.height,
+      x: 0,
+      y: top,
+      toJSON: () => ({}),
+    } as DOMRect)
+    Object.defineProperty(card, 'offsetTop', { value: top, configurable: true })
+  })
 }
+
+/** The centre of the card currently rendered at position `index`. */
+const centreOf = (index: number) => ({
+  clientX: CARD.width / 2,
+  clientY: index * (CARD.height + GAP_Y) + CARD.height / 2,
+})
 
 beforeEach(() => {
   stubMatchMedia()
@@ -239,8 +254,6 @@ describe('T37 · a board saved before the grid opens ordered', () => {
     color: 'butter',
     x: 10,
     y: 20,
-    z: 1,
-    tilt: 0,
     pinned: false,
     createdAt,
     updatedAt: createdAt,

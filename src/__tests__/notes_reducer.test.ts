@@ -8,7 +8,6 @@ const seed = (over: Partial<NoteSeed> = {}): NoteSeed => ({
   color: 'butter',
   body: '',
   order: 1,
-  tilt: -1.5,
   at: 1_700_000_000_000,
   ...over,
 })
@@ -18,8 +17,6 @@ const note = (over: Partial<Note> = {}): Note => ({
   body: 'a thought',
   color: 'sky',
   order: 1,
-  z: 1,
-  tilt: 2,
   pinned: false,
   createdAt: 1,
   updatedAt: 1,
@@ -46,7 +43,6 @@ describe('notesReducer · add', () => {
       body: '',
       color: 'butter',
       order: 1,
-      tilt: -1.5,
       pinned: false,
       createdAt: 1_700_000_000_000,
       updatedAt: 1_700_000_000_000,
@@ -59,19 +55,7 @@ describe('notesReducer · add', () => {
     expect(next.notes[0]).not.toHaveProperty('at')
   })
 
-  it('gives the first note on an empty board a z of 1', () => {
-    const next = notesReducer(frozen(EMPTY_BOARD), { type: 'add', seed: seed() })
 
-    expect(next.notes[0].z).toBe(1)
-  })
-
-  it('sets z to the largest z on the board plus one, even when they are not contiguous', () => {
-    const state = frozen(board([note({ id: 'a', z: 2 }), note({ id: 'b', z: 9 }), note({ id: 'c', z: 5 })]))
-
-    const next = notesReducer(state, { type: 'add', seed: seed({ id: 'd' }) })
-
-    expect(next.notes.find((n) => n.id === 'd')?.z).toBe(10)
-  })
 
   it('appends rather than prepends, because array order is tab order', () => {
     const state = frozen(board([note({ id: 'a' }), note({ id: 'b' })]))
@@ -138,13 +122,6 @@ describe('notesReducer · toggle_pin', () => {
     expect(twice.notes[0].pinned).toBe(false)
   })
 
-  it('does not change z — pinning is a render-time layer, not a stored value', () => {
-    const state = frozen(board([note({ id: 'a', z: 3 })]))
-
-    const next = notesReducer(state, { type: 'toggle_pin', id: 'a', at: 500 })
-
-    expect(next.notes[0].z).toBe(3)
-  })
 
   // P5: pinning moves a note to the front of the pinned group at render and never rewrites
   // its stamp, so un-pinning returns it to exactly its place among the rest.
@@ -241,6 +218,8 @@ describe('notesReducer · add carries the seed body', () => {
 })
 
 // T27-T29 — the ordering rules. `order` is descending: higher is earlier in the grid.
+// P5 removed `z` along with x and y: a grid does not stack, and a field nothing reads drifts.
+// The suites that covered it are gone rather than adapted — there is no behaviour left there.
 describe('notesReducer · ordering', () => {
   it('T27 · add stamps above every existing note and renumbers nothing', () => {
     const state = frozen(

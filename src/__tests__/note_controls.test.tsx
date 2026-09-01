@@ -12,8 +12,6 @@ const note = (over: Partial<Note> = {}): Note => ({
   body: 'a thought',
   color: 'butter',
   order: 1,
-  z: 1,
-  tilt: -1,
   pinned: false,
   createdAt: 1,
   updatedAt: 2,
@@ -21,9 +19,9 @@ const note = (over: Partial<Note> = {}): Note => ({
 })
 
 const THREE = [
-  note({ id: 'a', order: 1, z: 1 }),
-  note({ id: 'b', order: 2, z: 2 }),
-  note({ id: 'c', order: 3, z: 3 }),
+  note({ id: 'a', order: 1 }),
+  note({ id: 'b', order: 2 }),
+  note({ id: 'c', order: 3 }),
 ]
 
 const seed = (notes: Note[]) =>
@@ -128,7 +126,6 @@ describe('pinning reorders, and only within the pinned group', () => {
     vi.advanceTimersByTime(400)
 
     const stored = readNotes()
-    expect(stored.map((n) => n.z)).toEqual([1, 2, 3])
     // The stamp is untouched, which is what makes pin/unpin lossless: un-pinning returns the
     // note to exactly its place among the rest.
     expect(stored.map((n) => n.order)).toEqual([1, 2, 3])

@@ -30,8 +30,6 @@ const stored: Note = {
   body: 'written before this session',
   color: 'mint',
   order: 1,
-  z: 4,
-  tilt: 1.1,
   pinned: false,
   createdAt: 1,
   updatedAt: 2,
