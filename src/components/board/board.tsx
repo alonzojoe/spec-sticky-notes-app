@@ -1,9 +1,9 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useRef } from 'react'
 
 import { NoteCard } from '@/components/board/note_card'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
 import { useDraggable, type DragTarget } from '@/hooks/use_draggable'
-import { CELL, columnsFor, gridHeight, slotOf } from '@/lib/grid'
+import { MIN_COLUMN } from '@/lib/grid'
 import type { Note } from '@/types/note'
 
 /**
@@ -22,21 +22,6 @@ export function Board() {
   const dispatch = useNotesDispatch()
 
   const surface = useRef<HTMLDivElement>(null)
-  const [columns, setColumns] = useState(1)
-
-  // Measured, never guessed. A layout effect for the first value so the first paint is not a
-  // single column that immediately reflows, and a ResizeObserver after that because the column
-  // count is a function of the window.
-  useLayoutEffect(() => {
-    const element = surface.current
-    if (element === null) return
-    const measure = () => setColumns(columnsFor(element.getBoundingClientRect().width))
-    measure()
-    if (typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(measure)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [])
 
   const swap = useCallback(
     (a: string, b: string) => dispatch({ type: 'swap_order', a, b, at: Date.now() }),
@@ -46,52 +31,56 @@ export function Board() {
 
   const ordered = arrange(notes)
 
-  // The candidates a drag hit-tests against, measured once when the press begins. Slots are
-  // known arithmetic, so this needs the board's own position and nothing per-note.
-  const candidates = (): DragTarget[] => {
-    const box = surface.current?.getBoundingClientRect()
-    const left = (box?.left ?? 0) - (surface.current?.scrollLeft ?? 0)
-    const top = (box?.top ?? 0) - (surface.current?.scrollTop ?? 0)
-    return ordered.map((note, index) => {
-      const slot = slotOf(index, columns)
+  /**
+   * The cards a drag hit-tests against, read from the DOM once when the press begins.
+   *
+   * Reading real rectangles is what makes CSS grid workable here: nothing in this file knows
+   * the column count or the row heights any more, because the layout engine decided them.
+   * Measuring per pointermove would be O(n) per frame; nothing moves during a drag except the
+   * note under the pointer, so press-time rectangles stay true for the whole gesture.
+   */
+  const candidates = (): DragTarget[] =>
+    [...(surface.current?.querySelectorAll('[data-slot="note-card"]') ?? [])].map((element) => {
+      const rect = element.getBoundingClientRect()
       return {
-        id: note.id,
-        rect: {
-          left: left + slot.x,
-          top: top + slot.y,
-          right: left + slot.x + CELL.width,
-          bottom: top + slot.y + CELL.height,
-        },
+        id: element.getAttribute('data-note-id') ?? '',
+        rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom },
       }
     })
-  }
 
-  // Where a note goes when an arrow key moves it. Returns null at the ends: wrapping would
-  // fling a note from the first slot to the last on a keypress meant to nudge it.
-  const neighbour = (index: number, step: number): Note | null =>
-    ordered[index + step] ?? null
+  /**
+   * How many cards sit on one row, counted from where the browser actually put them. Needed
+   * only by the up/down arrows — everything else is a step of one in the sorted array.
+   */
+  const columnCount = (): number => {
+    const cards = [...(surface.current?.querySelectorAll('[data-slot="note-card"]') ?? [])]
+    if (cards.length === 0) return 1
+    const firstTop = (cards[0] as HTMLElement).offsetTop
+    const inFirstRow = cards.filter((card) => (card as HTMLElement).offsetTop === firstTop).length
+    return Math.max(1, inFirstRow)
+  }
 
   return (
     <div
       ref={surface}
       data-slot="board"
-      className="relative h-full w-full overflow-y-auto bg-cork texture-cork"
+      className="relative grid h-full w-full auto-rows-min content-start gap-4 overflow-y-auto bg-cork p-6 texture-cork"
+      // The layout, in one line, done by the engine rather than by arithmetic here: as many
+      // equal columns as fit at MIN_COLUMN or wider. Resizing reflows with no observer, and
+      // two cards cannot overlap because the grid will not place them in the same cell.
+      style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${MIN_COLUMN}px, 1fr))` }}
     >
-      {/* Sizes the scroll region to the last row. The notes themselves are positioned, so
-          without this the board would never scroll to reach them. */}
-      <div style={{ height: `${gridHeight(ordered.length, columns)}px` }} aria-hidden />
-
       {ordered.map((note, index) => (
         <NoteCard
           key={note.id}
           note={note}
-          slot={slotOf(index, columns)}
           dragging={drag?.id === note.id ? { dx: drag.dx, dy: drag.dy } : null}
           isDropTarget={drag?.over === note.id}
           onPointerDown={(event) => start(event, note.id, candidates())}
           onPointerMove={move}
           onPointerUp={end}
           onReorder={(direction) => {
+            const columns = columnCount()
             const step =
               direction === 'left' ? -1 : direction === 'right' ? 1 : direction === 'up' ? -columns : columns
             const other =
@@ -99,7 +88,9 @@ export function Board() {
                 ? (ordered[0] ?? null)
                 : direction === 'last'
                   ? (ordered[ordered.length - 1] ?? null)
-                  : neighbour(index, step)
+                  : // No wrap at the ends: a wrap would fling a note from the first slot to
+                    // the last on a keypress meant to nudge it one place.
+                    (ordered[index + step] ?? null)
             if (other !== null && other.id !== note.id) swap(note.id, other.id)
           }}
           startEditing={

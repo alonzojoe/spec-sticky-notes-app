@@ -21,7 +21,6 @@ const REORDER_KEYS: Record<string, ReorderDirection> = {
 
 export function NoteCard({
   note,
-  slot,
   dragging,
   isDropTarget,
   startEditing,
@@ -31,7 +30,6 @@ export function NoteCard({
   onReorder,
 }: {
   note: Note
-  slot: { x: number; y: number }
   dragging: { dx: number; dy: number } | null
   isDropTarget: boolean
   startEditing: boolean
@@ -51,13 +49,11 @@ export function NoteCard({
     AUTOSAVE_MS,
   )
 
-  const x = slot.x + (dragging?.dx ?? 0)
-  const y = slot.y + (dragging?.dy ?? 0)
-
   return (
     <article
       data-slot="note-card"
       data-testid={`note-${note.id}`}
+      data-note-id={note.id}
       data-dragging={dragging !== null ? '' : undefined}
       tabIndex={0}
       onPointerDown={onPointerDown}
@@ -73,20 +69,20 @@ export function NoteCard({
         event.preventDefault()
         onReorder(direction)
       }}
-      className={`group absolute top-0 left-0 w-56 rounded-lg p-4 text-ink texture-paper ${PAPER[note.color]} ${
+      className={`group flex min-h-32 flex-col rounded-lg p-4 text-ink texture-paper ${PAPER[note.color]} ${
         dragging !== null
-          ? // Tracks the pointer exactly. A transition on the thing following your hand is the
-            // classic mistake, and mission.md asks for a distinct lift while dragging.
-            'cursor-grabbing shadow-note-drag'
+          ? // Tracks the pointer exactly. A transition on the thing following your hand is
+            // the classic mistake, and mission.md asks for a distinct lift while dragging.
+            'relative z-50 cursor-grabbing shadow-note-drag'
           : 'cursor-grab shadow-note transition-[transform,box-shadow] duration-(--duration-note) ease-out hover:shadow-note-hover'
       } ${isDropTarget ? 'ring-2 ring-ring' : ''}`}
-      style={{
-        // Position and tilt are per-note data, not design tokens; this is the one place a
-        // style attribute is correct. The tilt is read straight from the store, never
-        // recomputed, so it cannot twitch between renders.
-        transform: `translate(${x}px, ${y}px) rotate(${note.tilt}deg)`,
-        zIndex: dragging !== null ? 9999 : note.z,
-      }}
+      style={
+        // The card sits in its grid cell and is not positioned by us — the layout engine
+        // places it. The only transform is the offset while it is being dragged, and the
+        // rotation is gone: mission.md's tilt criterion was amended in P5 because a tilt
+        // reads as deliberate only when nothing around it is aligned.
+        dragging !== null ? { transform: `translate(${dragging.dx}px, ${dragging.dy}px)` } : undefined
+      }
     >
       <NoteControls note={note} />
 
