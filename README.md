@@ -32,10 +32,10 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P3 (*a deliberate new note*) is complete: a **New note** button in the toolbar — or the `n`
-key — opens a dialog where the paper colour and the text are chosen together, and the note
-reaches the board already written. The sidebar palette it replaced is gone. Notes are still
-written on in place with debounced autosave, pinned, and deleted; the board and the sidebar
-collapse both persist to `localStorage` through the contract, and a corrupt stored value loads
-an empty board rather than white-screening. Board state is a pure reducer behind split state
-and dispatch contexts. Notes cannot be moved yet — P5 makes the board spatial.
+P5 (*a board that lines up*) is complete: notes sit in a grid, newest first. A new note takes
+the first slot and pushes the rest along, deleting one closes the gap, and dragging a note onto
+another swaps the two of them permanently — the same reordering is on the arrow keys. Notes are
+created from a toolbar dialog or the `n` key, written on in place with debounced autosave,
+pinned, and deleted. The board and the sidebar collapse both persist to `localStorage` through
+the contract, a corrupt stored value loads an empty board rather than white-screening, and a
+board saved before the grid is stamped with an order on read.
