@@ -65,13 +65,12 @@ export function DeleteNoteProvider({ children }: { children: ReactNode }) {
             <AlertDialogTitle>
               Delete {pending?.title === '' ? 'this note' : `“${pending?.title}”`}?
             </AlertDialogTitle>
-            {/* The old wording — "the notes after it close the gap" — described the animation
-                you are about to watch happen. This says the thing you cannot see instead: there
-                is no trash and no undo, which mission.md puts out of scope by name, so this is
-                the last moment the note exists. */}
-            <AlertDialogDescription>
-              This cannot be undone — there is no trash to recover it from.
-            </AlertDialogDescription>
+            {/* Four words. The original — "the notes after it close the gap" — described the
+                animation the user is about to watch happen, which is the one thing they do not
+                need telling. Naming the absent trash was the next draft and was still more than
+                the moment needs: the title already says which note, and this says the only other
+                thing that matters. */}
+            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             {/* Cancel holds the default focus, so Enter on a dialog you did not read cancels
