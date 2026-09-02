@@ -64,15 +64,15 @@ Deferred deliberately. Each belongs to a named later phase.
   stays unused.
 - **Changing a note's color after creation.** The palette creates; it does not recolor. The
   per-note recolor control and the shadcn `popover`/`dropdown-menu` it needs are **P6**.
-- **Search, tags, markdown, checkboxes.** **P9** and **P10**. Note bodies are plain text rendered in
+- **Search, tags, markdown, checkboxes.** **P9** and ***Markdown and checkboxes***. Note bodies are plain text rendered in
   a `<p>`; a `#tag` typed into one is just characters.
-- **Dark mode.** No toggle, no `useTheme`, no `prefers-color-scheme` wiring. **P11.**
+- **Dark mode.** No toggle, no `useTheme`, no `prefers-color-scheme` wiring. ***Dark mode*.**
 - **An empty state.** A board with no notes is bare cork, and the palette sitting in the sidebar is
-  the only invitation. `empty_state.tsx` is **P12**.
+  the only invitation. `empty_state.tsx` is ***Polish***.
 - **Delete confirmation.** Delete is immediate and there is no undo. The `alert-dialog` guard for a
-  note with content is **P12**; the risk is accepted and recorded below.
+  note with content is ***Polish***; the risk is accepted and recorded below.
 - **Spring motion on add and delete.** Notes appear and disappear. The spring choreography is
-  **P12**.
+  ***Polish***.
 - **Any new shadcn component.** This phase installs none (**D11**). The six components P1 pulled in
   transitively stay dormant, and **T9** still asserts it.
 - **Cross-tab synchronisation.** One user, one tab. See Risks.
@@ -237,8 +237,8 @@ future phase needs `Button` on the board, that is a visible edit to a test, whic
 | A debounced write means the last edit before a tab closes can be lost. | Dispatch on blur is immediate rather than debounced, and the debounce is 300ms. Accepted: a `beforeunload` flush is a lifecycle hazard for 300ms of typing, and no phase asks for one. |
 | `useLocalStorage` syncs across tabs via `storage` events, but the reducer is the source of truth (**D2**), so a second tab's write is overwritten by the first tab's next push. | Out of scope and recorded here rather than discovered later. `mission.md` scopes this to one user with no sync. Revisit only if a real two-tab workflow appears. |
 | `crypto.randomUUID()` is unavailable in insecure contexts and may be missing from the jsdom build. | `note_factory.ts` is the single call site. Component tests stub it in `dom_setup.ts` alongside `matchMedia`; the factory's own test asserts the id is a non-empty string, not a UUID shape. |
-| Delete is immediate and there is no undo. A misclick on a note holding real text destroys it. | Accepted for this phase and named in Out of scope. The delete control sits opposite the pin toggle with real spacing between them, and P12 adds the `alert-dialog` guard for notes with content. Not silently deferred — it is a roadmap line. |
-| An uncontrolled `<textarea>` (**D9**) desynchronises if anything else writes `body` while it is open. | Nothing else writes `body` in this phase. When P10 introduces a second writer, the textarea gets a `key={note.updatedAt}` or becomes controlled — recorded so it is a decision then rather than a bug. |
+| Delete is immediate and there is no undo. A misclick on a note holding real text destroys it. | Accepted for this phase and named in Out of scope. The delete control sits opposite the pin toggle with real spacing between them, and *Polish* adds the `alert-dialog` guard for notes with content. Not silently deferred — it is a roadmap line. |
+| An uncontrolled `<textarea>` (**D9**) desynchronises if anything else writes `body` while it is open. | Nothing else writes `body` in this phase. When *Markdown and checkboxes* introduces a second writer, the textarea gets a `key={note.updatedAt}` or becomes controlled — recorded so it is a decision then rather than a bug. |
 | Reading `localStorage` on mount can flash an empty board before the stored one appears. | The reducer is lazily initialised from the stored value on the *first* render, not in an effect. P1's Gate 3 "no layout shift on load" check is carried forward and now covers the board as well as the sidebar. |
 | `useReducer`'s lazy initialiser runs on every render in React StrictMode double-invocation, and a `hydrate` with side effects would run twice. | `hydrate` is pure — it validates and returns. It does not write, log, or migrate. |
-| The board becomes the first component to consume context, and a single context would re-render all 100+ notes on every keystroke. | Split state and dispatch contexts, as [tech-stack.md](../tech-stack.md) already specifies. The palette and the controls consume dispatch only and never re-render on a body edit. The 100-note performance check itself stays **P12**. |
+| The board becomes the first component to consume context, and a single context would re-render all 100+ notes on every keystroke. | Split state and dispatch contexts, as [tech-stack.md](../tech-stack.md) already specifies. The palette and the controls consume dispatch only and never re-render on a body edit. The 100-note performance check itself stays ***Polish***. |

@@ -63,7 +63,7 @@ Plus the documents this invalidates (**D8**).
   scope, and a date field is not a licence to add them.
 - **Date ranges, recurring dates, or more than one date per note.**
 - **Locale-aware formatting.** `MM/DD/YYYY` is specified literally (**D2**).
-- **Markdown rendering in the view.** Still **P10**. The view shows raw text.
+- **Markdown rendering in the view.** Still ***Markdown and checkboxes***. The view shows raw text.
 - **Recolouring from the card.** The view dialog carries the swatches, which discharges what the old
   P6 was for; a per-card colour control is not added.
 

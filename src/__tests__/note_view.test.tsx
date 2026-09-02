@@ -28,11 +28,6 @@ const seed = (notes: Note[]) =>
 const readNotes = (): Note[] => JSON.parse(window.localStorage.getItem(BOARD_KEY) ?? '{}').notes ?? []
 const card = (id: string) => screen.getByTestId(`note-${id}`)
 const opener = (index = 0) => screen.getAllByTestId('open')[index]
-const control = (id: string, which: 'pin' | 'delete') => {
-  const button = card(id).querySelector(`[data-testid="${which}"]`)
-  if (!(button instanceof HTMLElement)) throw new Error(`no ${which} on ${id}`)
-  return button
-}
 const flush = () =>
   act(() => {
     vi.advanceTimersByTime(400)
@@ -161,25 +156,38 @@ describe('T46 · the card opens the note, and only when it should', () => {
     expect(screen.queryByRole('textbox', { name: 'Note text' })).toBeNull()
   })
 
-  it('does not open when the pin control is clicked', () => {
-    seed([note()])
+  /**
+   * These two asserted that the pin and delete controls did not open the note — a collision that
+   * stopped existing in P9, when the controls moved into the note's own view and the card was
+   * left with one affordance.
+   *
+   * They are re-pointed rather than deleted. What they were really protecting is that **the
+   * things on a card either open the note or deliberately do not**, and there is still one of
+   * each: the pin glyph, which is state and must not swallow the click, and the link chip, which
+   * is a control and must.
+   */
+  it('opens the note when the pinned glyph is clicked, because it is not a control', () => {
+    seed([note({ pinned: true })])
     render(<App />)
 
-    fireEvent.click(control('a', 'pin'))
+    const glyph = card('a').querySelector('svg.size-3\\.5')
+    expect(glyph).not.toBeNull()
 
-    expect(screen.queryByRole('textbox', { name: 'Note text' })).toBeNull()
-    expect(card('a').querySelector('[data-testid="pin"]')?.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(opener())
+
+    // A dead zone in the corner of a card would be worse than the control it replaced.
+    expect(screen.getByRole('textbox', { name: 'Note text' })).toBeDefined()
   })
 
-  it('does not open the note it just deleted', () => {
-    seed([note()])
+  it('does not open the note when the link chip is clicked', () => {
+    seed([note({ link: 'https://meet.google.com/abc' })])
     render(<App />)
 
-    fireEvent.click(control('a', 'delete'))
+    const chip = card('a').querySelector('[data-slot="note-link"]')
+    fireEvent.click(chip as Element)
 
-    // Without the stopPropagation on the controls container, deleting a note opens it.
+    // Without the stopPropagation on the chip, following a link opens the note behind it.
     expect(screen.queryByRole('textbox', { name: 'Note text' })).toBeNull()
-    expect(screen.queryByTestId('note-a')).toBeNull()
   })
 })
 

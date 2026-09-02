@@ -54,7 +54,7 @@ Nothing between groups 1 and 6 leaves the app broken.
     requirements rather than silently dropped; the roadmap states the new behaviour only.
 
 1.2 `roadmap.md` — insert **P9 · Tags** carrying what P8 shed: `lib/tags.ts`, chips on the card,
-    click-to-filter. Renumber Markdown to P10, Dark mode to P11, Polish to P12.
+    click-to-filter. Renumber Markdown to *Markdown and checkboxes*, Dark mode to *Dark mode*, Polish to *Polish*.
 
 1.3 Correct every forward reference the renumber invalidates across `specs/`, `tech-stack.md` and
     `README.md`. **Only the numbers move** — no earlier spec's reasoning is rewritten. Highest first

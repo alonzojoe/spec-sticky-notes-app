@@ -1,6 +1,6 @@
-import { Link2 } from 'lucide-react'
+import { Link2, Pin, Trash2 } from 'lucide-react'
 
-import { NoteControls } from '@/components/board/note_controls'
+import { useDeleteNote } from '@/context/use_delete_note'
 import { formatDate } from '@/lib/dates'
 import { linkLabel } from '@/lib/links'
 import { PAPER } from '@/lib/paper'
@@ -48,12 +48,22 @@ const bodyClamp = (note: Note): string =>
  * reader. `line-clamp` rather than `overflow: hidden` so the ellipsis lands on the last visible
  * line — that is what signals "there is more" instead of looking like the text stopped.
  *
- * P7 added the title and the link chip and grew the card to `h-52` to hold them. Five gestures
- * now share this element and each has a deliberate answer. The body is a real button, so
- * clicking or pressing Enter on it opens the note — but only if the gesture did not become a
- * drag. The pin and delete controls stop propagation, or deleting a note would open the note it
- * just deleted; the chip stops it for the same reason, or following a link would open the note
- * behind it. The arrow keys on the article itself still reorder.
+ * P7 added the title and the link chip and grew the card to `h-52` to hold them.
+ *
+ * **P9 took pin off the card and left delete on it.** Pinning is something you do to a note you
+ * are already reading, and it moved into the note's own view; deleting is something you decide
+ * about a note you can see from across the board, and making you open it first to throw it away
+ * is a worse trade than the one control costs. That asymmetry is what the amended principle 4
+ * says, and it is why the card still carries a `group` class and a hover-revealed corner.
+ *
+ * Four things now share this element and each has a deliberate answer. The body is a real button,
+ * so clicking or pressing Enter on it opens the note — but only if the gesture did not become a
+ * drag. The delete control stops propagation, or removing a note would open the note it just
+ * removed. The link chip stops it for the same reason. The arrow keys on the article itself still
+ * reorder.
+ *
+ * The pin glyph is **state, not a control**: it is the only way to see why a pinned note sorts
+ * first, and it is deliberately not the thing you click to unpin.
  */
 export function NoteCard({
   note,
@@ -74,6 +84,8 @@ export function NoteCard({
   onPointerUp: (event: React.PointerEvent) => void
   onReorder: (direction: ReorderDirection) => void
 }) {
+  const { requestDelete } = useDeleteNote()
+
   return (
     <article
       data-slot="note-card"
@@ -92,7 +104,7 @@ export function NoteCard({
         event.preventDefault()
         onReorder(direction)
       }}
-      className={`group flex h-52 cursor-pointer flex-col overflow-hidden rounded-lg p-4 text-left text-ink texture-paper ${PAPER[note.color]} ${
+      className={`group relative flex h-52 cursor-pointer flex-col overflow-hidden rounded-lg p-4 text-left text-ink texture-paper ${PAPER[note.color]} ${
         dragging !== null
           ? // Tracks the pointer exactly. A transition on the thing following your hand is
             // the classic mistake, and mission.md asks for a distinct lift while dragging.
@@ -103,7 +115,41 @@ export function NoteCard({
         dragging !== null ? { transform: `translate(${dragging.dx}px, ${dragging.dy}px)` } : undefined
       }
     >
-      <NoteControls note={note} />
+      {/* The corner: the pinned state, then the one control. They share a row so the glyph does
+          not jump when the control fades in beside it. */}
+      <div className="absolute top-3 right-3 flex items-center gap-0.5">
+        {/* State, not a control. No handler, no tabindex, `aria-hidden` — clicking it opens the
+            note like anywhere else on the card, because it is not a target. Principle 4's amended
+            clause licences exactly this: state that would otherwise be invisible. Without it,
+            principle 1's promise that pinned notes sort first has no visible cause. */}
+        {note.pinned && (
+          <span className="pointer-events-none p-1 text-ink-soft">
+            <Pin className="size-3.5" aria-hidden />
+          </span>
+        )}
+
+        {/* Hidden until you touch this note — principle 4's "on the note you're touching, not on
+            all of them at once". `opacity-0` leaves a button focusable but invisible, so the
+            group-focus-within and focus-visible escapes bring it back for the keyboard; without
+            them, tabbing lands on something nobody can see, which is a defect rather than a
+            style choice.
+
+            stopPropagation on both click and pointerdown, or deleting a note would open the note
+            it just removed and pressing the control would start dragging the card. */}
+        <button
+          type="button"
+          data-testid="delete"
+          aria-label="Delete note"
+          onClick={(event) => {
+            event.stopPropagation()
+            requestDelete(note)
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
+          className="rounded-sm p-1 text-ink-soft opacity-0 transition-opacity duration-(--duration-hover) ease-out group-hover:opacity-100 group-focus-within:opacity-100 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          <Trash2 className="size-3.5" aria-hidden />
+        </button>
+      </div>
 
       {/* A real button rather than a click handler on the article. The article keeps its
           landmark role, and the thing that opens the note is announced as a control and
@@ -111,7 +157,9 @@ export function NoteCard({
       <button
         type="button"
         data-testid="open"
-        aria-label={`Open note from ${formatDate(note.date)}`}
+        // The pin glyph is aria-hidden, so the state has to reach a screen reader through the
+        // one control that names the note.
+        aria-label={`Open ${note.pinned ? 'pinned ' : ''}note from ${formatDate(note.date)}`}
         onClick={onOpen}
         className="flex flex-1 cursor-pointer flex-col overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >

@@ -43,7 +43,8 @@ demonstrably works, an `@/` import resolves, and the build is clean.
 - `npx shadcn@latest add sidebar`. Delete its cookie persistence and its `ease-linear`
   motion; host `TooltipProvider` inside it so the collapsed rail works.
 - Build the shell: a collapsible sidebar holding one nav item, **Notes**, plus named slots
-  for the New-note (P2), search (P9), and theme (P11) controls. The board fills the rest.
+  for the New-note (P2), search (P8) and theme (*Dark mode*) controls. The board fills the rest.
+  (Search shipped in P8 as a ⌘K palette in the toolbar, not as a sidebar slot.)
 - Build the board surface with its cork/felt texture and the paper grain utility.
 - Render three **hardcoded** notes to prove the visual language: layered shadow, tilt,
   grain, padding. (P5 dropped the tilt when the board became a grid.)
@@ -111,7 +112,7 @@ and no sidebar control creates notes any more.
 ## P4 · Write on them — *absorbed into P2*
 
 Inline editing with debounced autosave shipped with P2. Markdown rendering was never P4's —
-it is still **P10**. Nothing is scheduled here.
+it is still ***Markdown and checkboxes***. Nothing is scheduled here.
 
 ---
 
@@ -167,8 +168,8 @@ Save button anywhere.
 - Amend `mission.md` § Core scope: a note carries a one-line **title** and one **link**.
   Principles 2 and 3 are **not** amended — the card is already a summary, and the new fields
   autosave like every other one.
-- Renumber the phases below: *Find things* becomes P9, and Markdown, Dark mode and Polish each
-  move down one.
+- Renumber the phases below: the tags half of this phase becomes its own phase, and Markdown,
+  Dark mode and Polish each move down one. (P9 stopped numbering them; see its last bullet.)
 - `Note` gains `title` and `link`, both `''` when absent. Neither is optional and neither is
   `null`.
 - `lib/links.ts` — the only place a URL is judged. `http:` and `https:` are allowlisted, a bare
@@ -216,7 +217,42 @@ is byte-identical before, during and after.
 
 ---
 
-## P9 · Tags
+## P9 · A quieter card
+
+**Goal:** the board is paper and nothing else; acting on a note happens in the note.
+
+- Amend `mission.md` principle 4: **a card carries one per-note control — delete.** Everything
+  else moves into the note. It may also show *state* that would otherwise be invisible.
+- **Pin** moves into the note view's footer beside Done; **delete stays on the card** and gains a
+  confirmation. Pinning is something you do to a note you are already reading; deleting is
+  something you decide about a note you can see from across the board.
+- One confirmation for the whole board, mounted in the shell rather than per card, reached from
+  either entry point.
+- A **pinned** card keeps a pin glyph: `aria-hidden`, no handler, no focus, not a control. Without
+  it, principle 1's promise that pinned notes sort first has no visible cause.
+- `npx shadcn@latest add alert-dialog`. Deleting a note that carries a **title, a body or a link**
+  asks first; an empty one is deleted immediately. `date`, `color` and `pinned` are not content —
+  every note has them whether you chose them or not.
+- Pinning does not close the view. Deleting does, because the note it was showing is gone.
+- **The phases below stop being numbered.** P7 renumbered four, P8 renumbered four more, and this
+  would be the third in three phases. A number is a promise about ordering that has been broken
+  three times running; a name survives being reordered. P0–P9 keep theirs — their spec directories
+  are named after them.
+
+**Done when:** a card shows delete and nothing else, a pinned note is still identifiable at a
+glance without carrying a pin control, pinning happens in the note's own view, and deleting a note
+with something in it asks first from either place.
+
+---
+
+# Planned, in order
+
+No numbers — see P9's last bullet. Order is a plan, not a commitment; inserting work here is an edit
+to this list rather than a rewrite of every cross-reference in `specs/`.
+
+---
+
+## Tags
 
 **Goal:** notes group themselves by what is written in them.
 
@@ -231,7 +267,7 @@ it.
 
 ---
 
-## P10 · Markdown and checkboxes
+## Markdown and checkboxes
 
 **Goal:** notes become lightly structured.
 
@@ -247,7 +283,7 @@ in a note body is escaped rather than rendered.
 
 ---
 
-## P11 · Dark mode
+## Dark mode
 
 **Goal:** usable at night, deliberate in both themes.
 
@@ -262,7 +298,7 @@ and reloading in dark mode never flashes light.
 
 ---
 
-## P12 · Polish
+## Polish
 
 **Goal:** it feels finished.
 
@@ -274,7 +310,6 @@ and reloading in dark mode never flashes light.
 - Responsive pass — usable on a narrow screen, not optimized for one.
 - Performance check with 100+ notes: smooth drag, no jank while typing, and the grid's
   hit test still O(1) per pointer event.
-- Delete confirmation for a note with content (shadcn `alert-dialog`).
 
 **Done when:** every "Done means" bullet in `mission.md` is true.
 
