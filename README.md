@@ -32,11 +32,12 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P9 (*a quieter card*) is complete: a card carries no controls at all — hovering the board reveals
-nothing anywhere. Pin and delete live in the note's own view, and deleting a note that has a title,
-a body or a link asks first; an empty one goes immediately. A pinned card keeps a small pin glyph,
-which is state rather than a control: it has no handler and no tab stop, and clicking it opens the
-note like anywhere else on the card. Search is a palette on `⌘K` — `Ctrl+K` off macOS — that finds a
+P9 (*a quieter card*) is complete: a card carries one control — delete — hidden until you touch
+that note, and everything else you can do to a note happens in the note. Deleting a note that has a
+title, a body or a link asks first; an empty one goes immediately, and there is one confirmation for
+the whole board rather than one per card. Pinning moved into the note's own view, and a pinned card
+keeps a small pin glyph that is state rather than a control: no handler, no tab stop, and clicking
+it opens the note like anywhere else on the card. Search is a palette on `⌘K` — `Ctrl+K` off macOS — that finds a
 note by its title or its text and opens it; the board never filters, dims or reorders. A note
 carries a title and a link alongside its date, and the card shows all three at a uniform height with
 its body clamped to the lines the title and the link left it. Notes sit in a grid,
