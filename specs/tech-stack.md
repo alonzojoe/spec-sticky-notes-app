@@ -146,6 +146,8 @@ src/
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
       paper_radiogroup.tsx // the six swatches, shared by both dialogs        (P6)
       note_fields.tsx    // the title and link inputs, shared by both dialogs (P7)
+      note_controls.tsx  // pin and delete, in the note's own view              (P9)
+      delete_note_dialog.tsx // one confirmation for the whole board            (P9)
       toolbar.tsx        // sidebar toggle + search trigger + New note        (P8)
       search_trigger.tsx // a BUTTON shaped like a field; ⌘K / Ctrl+K badge   (P8)
       search_dialog.tsx  // the palette: query, results, roving selection     (P8)
@@ -153,12 +155,13 @@ src/
       board.tsx          // the cork surface; measures its width and lays out the grid
       note_card.tsx      // one sheet of paper: a summary at a fixed height, with a
                          //   clamp that widens for each row the note does not use  (P7)
-      note_controls.tsx  // per-note pin and delete
+
       empty_state.tsx    //                                               (*Polish*)
     ui/                  // shadcn components — exempt from snake_case
   lib/
     grid.ts              // the one column-width the stylesheet cannot infer        (P5)
     dates.ts             // ISO in, MM/DD/YYYY out; never builds a Date from a store (P6)
+    notes.ts             // hasContent — what makes a note worth confirming      (P9)
     links.ts             // the only judge of a URL: http(s) allowlisted, bare host
                          //   prefixed, everything else normalised to ''            (P7)
     platform.ts          // is this a Mac; what the modifier is called here     (P8)
@@ -172,6 +175,7 @@ src/
   context/
     open_note_context.tsx // which note is open, shared by the board and the palette (P8)
     use_open_note.ts      // its hook, split for react-refresh                       (P8)
+    use_delete_note.ts    // requestDelete(note); the alert lives in the shell        (P9)
   types/
     note.ts
 ```
