@@ -32,15 +32,14 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P8 (*find things*) is complete: a search trigger sits beside the sidebar toggle showing this
-platform's own shortcut — `⌘K` on macOS, `Ctrl+K` elsewhere — and either modifier opens a palette
-over the same blurred backdrop the new-note dialog uses. Type to match a note's title or its text,
-arrow to one, and Enter opens its note view. **The board never changes**: nothing dims, hides,
-moves or reorders, before, during or after. A note carries a one-line title and a single link
-alongside its date, and the card shows all three — the date top-left, the title under it, and the
-link as a chip on the bottom edge that opens in a new tab. Cards are all exactly the same height,
-and the body is clamped to the lines the title and the link left it. Clicking a card opens the
-note, editable, saving itself with no Save button. Notes still sit in a grid,
+P9 (*a quieter card*) is complete: a card carries no controls at all — hovering the board reveals
+nothing anywhere. Pin and delete live in the note's own view, and deleting a note that has a title,
+a body or a link asks first; an empty one goes immediately. A pinned card keeps a small pin glyph,
+which is state rather than a control: it has no handler and no tab stop, and clicking it opens the
+note like anywhere else on the card. Search is a palette on `⌘K` — `Ctrl+K` off macOS — that finds a
+note by its title or its text and opens it; the board never filters, dims or reorders. A note
+carries a title and a link alongside its date, and the card shows all three at a uniform height with
+its body clamped to the lines the title and the link left it. Notes sit in a grid,
 newest first, and dragging one onto another swaps them permanently. The board persists to
 `localStorage` through the contract; a corrupt value loads an empty board rather than
 white-screening, and a board saved before the grid, the date, or the title and link is

@@ -29,9 +29,10 @@ the board rearrange itself, it is wrong regardless of how good it looks.
 3. **Persistent by default.** There is no Save button. State is written as it changes and
    restored exactly on reload — position, stacking, colors, and all.
 4. **Quiet chrome.** The interface is the notes. Global controls live in the sidebar and
-   the toolbar above it, and never on the board surface itself; per-note controls appear on the note
-   you're touching, not on all of them at once. The sidebar can be collapsed to a rail, and
-   the board stays fully usable with it collapsed.
+   the toolbar above it, and never on the board surface itself; a card carries no controls at
+   all — acting on a note happens in the note, which is one click away. A card may show *state*
+   it would otherwise be impossible to see, such as whether it is pinned. The sidebar can be
+   collapsed to a rail, and the board stays fully usable with it collapsed.
 5. **Keyboard-reachable.** Anything the mouse can do — including moving a note — has a
    keyboard path. Beauty that excludes the keyboard isn't finished.
 

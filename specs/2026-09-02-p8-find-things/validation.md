@@ -50,7 +50,7 @@ Empty. A `RegExp` built from the query throws on `(`, and this input is typed on
 time. **D3** lowercases both sides and calls `includes`.
 
 ```
-grep -rln "P8 · Markdown\|P9 · Dark mode\|P10 · Polish\|P8 · Find things (search + tags)" specs/ \
+grep -rln "P8 · Markdown\|P9 · Dark mode\|*Markdown and checkboxes* · Polish\|P8 · Find things (search + tags)" specs/ \
   --exclude-dir=2026-09-02-p8-find-things
 ```
 
@@ -242,7 +242,7 @@ match still render as identical rows. That is a property of the seed rather than
 real notes differ — but it is the shape of the problem a future ranking change would have to solve.
 
 Not claimed by this phase, and still outstanding from P5 and P6: the `prefers-reduced-motion` pass
-and the 100+ note drag check. Both belong to **P12** after **D1** and neither is touched here.
+and the 100+ note drag check. Both belong to ***Polish*** after **D1** and neither is touched here.
 
 ---
 
