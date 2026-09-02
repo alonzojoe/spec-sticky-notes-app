@@ -162,15 +162,21 @@ export function SearchDialog({
                 aria-hidden
                 className={`mt-1 size-2.5 shrink-0 rounded-full ${PAPER[hit.note.color]}`}
               />
+              {/* A titled note is named by its title and explained by its excerpt. An untitled
+                  one has no name, so the excerpt IS its primary line rather than a caption under
+                  the words "Untitled note" — which named nothing and pushed the only
+                  distinguishing text into the quiet row. Found by running Gate 3 against thirty
+                  notes: three untitled hits were three identical rows. */}
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm text-ink">
-                  {hit.note.title === '' ? (
-                    <span className="text-ink-soft">Untitled note</span>
-                  ) : (
-                    hit.note.title
-                  )}
+                  {hit.note.title !== ''
+                    ? hit.note.title
+                    : hit.excerpt !== ''
+                      ? hit.excerpt
+                      : // Matches the card's own language for a note with nothing in it.
+                        'Empty note'}
                 </span>
-                {hit.excerpt !== '' && (
+                {hit.note.title !== '' && hit.excerpt !== '' && (
                   <span className="block truncate text-xs text-ink-soft">{hit.excerpt}</span>
                 )}
               </span>
@@ -184,7 +190,11 @@ export function SearchDialog({
               ? `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`
               : `${hits.length} ${hits.length === 1 ? 'note' : 'notes'}`}
           </span>
-          <span aria-hidden>↑↓ to move · ↵ to open · esc to close</span>
+          {/* The movement hints are offered only when there is something to move through.
+              Gate 3 found the footer promising "↑↓ to move · ↵ to open" to an empty board. */}
+          <span aria-hidden>
+            {hits.length > 0 ? '↑↓ to move · ↵ to open · esc to close' : 'esc to close'}
+          </span>
         </div>
       </DialogContent>
     </Dialog>

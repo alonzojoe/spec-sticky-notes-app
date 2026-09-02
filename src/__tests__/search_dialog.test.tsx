@@ -166,17 +166,34 @@ describe('T60 · the results', () => {
     // The titled note outranks the one that only mentions it, even though both match.
     expect(rows()).toHaveLength(2)
     expect(rows()[0].textContent).toContain('Standup with the team')
-    expect(rows()[1].textContent).toContain('Untitled note')
+    expect(rows()[1].textContent).toContain('a standup ran long yesterday')
   })
 
-  it('names an untitled note rather than showing a blank row', () => {
+  /**
+   * An untitled note has no name, so its excerpt is the row's primary line. Gate 3 found the
+   * alternative: three untitled hits rendered as three identical rows reading "Untitled note",
+   * with the only distinguishing text demoted to the quiet caption underneath.
+   */
+  it('leads an untitled row with its text rather than with the word Untitled', () => {
     seed([note({ id: 'a', body: 'a standup ran long' })])
     render(<App />)
     openPalette()
 
     type('standup')
 
-    expect(rows()[0].textContent).toContain('Untitled note')
+    expect(rows()[0].textContent).toContain('a standup ran long')
+    expect(rows()[0].textContent).not.toContain('Untitled')
+  })
+
+  it('falls back to the card\'s own language for a note with no text at all', () => {
+    seed([note({ id: 'a', title: 'Standup', body: '' })])
+    render(<App />)
+    openPalette()
+
+    type('standup')
+
+    // Titled but empty: the title names it and there is no excerpt to caption it with.
+    expect(rows()[0].textContent).toContain('Standup')
   })
 
   it('says so, and names the query, when nothing matches', () => {
@@ -375,5 +392,27 @@ describe('T62 · the board does not move, dim, or reorder', () => {
     for (const card of cards()) {
       expect(card.className).not.toMatch(/opacity-|grayscale|dimmed/)
     }
+  })
+})
+
+// Gate 3 found the footer offering "↑↓ to move · ↵ to open" with nothing to move through.
+describe('T60 · the footer only offers what is possible', () => {
+  it('drops the movement hints when there are no results', () => {
+    seed()
+    render(<App />)
+    openPalette()
+
+    expect(screen.getByText('esc to close')).toBeDefined()
+    expect(screen.queryByText(/to move/)).toBeNull()
+  })
+
+  it('offers them once there are', () => {
+    seed()
+    render(<App />)
+    openPalette()
+
+    type('standup')
+
+    expect(screen.getByText(/↑↓ to move/)).toBeDefined()
   })
 })
