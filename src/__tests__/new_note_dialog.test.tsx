@@ -65,7 +65,11 @@ describe('T20 · colour and text are chosen before the note exists', () => {
     // note created empty is one you are about to write on. The dialog on screen afterwards is
     // a different one — it carries the note's textarea, not a New note title.
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Add note' })).toBeNull())
-    expect(screen.getByRole('textbox', { name: 'Note text' })).toBeDefined()
+    // Also awaited, not asserted synchronously. The dialog dispatches `add` inside a
+    // setTimeout(0) — see the comment in new_note_dialog.tsx — so the create dialog closing and
+    // the note view opening are two separate macrotasks. Asserting the second the moment the
+    // first lands is a race, and it failed roughly one run in three.
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Note text' })).toBeDefined())
   })
 })
 
