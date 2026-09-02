@@ -43,7 +43,7 @@ demonstrably works, an `@/` import resolves, and the build is clean.
 - `npx shadcn@latest add sidebar`. Delete its cookie persistence and its `ease-linear`
   motion; host `TooltipProvider` inside it so the collapsed rail works.
 - Build the shell: a collapsible sidebar holding one nav item, **Notes**, plus named slots
-  for the New-note (P2), search (P8), and theme (P10) controls. The board fills the rest.
+  for the New-note (P2), search (P9), and theme (P11) controls. The board fills the rest.
 - Build the board surface with its cork/felt texture and the paper grain utility.
 - Render three **hardcoded** notes to prove the visual language: layered shadow, tilt,
   grain, padding. (P5 dropped the tilt when the board became a grid.)
@@ -111,7 +111,7 @@ and no sidebar control creates notes any more.
 ## P4 · Write on them — *absorbed into P2*
 
 Inline editing with debounced autosave shipped with P2. Markdown rendering was never P4's —
-it is still **P9**. Nothing is scheduled here.
+it is still **P10**. Nothing is scheduled here.
 
 ---
 
@@ -167,7 +167,7 @@ Save button anywhere.
 - Amend `mission.md` § Core scope: a note carries a one-line **title** and one **link**.
   Principles 2 and 3 are **not** amended — the card is already a summary, and the new fields
   autosave like every other one.
-- Renumber the phases below: *Find things* becomes P8, and Markdown, Dark mode and Polish each
+- Renumber the phases below: *Find things* becomes P9, and Markdown, Dark mode and Polish each
   move down one.
 - `Note` gains `title` and `link`, both `''` when absent. Neither is optional and neither is
   `null`.
@@ -192,18 +192,46 @@ phase opens with every note intact.
 
 **Goal:** the board scales past a screenful.
 
-- Search input in the toolbar; live filter on note body, case-insensitive.
-- `lib/tags.ts` parses `#tags` out of `body` on read.
-- Tags render as chips on the note and filter the board when clicked.
-- Non-matching notes dim in place rather than disappearing — **positions never change**.
-- Escape clears the filter.
+- A trigger beside the sidebar toggle: a muted field-shaped **button**, never an input, carrying
+  a magnifier, the word Search, and this platform's own shortcut badge — `⌘K` on macOS, `Ctrl+K`
+  everywhere else. Icon only below `sm`.
+- `lib/platform.ts` answers "is this a Mac" in one place. The badge is a hint: **both modifiers
+  open the palette on every platform**, so a wrong guess is cosmetic rather than a lost shortcut.
+- `lib/search.ts` — pure. Case-insensitive substring over **title and body**, a title hit ranked
+  above a body hit, board order within each band, and an excerpt windowed around the match. No
+  regex is ever built from the query.
+- A palette on the same shadcn `Dialog` the create dialog uses, so the blurred backdrop is the
+  same one rather than a copy. Query field, result rows, `↑↓` to move, `Enter` to open the note's
+  own view, `Escape` to close.
+- The roving selection is `aria-activedescendant`; **DOM focus never leaves the input**.
+- `openId` moves out of `board.tsx` into its own context, so the palette can open a note.
 
-**Done when:** filtering never moves a note, and clicking a tag shows exactly the notes
-carrying it.
+**The board never changes** — not while the palette is open, not after it closes. Nothing dims,
+hides, moves, or reorders. This replaces the inline filter this phase originally promised: a
+dialog blurs the board behind it, so a filter driven from one would be a filter you cannot see.
+Not filtering at all keeps principle 1's promise more completely than dimming did.
+
+**Done when:** `⌘K` finds a note by its title or its text, `Enter` opens it, and the stored board
+is byte-identical before, during and after.
 
 ---
 
-## P9 · Markdown and checkboxes
+## P9 · Tags
+
+**Goal:** notes group themselves by what is written in them.
+
+- `lib/tags.ts` parses `#tags` out of `body` on read. Nothing is stored — a tag is a view of the
+  text, so editing the text is the only way to change the tags.
+- Tags render as chips on the note and filter the board when clicked.
+- Non-matching notes **dim in place** rather than disappearing — positions never change.
+- Escape clears the filter.
+
+**Done when:** filtering never moves a note, and clicking a tag shows exactly the notes carrying
+it.
+
+---
+
+## P10 · Markdown and checkboxes
 
 **Goal:** notes become lightly structured.
 
@@ -219,7 +247,7 @@ in a note body is escaped rather than rendered.
 
 ---
 
-## P10 · Dark mode
+## P11 · Dark mode
 
 **Goal:** usable at night, deliberate in both themes.
 
@@ -234,7 +262,7 @@ and reloading in dark mode never flashes light.
 
 ---
 
-## P11 · Polish
+## P12 · Polish
 
 **Goal:** it feels finished.
 

@@ -69,7 +69,9 @@ These are in the constitution. They ship.
 - **Colors + pin** — a curated paper palette per note; pinned notes stay above the pile.
 - **Title and link** — a note can carry a one-line title and one URL. The card shows both so
   the board can be scanned rather than read; the link opens in a new tab.
-- **Search + tags** — a live filter box, and `#tags` parsed out of note text and clickable.
+- **Search** — a palette on `⌘K` that finds a note by its title or its text. The board never
+  filters, dims, or reorders.
+- **Tags** — `#tags` parsed out of note text, shown on the note and clickable to filter.
 - **Markdown + checklists** — bold, italic, links, lists, and `- [ ]` checkboxes that can
   be ticked directly on the note without entering edit mode.
 - **Dark mode** — follows the system by default, with a manual override that is remembered.

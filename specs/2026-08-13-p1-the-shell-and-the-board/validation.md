@@ -261,7 +261,7 @@ Run `npm run dev`. These are about appearance and feel, which no unit test reach
 - [ ] **Nothing is disabled or dead.** The sidebar shows only controls that work. No greyed-out
       `New note`, no non-functional search field.
 - [ ] **Narrow viewport.** Below `md`, the sidebar becomes a sheet and the board still fills the
-      screen. Usable, not polished — polish is P11.
+      screen. Usable, not polished — polish is P12.
 
 **Both**
 
@@ -311,8 +311,8 @@ Do not block the merge on these:
 
 - Any real note state, creation, deletion, editing, or dragging (**P2**, **P4**, **P5**).
 - Sidebar collapse persisting across reloads (**P3**, per **D4**).
-- A working theme toggle or a designed dark mode (**P10**). The `.dark` token *values* are warm in
+- A working theme toggle or a designed dark mode (**P11**). The `.dark` token *values* are warm in
   this phase; nothing switches to them.
-- The `New note`, `Search`, or `Theme` controls existing in any form (**P2**, **P8**, **P10**).
+- The `New note`, `Search`, or `Theme` controls existing in any form (**P2**, **P9**, **P11**).
 - Visual regression or screenshot tests.
-- Mobile polish, responsive refinement, or the 100-note performance check (**P11**).
+- Mobile polish, responsive refinement, or the 100-note performance check (**P12**).

@@ -32,13 +32,15 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P7 (*a note that says what it is*) is complete: a note carries a one-line title and a single
-link alongside its date, and the card shows all three — the date top-left, the title under it,
-and the link as a chip on the bottom edge that opens in a new tab. Cards are all exactly the
-same height, and the body is clamped to the lines the title and the link left it, so a note
-with neither shows more of itself rather than the same four lines. Clicking a card opens the
-note — the full text, its colour, its date, its title and its link, editable, saving itself
-with no Save button. Notes still sit in a grid,
+P8 (*find things*) is complete: a search trigger sits beside the sidebar toggle showing this
+platform's own shortcut — `⌘K` on macOS, `Ctrl+K` elsewhere — and either modifier opens a palette
+over the same blurred backdrop the new-note dialog uses. Type to match a note's title or its text,
+arrow to one, and Enter opens its note view. **The board never changes**: nothing dims, hides,
+moves or reorders, before, during or after. A note carries a one-line title and a single link
+alongside its date, and the card shows all three — the date top-left, the title under it, and the
+link as a chip on the bottom edge that opens in a new tab. Cards are all exactly the same height,
+and the body is clamped to the lines the title and the link left it. Clicking a card opens the
+note, editable, saving itself with no Save button. Notes still sit in a grid,
 newest first, and dragging one onto another swaps them permanently. The board persists to
 `localStorage` through the contract; a corrupt value loads an empty board rather than
 white-screening, and a board saved before the grid, the date, or the title and link is

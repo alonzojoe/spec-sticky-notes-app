@@ -53,15 +53,15 @@ leaves the app broken.
 ## 1. The amendment
 
 1.1 `roadmap.md` — insert this phase as **P7 · A note that says what it is** with its goal, its
-    bullets and its Done-when. Renumber *Find things* to **P8**, *Markdown and checkboxes* to
-    **P9**, *Dark mode* to **P10**, *Polish* to **P11**, per **D1**'s table.
+    bullets and its Done-when. Renumber *Find things* to **P9**, *Markdown and checkboxes* to
+    **P10**, *Dark mode* to **P11**, *Polish* to **P12**, per **D1**'s table.
 
 1.2 `roadmap.md` — the *Later (not scheduled)* list is unchanged in content. The recolour-from-card
     entry keeps pointing at the note view's swatches.
 
 1.3 Correct the forward references the renumbering invalidates. P6's requirements point markdown at
-    "**P8**" and it is now P9; P5's and P6's risks point deletion confirmation at "**P10**" and it
-    is now P11. Grep for `P8`, `P9`, `P10` across `specs/` and fix what the renumber broke —
+    "**P9**" and it is now P10; P5's and P6's risks point deletion confirmation at "**P11**" and it
+    is now P12. Grep for `P9`, `P10`, `P11` across `specs/` and fix what the renumber broke —
     **without** rewriting the history of what those specs decided. Only the numbers move.
 
 1.4 `mission.md` § Core scope — add the **Title and link** bullet from **D2**, after *Colors + pin*.
