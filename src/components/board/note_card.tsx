@@ -1,6 +1,5 @@
-import { Link2 } from 'lucide-react'
+import { Link2, Pin } from 'lucide-react'
 
-import { NoteControls } from '@/components/board/note_controls'
 import { formatDate } from '@/lib/dates'
 import { linkLabel } from '@/lib/links'
 import { PAPER } from '@/lib/paper'
@@ -48,12 +47,18 @@ const bodyClamp = (note: Note): string =>
  * reader. `line-clamp` rather than `overflow: hidden` so the ellipsis lands on the last visible
  * line — that is what signals "there is more" instead of looking like the text stopped.
  *
- * P7 added the title and the link chip and grew the card to `h-52` to hold them. Five gestures
- * now share this element and each has a deliberate answer. The body is a real button, so
+ * P7 added the title and the link chip and grew the card to `h-52` to hold them.
+ *
+ * **P9 took the controls off entirely.** Pin and delete moved into the note's own view, which is
+ * the amended principle 4: a card carries no controls at all. Gone with them are the `group`
+ * class, which existed only so `group-hover:` could reveal them, the absolutely-positioned
+ * container they sat in, and two tab stops per note.
+ *
+ * What is left on the card is a summary and one affordance. The body is a real button, so
  * clicking or pressing Enter on it opens the note — but only if the gesture did not become a
- * drag. The pin and delete controls stop propagation, or deleting a note would open the note it
- * just deleted; the chip stops it for the same reason, or following a link would open the note
- * behind it. The arrow keys on the article itself still reorder.
+ * drag. The link chip stops propagation, or following a link would open the note behind it. The
+ * arrow keys on the article itself still reorder. The pin glyph below is **state, not a
+ * control**: it is the only way left to see why a pinned note sorts first.
  */
 export function NoteCard({
   note,
@@ -92,7 +97,7 @@ export function NoteCard({
         event.preventDefault()
         onReorder(direction)
       }}
-      className={`group flex h-52 cursor-pointer flex-col overflow-hidden rounded-lg p-4 text-left text-ink texture-paper ${PAPER[note.color]} ${
+      className={`relative flex h-52 cursor-pointer flex-col overflow-hidden rounded-lg p-4 text-left text-ink texture-paper ${PAPER[note.color]} ${
         dragging !== null
           ? // Tracks the pointer exactly. A transition on the thing following your hand is
             // the classic mistake, and mission.md asks for a distinct lift while dragging.
@@ -103,7 +108,15 @@ export function NoteCard({
         dragging !== null ? { transform: `translate(${dragging.dx}px, ${dragging.dy}px)` } : undefined
       }
     >
-      <NoteControls note={note} />
+      {/* State, not a control. No handler, no tabindex, `aria-hidden` — clicking it opens the
+          note like anywhere else on the card, because it is not a target. Principle 4's amended
+          clause licences exactly this and no more: state that would otherwise be invisible.
+          Without it, principle 1's promise that pinned notes sort first has no visible cause. */}
+      {note.pinned && (
+        <span className="pointer-events-none absolute top-2 right-2 text-ink-soft">
+          <Pin className="size-3.5" aria-hidden />
+        </span>
+      )}
 
       {/* A real button rather than a click handler on the article. The article keeps its
           landmark role, and the thing that opens the note is announced as a control and
@@ -111,7 +124,9 @@ export function NoteCard({
       <button
         type="button"
         data-testid="open"
-        aria-label={`Open note from ${formatDate(note.date)}`}
+        // The pin glyph is aria-hidden, so the state has to reach a screen reader through the
+        // one control that names the note.
+        aria-label={`Open ${note.pinned ? 'pinned ' : ''}note from ${formatDate(note.date)}`}
         onClick={onOpen}
         className="flex flex-1 cursor-pointer flex-col overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
