@@ -43,7 +43,7 @@ demonstrably works, an `@/` import resolves, and the build is clean.
 - `npx shadcn@latest add sidebar`. Delete its cookie persistence and its `ease-linear`
   motion; host `TooltipProvider` inside it so the collapsed rail works.
 - Build the shell: a collapsible sidebar holding one nav item, **Notes**, plus named slots
-  for the New-note (P2), search (P7), and theme (P9) controls. The board fills the rest.
+  for the New-note (P2), search (P8), and theme (P10) controls. The board fills the rest.
 - Build the board surface with its cork/felt texture and the paper grain utility.
 - Render three **hardcoded** notes to prove the visual language: layered shadow, tilt,
   grain, padding. (P5 dropped the tilt when the board became a grid.)
@@ -111,7 +111,7 @@ and no sidebar control creates notes any more.
 ## P4 · Write on them — *absorbed into P2*
 
 Inline editing with debounced autosave shipped with P2. Markdown rendering was never P4's —
-it is still **P8**. Nothing is scheduled here.
+it is still **P9**. Nothing is scheduled here.
 
 ---
 
@@ -160,7 +160,35 @@ Save button anywhere.
 
 ---
 
-## P7 · Find things
+## P7 · A note that says what it is
+
+**Goal:** a card can be scanned instead of read.
+
+- Amend `mission.md` § Core scope: a note carries a one-line **title** and one **link**.
+  Principles 2 and 3 are **not** amended — the card is already a summary, and the new fields
+  autosave like every other one.
+- Renumber the phases below: *Find things* becomes P8, and Markdown, Dark mode and Polish each
+  move down one.
+- `Note` gains `title` and `link`, both `''` when absent. Neither is optional and neither is
+  `null`.
+- `lib/links.ts` — the only place a URL is judged. `http:` and `https:` are allowlisted, a bare
+  host is prefixed with `https://`, and everything else normalises to `''`.
+- The card grows to `h-52`: date, title clamped to one line, body clamped to what is left, and
+  the link as a chip on the bottom edge that opens in a new tab.
+- **The body's clamp is three lines plus one for each of the title and the link the note does
+  not have.** Uniform height was the requirement; a uniform clamp never was.
+- The defensive read fills a missing `title` and `link` with `''`, and drops a stored link that
+  is not `http(s)`.
+- This phase runs P6's outstanding Gate 3 check on the card geometry rather than deferring it
+  again.
+
+**Done when:** a note can carry a title and a URL, the card shows the title under the date and
+the link as a chip, every card is still exactly the same height, and a board saved before this
+phase opens with every note intact.
+
+---
+
+## P8 · Find things
 
 **Goal:** the board scales past a screenful.
 
@@ -175,7 +203,7 @@ carrying it.
 
 ---
 
-## P8 · Markdown and checkboxes
+## P9 · Markdown and checkboxes
 
 **Goal:** notes become lightly structured.
 
@@ -191,7 +219,7 @@ in a note body is escaped rather than rendered.
 
 ---
 
-## P9 · Dark mode
+## P10 · Dark mode
 
 **Goal:** usable at night, deliberate in both themes.
 
@@ -206,7 +234,7 @@ and reloading in dark mode never flashes light.
 
 ---
 
-## P10 · Polish
+## P11 · Polish
 
 **Goal:** it feels finished.
 

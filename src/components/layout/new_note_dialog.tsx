@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { DateField } from '@/components/layout/date_field'
+import { FieldLabel, LinkField, TitleField } from '@/components/layout/note_fields'
 import { PaperRadiogroup } from '@/components/layout/paper_radiogroup'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
 import { todayISO } from '@/lib/dates'
+import { normalizeLink } from '@/lib/links'
 import { createNoteSeed, topOrder } from '@/lib/note_factory'
 import { NOTE_COLORS, type NoteColor } from '@/types/note'
 /**
@@ -38,7 +40,9 @@ export function NewNoteDialog({
   const { notes } = useNotes()
 
   const [color, setColor] = useState<NoteColor>(NOTE_COLORS[0])
+  const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
+  const [link, setLink] = useState('')
   const [date, setDate] = useState(todayISO)
 
   // Recomputed when the dialog opens, not once at mount: a tab left open overnight must not
@@ -55,14 +59,25 @@ export function NewNoteDialog({
     // Reset on close rather than on submit, so Cancel and Escape clear the draft too. A
     // cancelled draft is not a draft.
     setColor(NOTE_COLORS[0])
+    setTitle('')
     setBody('')
+    setLink('')
     setDate(todayISO())
   }
 
   const submit = () => {
     // Read in the handler, never during a render. The new note only needs to beat the
     // highest stamp on the board; where it lands is the grid's business, not this file's.
-    const seed = createNoteSeed(color, topOrder(notes), body.trim(), date)
+    // Normalised here as well as on the field's blur: Ctrl/Cmd+Enter submits without ever
+    // blurring the link input, so the raw draft is what this reads.
+    const seed = createNoteSeed(
+      color,
+      topOrder(notes),
+      body.trim(),
+      date,
+      title.trim(),
+      normalizeLink(link),
+    )
     close()
     // Added after the dialog has gone, not with it still up, and the ordering is the whole
     // reason. A note created empty opens focused on the board — board.tsx picks it with
@@ -105,19 +120,31 @@ export function NewNoteDialog({
 
           <PaperRadiogroup value={color} onChange={setColor} />
 
-          <textarea
-            autoFocus
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            aria-label="Note text"
-            rows={4}
-            placeholder="Write the note…"
-            // Enter is a newline here, never a submit: a note body is multi-line, and a form
-            // that submitted on Enter would put the second line out of reach of the keyboard —
-            // exactly what the amended principle 2 promised not to do. Ctrl/Cmd+Enter is
-            // handled on the form above.
-            className="field-sizing-content max-h-72 min-h-24 w-full resize-none rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-ink outline-none placeholder:text-ink-soft focus-visible:ring-2 focus-visible:ring-ring"
-          />
+          <TitleField value={title} onChange={setTitle} id="new-note-title" />
+
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel htmlFor="new-note-body">Note</FieldLabel>
+            <textarea
+              id="new-note-body"
+              // Focus stays here, not on the title above it, and that is the mission's call
+              // rather than a preference: "can I capture a thought in under two seconds" is the
+              // one-sentence test, and a required stop at an optional field fails it. The title
+              // is one Shift+Tab away. Same reasoning P3 used for the colour.
+              autoFocus
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              aria-label="Note text"
+              rows={4}
+              placeholder="Write the note…"
+              // Enter is a newline here, never a submit: a note body is multi-line, and a form
+              // that submitted on Enter would put the second line out of reach of the keyboard —
+              // exactly what the amended principle 2 promised not to do. Ctrl/Cmd+Enter is
+              // handled on the form above.
+              className="field-sizing-content max-h-72 min-h-24 w-full resize-none rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-ink outline-none placeholder:text-ink-soft/60 focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+
+          <LinkField value={link} onChange={setLink} onCommit={setLink} id="new-note-link" />
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={close}>

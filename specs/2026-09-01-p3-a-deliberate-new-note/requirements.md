@@ -48,7 +48,7 @@ Six deliverables.
    wording (**D1**).
 2. **The button.** A shadcn `Button` at the right edge of the existing `app_shell.tsx` header —
    `Plus` icon plus the label **New note**, label hidden below `sm`. No new layout component; the
-   header becomes the toolbar that P7 and P9 already need (**D2**).
+   header becomes the toolbar that P8 and P10 already need (**D2**).
 3. **The dialog.** `npx shadcn@latest add dialog`, and a new
    `src/components/layout/new_note_dialog.tsx`. Six paper swatches as a genuine radiogroup, a
    `<textarea>` for the body, and a Cancel / **Add note** footer. Swatches reuse `PAPER` and
@@ -77,9 +77,9 @@ Deferred deliberately.
 - **Dragging.** Still **P5**. The dialog places a note through the existing `createNoteSeed`
   placement search and nothing here changes where notes land.
 - **A note template or a title field.** The `Note` model gains `body` in its seed and nothing else.
-- **Delete confirmation.** Still **P10**, and unrelated.
+- **Delete confirmation.** Still **P11**, and unrelated.
 - **Extracting a `top_nav.tsx`.** Considered and rejected for now (**D2**). The header holds two
-  controls after this phase. Extract it when P7 or P9 gives it a third.
+  controls after this phase. Extract it when P8 or P10 gives it a third.
 
 ## Decisions
 
@@ -120,11 +120,11 @@ how the phase pays for it.
 `app_shell.tsx` already renders `<header className="flex h-12 shrink-0 items-center px-3">` with
 `SidebarTrigger` inside it. The button goes in that header with `ml-auto`.
 
-Extracting a `top_nav.tsx` with named slots for P7's search and P9's theme toggle was the
+Extracting a `top_nav.tsx` with named slots for P8's search and P10's theme toggle was the
 alternative. Rejected for now: after this phase the header holds two controls, and a layout
 component wrapping two controls is indirection without a payer. P1's own rule — *"don't build
 ahead; if a phase doesn't need it, don't install it yet"* — applies to structure as much as to
-dependencies. When P7 adds the third control, extract it then, and the extraction will be
+dependencies. When P8 adds the third control, extract it then, and the extraction will be
 mechanical because everything is already in one header.
 
 The header is chrome, and it is outside the board surface, so principle 4 is satisfied as written:
@@ -203,7 +203,7 @@ keep in sync — the placement call, the seed shape, the focus behaviour — for
 explicitly replaced rather than supplemented. The user asked for the sidebar route to go.
 
 The sidebar after this phase is a header, a nav group, and a rail. That is thin, and it is honest:
-P7 puts search and tags in it, P9 puts the theme toggle in it.
+P8 puts search and tags in it, P10 puts the theme toggle in it.
 
 ### D6 · `n` opens the dialog
 

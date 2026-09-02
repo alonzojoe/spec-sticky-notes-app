@@ -17,11 +17,17 @@ export function createNoteSeed(
   topOrder: number,
   body = '',
   date = todayISO(),
+  title = '',
+  // Already through normalizeLink at the call site. The factory is the impure boundary, not the
+  // validating one — lib/links.ts is the only thing that judges a URL.
+  link = '',
 ): NoteSeed {
   return {
     id: crypto.randomUUID(),
     color,
+    title,
     body,
+    link,
     date,
     // Above every existing note, so it takes slot 0. One note is written; the rest move
     // because the derived layout shifted, not because anything rewrote them.

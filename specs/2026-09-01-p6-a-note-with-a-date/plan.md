@@ -176,7 +176,7 @@ Only now, with the view working.
     (autosave on change, immediate on close, text survives a reload) are all still claims this app
     makes; only the control changed.
 
-7.2 `roadmap.md`, `tech-stack.md`, `README.md` per **D8**. The old P6 moves to **P11** with a note
+7.2 `roadmap.md`, `tech-stack.md`, `README.md` per **D8**. The old P6 moves to the **Later** list with a note
     that the view dialog's swatches discharge most of it.
 
 7.3 Full gate.

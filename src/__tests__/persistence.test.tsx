@@ -33,6 +33,8 @@ const stored: Note = {
   id: 'stored-1',
   body: 'written before this session',
   color: 'mint',
+  title: '',
+  link: '',
   date: '2026-09-01',
   order: 1,
   pinned: false,

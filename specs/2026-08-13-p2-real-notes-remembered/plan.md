@@ -188,7 +188,7 @@ export function notesReducer(state: BoardState, action: NoteAction): BoardState 
 
 1.4 Write `src/__tests__/reducer_purity.test.ts` for § T19 — a source assertion that
     `notes_reducer.ts` contains no `Date.now`, `Math.random`, `crypto.randomUUID`, or import from
-    `react`. A pure reducer that quietly grows a `Date.now()` in P8 is a test that starts needing
+    `react`. A pure reducer that quietly grows a `Date.now()` in P9 is a test that starts needing
     fake timers, and nobody notices until it does.
 
 1.5 `npm run build && npm run lint && npm test` — clean.
@@ -690,7 +690,7 @@ export function NoteControls({ note }: { note: Note }) {
 ```
 
     Delete is immediate and there is no undo — accepted for this phase, named in
-    [requirements.md](./requirements.md) § Risks, guarded by an `alert-dialog` in P10. The two
+    [requirements.md](./requirements.md) § Risks, guarded by an `alert-dialog` in P11. The two
     buttons sit a full `gap-1` apart so the destructive one is not adjacent by accident.
 
 7.3 Add `group` and `relative` to the `<article>` in `note_card.tsx` — the control layer is
@@ -757,7 +757,7 @@ and P1's specs still resolve. Nothing is scheduled here.
 ## P4 · Write on them — *absorbed into P2*
 
 Inline editing with debounced autosave shipped with P2. Markdown rendering was never P4's — it
-is still **P8**. Nothing is scheduled here.
+is still **P9**. Nothing is scheduled here.
 ```
 
 8.3 `specs/roadmap.md` — reduce P6 to what is left of it:
@@ -780,7 +780,7 @@ pinning works, and per-note controls already appear on hover or focus of that no
 - **Persistence contract**, first bullet. Add the sidebar key, which is now real:
 
 ```md
-- Board key: `sticky-notes:board:v1` · Sidebar key: `sticky-notes:sidebar` · Theme key: `sticky-notes:theme` (P9)
+- Board key: `sticky-notes:board:v1` · Sidebar key: `sticky-notes:sidebar` · Theme key: `sticky-notes:theme` (P10)
 ```
 
 - **State architecture**, the sentence *"Every action stamps `updatedAt`."* Replace with:

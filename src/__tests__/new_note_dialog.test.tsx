@@ -65,7 +65,11 @@ describe('T20 · colour and text are chosen before the note exists', () => {
     // note created empty is one you are about to write on. The dialog on screen afterwards is
     // a different one — it carries the note's textarea, not a New note title.
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Add note' })).toBeNull())
-    expect(screen.getByRole('textbox', { name: 'Note text' })).toBeDefined()
+    // Also awaited, not asserted synchronously. The dialog dispatches `add` inside a
+    // setTimeout(0) — see the comment in new_note_dialog.tsx — so the create dialog closing and
+    // the note view opening are two separate macrotasks. Asserting the second the moment the
+    // first lands is a race, and it failed roughly one run in three.
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Note text' })).toBeDefined())
   })
 })
 
@@ -224,6 +228,11 @@ describe('T25 · the whole dialog is completable without a mouse', () => {
     await waitFor(() => expect(document.activeElement).toBe(noteText()))
 
     await user.keyboard('a thought')
+    // Two shifts back to the swatches, not one. P7 put the title input between the radiogroup
+    // and the textarea, which is a stop the keyboard path gained rather than one it lost — the
+    // carve-out's condition is that the dialog is completable without a mouse, not that any
+    // particular control is exactly one tab away.
+    await user.tab({ shift: true })
     await user.tab({ shift: true })
     await user.keyboard('{ArrowRight}')
     await user.keyboard('{Control>}{Enter}{/Control}')
@@ -262,5 +271,95 @@ describe('T26 · Escape and Cancel close without creating, and clear the draft',
     await open(user)
     expect((noteText() as HTMLTextAreaElement).value).toBe('')
     expect(screen.getByRole('radio', { name: 'Butter' }).getAttribute('aria-checked')).toBe('true')
+  })
+})
+
+// T52 — P7. The create dialog carries the title and the link, and the link is stored normalised.
+describe('T52 · the create dialog carries the title and the link', () => {
+  const read = () => JSON.parse(window.localStorage.getItem('sticky-notes:board:v1') ?? '{}')
+
+  it('puts a note on the board with both', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await open(user)
+
+    await user.type(screen.getByLabelText('Title'), 'Standup with the team')
+    await user.type(noteText(), 'went through the merge')
+    await user.type(screen.getByLabelText('Link'), 'https://meet.google.com/abc-defg-hij')
+    await user.click(screen.getByRole('button', { name: 'Add note' }))
+
+    await waitFor(() => expect(read().notes ?? []).toHaveLength(1))
+    const [stored] = read().notes
+    expect(stored.title).toBe('Standup with the team')
+    expect(stored.link).toBe('https://meet.google.com/abc-defg-hij')
+  })
+
+  // The whole point of normalizeLink at the boundary: a bare host is what people type.
+  it('stores a bare host normalised', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await open(user)
+
+    await user.type(screen.getByLabelText('Link'), 'meet.google.com/abc-defg-hij')
+    await user.click(screen.getByRole('button', { name: 'Add note' }))
+
+    await waitFor(() => expect(read().notes ?? []).toHaveLength(1))
+    expect(read().notes[0].link).toBe('https://meet.google.com/abc-defg-hij')
+  })
+
+  // Ctrl/Cmd+Enter never blurs the link input, so this is the path where a draft held privately
+  // inside the field would be silently dropped.
+  it('normalises a link submitted from the keyboard without blurring', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await open(user)
+
+    await user.type(screen.getByLabelText('Link'), 'meet.google.com/xyz')
+    await user.keyboard('{Control>}{Enter}{/Control}')
+
+    await waitFor(() => expect(read().notes ?? []).toHaveLength(1))
+    expect(read().notes[0].link).toBe('https://meet.google.com/xyz')
+  })
+
+  it('stores an empty string for each when neither is filled in', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await open(user)
+
+    await user.type(noteText(), 'just a thought')
+    await user.click(screen.getByRole('button', { name: 'Add note' }))
+
+    await waitFor(() => expect(read().notes ?? []).toHaveLength(1))
+    const [stored] = read().notes
+    expect(stored.title).toBe('')
+    expect(stored.link).toBe('')
+    expect(stored.createdAt).toBe(stored.updatedAt)
+  })
+
+  it('refuses an unsafe link rather than storing it', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await open(user)
+
+    await user.type(screen.getByLabelText('Link'), 'javascript:alert(1)')
+    await user.click(screen.getByRole('button', { name: 'Add note' }))
+
+    await waitFor(() => expect(read().notes ?? []).toHaveLength(1))
+    expect(read().notes[0].link).toBe('')
+  })
+
+  // A cancelled draft is not a draft — the two new fields join the four that already reset.
+  it('clears both on Cancel', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await open(user)
+
+    await user.type(screen.getByLabelText('Title'), 'Standup')
+    await user.type(screen.getByLabelText('Link'), 'meet.google.com/abc')
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await open(user)
+
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('')
+    expect((screen.getByLabelText('Link') as HTMLInputElement).value).toBe('')
   })
 })

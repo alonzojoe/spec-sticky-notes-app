@@ -1,4 +1,5 @@
 import { isISODate, isoFromEpoch } from '@/lib/dates'
+import { isSafeLink } from '@/lib/links'
 import { EMPTY_BOARD, NOTE_COLORS, type BoardState, type Note } from '@/types/note'
 
 export const BOARD_KEY = 'sticky-notes:board:v1'
@@ -9,7 +10,12 @@ export const SIDEBAR_KEY = 'sticky-notes:sidebar'
  * exactly as it always was — a board that is malformed in any other way is still rejected
  * whole.
  */
-type StoredNote = Omit<Note, 'order' | 'date'> & { order?: unknown; date?: unknown }
+type StoredNote = Omit<Note, 'order' | 'date' | 'title' | 'link'> & {
+  order?: unknown
+  date?: unknown
+  title?: unknown
+  link?: unknown
+}
 
 const isNote = (value: unknown): value is StoredNote => {
   if (typeof value !== 'object' || value === null) return false
@@ -66,13 +72,39 @@ export const parseSidebarOpen = (raw: string): boolean => parseStored(raw) !== f
 const dateOf = (note: StoredNote): string =>
   isISODate(note.date) ? note.date : isoFromEpoch(note.createdAt)
 
+/**
+ * P7's repair, and the second half of the link boundary.
+ *
+ * A note saved before this phase has no `title` and no `link`; both become `''`, which is what
+ * every reader already expects for an absent one. A `link` that is present but is not an
+ * `http(s)` URL becomes `''` too — and that check is the point. `normalizeLink` guards what the
+ * field writes, and this guards what the disk hands back, so a `javascript:` URL typed straight
+ * into localStorage by hand never reaches an `href`.
+ *
+ * Repaired rather than rejected, like the date: a malformed title or link is recoverable and
+ * losing the whole board is not.
+ */
+const titleOf = (note: StoredNote): string => (typeof note.title === 'string' ? note.title : '')
+
+const linkOf = (note: StoredNote): string =>
+  typeof note.link === 'string' && isSafeLink(note.link) ? note.link : ''
+
 const withOrder = (notes: StoredNote[]): Note[] => {
   if (notes.every((note) => typeof note.order === 'number')) {
     return notes.map((note) => {
-      const { id, body, color, pinned, createdAt, updatedAt } = note as Omit<StoredNote, 'date'> & {
-        date?: unknown
+      const { id, body, color, pinned, createdAt, updatedAt } = note
+      return {
+        id,
+        body,
+        color,
+        pinned,
+        createdAt,
+        updatedAt,
+        title: titleOf(note),
+        link: linkOf(note),
+        date: dateOf(note),
+        order: note.order as number,
       }
-      return { id, body, color, pinned, createdAt, updatedAt, date: dateOf(note), order: note.order as number }
     })
   }
 
@@ -81,10 +113,19 @@ const withOrder = (notes: StoredNote[]): Note[] => {
   return notes.map((note) => {
     // Rebuilt rather than spread-and-overwritten, so `x` and `y` from a pre-P5 board have
     // nowhere to survive.
-    const { id, body, color, pinned, createdAt, updatedAt } = note as Omit<StoredNote, 'date'> & {
-        date?: unknown
-      }
-    return { id, body, color, pinned, createdAt, updatedAt, date: dateOf(note), order: rank.indexOf(id) + 1 }
+    const { id, body, color, pinned, createdAt, updatedAt } = note
+    return {
+      id,
+      body,
+      color,
+      pinned,
+      createdAt,
+      updatedAt,
+      title: titleOf(note),
+      link: linkOf(note),
+      date: dateOf(note),
+      order: rank.indexOf(id) + 1,
+    }
   })
 }
 

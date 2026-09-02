@@ -12,6 +12,8 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
   color: 'butter',
+  title: '',
+  link: '',
   date: '2026-09-01',
   order: 1,
   pinned: false,
@@ -112,7 +114,9 @@ describe('T45 · the card is a summary', () => {
 
     // jsdom runs no layout, so a getBoundingClientRect comparison would compare two zeroes and
     // pass vacuously. The fixed height is asserted from the class that causes it.
-    for (const id of ['a', 'b']) expect(card(id).className).toContain('h-44')
+    // h-52 since P7, which grew the card for the title and the link chip. The height is what is
+    // uniform; the clamp inside it is not — T55 covers that.
+    for (const id of ['a', 'b']) expect(card(id).className).toContain('h-52')
   })
 
   it('clamps the body rather than letting it overflow', () => {
@@ -121,7 +125,9 @@ describe('T45 · the card is a summary', () => {
 
     // line-clamp rather than overflow:hidden, so the ellipsis lands on the last visible line —
     // that is what signals "there is more" instead of looking like the text stopped.
-    expect(card('a').querySelector('.line-clamp-4')).not.toBeNull()
+    // Five lines, not four: this note has neither a title nor a link, so it takes both spare
+    // rows back. P7's answer to the question P6's Gate 3 left open.
+    expect(card('a').querySelector('.line-clamp-5')).not.toBeNull()
   })
 })
 
@@ -201,5 +207,118 @@ describe('T47 · the card’s keyboard contract', () => {
         c.getAttribute('data-testid'),
       ),
     ).toEqual(['note-b', 'note-a'])
+  })
+})
+
+// T53 — P7. The note view edits the title and the link, and saves without a button.
+describe('T53 · the note view carries the title and the link', () => {
+  it('shows what the note already has', () => {
+    seed([note({ title: 'Standup', link: 'https://meet.google.com/abc' })])
+    render(<App />)
+
+    fireEvent.click(opener())
+
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Standup')
+    expect((screen.getByLabelText('Link') as HTMLInputElement).value).toBe(
+      'https://meet.google.com/abc',
+    )
+  })
+
+  it('writes a typed title after the debounce', () => {
+    seed([note()])
+    render(<App />)
+    fireEvent.click(opener())
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Standup' } })
+    flush()
+    flush()
+
+    // What the card does with it is T54's business — the board behind an open dialog is
+    // aria-hidden by Radix and is not queryable from here anyway.
+    expect(readNotes()[0].title).toBe('Standup')
+  })
+
+  // The flush on close covers all three fields, not only the body — the last keystroke before
+  // Escape must never be the one that is lost.
+  it('writes a title typed immediately before Escape', () => {
+    seed([note()])
+    render(<App />)
+    fireEvent.click(opener())
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Standup' } })
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    // The storage mirror is debounced too, so this drains it. The assertion still
+    // discriminates: close() cancels the pending saveTitle, so without its own dispatch the
+    // value would never arrive however long the clock ran.
+    flush()
+    flush()
+
+    expect(readNotes()[0].title).toBe('Standup')
+  })
+
+  it('normalises a bare host on blur and stores it', () => {
+    seed([note()])
+    render(<App />)
+    fireEvent.click(opener())
+
+    const field = screen.getByLabelText('Link') as HTMLInputElement
+    fireEvent.change(field, { target: { value: 'meet.google.com/abc' } })
+    fireEvent.blur(field)
+    flush()
+    flush()
+
+    expect(readNotes()[0].link).toBe('https://meet.google.com/abc')
+    expect(field.value).toBe('https://meet.google.com/abc')
+  })
+
+  // Normalising per keystroke would turn `h` into `https://h` between the first and second
+  // character of `https`, which is the reason the commit waits for blur.
+  it('does not rewrite the link while it is being typed', () => {
+    seed([note()])
+    render(<App />)
+    fireEvent.click(opener())
+
+    const field = screen.getByLabelText('Link') as HTMLInputElement
+    fireEvent.change(field, { target: { value: 'h' } })
+
+    expect(field.value).toBe('h')
+    expect(readNotes()[0].link).toBe('')
+  })
+
+  it('keeps the text but stores nothing for an unparseable link', () => {
+    seed([note()])
+    render(<App />)
+    fireEvent.click(opener())
+
+    const field = screen.getByLabelText('Link') as HTMLInputElement
+    fireEvent.change(field, { target: { value: 'javascript:alert(1)' } })
+    fireEvent.blur(field)
+    flush()
+    flush()
+
+    expect(field.value).toBe('javascript:alert(1)')
+    expect(readNotes()[0].link).toBe('')
+    // No error message, no blocked dismissal — the missing chip is the feedback.
+    expect(screen.getByRole('dialog')).toBeDefined()
+  })
+
+  it('resets its fields when a different note is opened', () => {
+    seed([note({ id: 'a', title: 'first', order: 2 }), note({ id: 'b', title: 'second', order: 1 })])
+    render(<App />)
+
+    fireEvent.click(opener(0))
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('first')
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+
+    fireEvent.click(opener(1))
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('second')
+  })
+
+  it('still has no Save button', () => {
+    seed([note({ title: 'Standup', link: 'https://meet.google.com/abc' })])
+    render(<App />)
+    fireEvent.click(opener())
+
+    expect(screen.queryByRole('button', { name: /save/i })).toBeNull()
   })
 })

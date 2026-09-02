@@ -11,6 +11,8 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
   color: 'butter',
+  title: '',
+  link: '',
   date: '2026-09-01',
   order: 1,
   pinned: false,
@@ -101,9 +103,12 @@ describe('a card is a summary', () => {
 
     // jsdom runs no layout, so heights are all zero and a rect comparison would pass
     // vacuously. The clamp and the fixed height are asserted from the classes that cause them.
+    // P7 grew the card to h-52 to hold the title and the link chip, and made the clamp depend
+    // on which of those the note has. Neither note here has either, so both take the widest
+    // clamp — see BODY_LINES in note_card.tsx.
     const cards = screen.getAllByRole('article')
-    for (const card of cards) expect(card.className).toContain('h-44')
-    expect(document.querySelector('.line-clamp-4')).not.toBeNull()
+    for (const card of cards) expect(card.className).toContain('h-52')
+    expect(document.querySelector('.line-clamp-5')).not.toBeNull()
   })
 })
 

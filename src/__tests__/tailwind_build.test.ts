@@ -56,3 +56,29 @@ describe('the Tailwind pipeline', () => {
     expect(css).not.toContain(`.${unusedUtility}`)
   })
 })
+
+// T51 — P7. Every class the card can reach must actually emit. A missing utility here fails
+// silently: the card simply does not clamp, and no test that reads the DOM would notice.
+describe('T51 · the card geometry emits', () => {
+  // Assembled rather than written literally, because Tailwind scans this file too and a literal
+  // would emit the class it is meant to be checking for.
+  const clamp = (n: number) => ['line', 'clamp', String(n)].join('-')
+
+  it.each([3, 4, 5])('emits %s of the body clamps BODY_LINES can choose', (lines) => {
+    expect(css).toContain(`.${clamp(lines)}`)
+  })
+
+  it('emits the fixed card height', () => {
+    expect(css).toContain(`.${['h', '52'].join('-')}`)
+  })
+
+  // The obvious companion — "no clamp wider than the table allows" — cannot be asserted from
+  // the stylesheet. Tailwind scans the whole project including specs/, and validation.md names
+  // line-clamp-6 in order to forbid it, which is enough to emit it. The table itself is asserted
+  // from the source below instead, which is the thing that actually matters.
+  it('offers exactly the three clamps the table describes', () => {
+    const card = readFileSync(join(root, 'src/components/board/note_card.tsx'), 'utf8')
+    const table = card.slice(card.indexOf('BODY_LINES'), card.indexOf('const bodyClamp'))
+    expect(table.match(/line-clamp-\d+/g)).toEqual([clamp(3), clamp(4), clamp(5)])
+  })
+})
