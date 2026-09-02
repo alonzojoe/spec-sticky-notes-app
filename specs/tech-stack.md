@@ -146,6 +146,9 @@ src/
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
       paper_radiogroup.tsx // the six swatches, shared by both dialogs        (P6)
       note_fields.tsx    // the title and link inputs, shared by both dialogs (P7)
+      toolbar.tsx        // sidebar toggle + search trigger + New note        (P8)
+      search_trigger.tsx // a BUTTON shaped like a field; ⌘K / Ctrl+K badge   (P8)
+      search_dialog.tsx  // the palette: query, results, roving selection     (P8)
     board/
       board.tsx          // the cork surface; measures its width and lays out the grid
       note_card.tsx      // one sheet of paper: a summary at a fixed height, with a
@@ -158,12 +161,17 @@ src/
     dates.ts             // ISO in, MM/DD/YYYY out; never builds a Date from a store (P6)
     links.ts             // the only judge of a URL: http(s) allowlisted, bare host
                          //   prefixed, everything else normalised to ''            (P7)
+    platform.ts          // is this a Mac; what the modifier is called here     (P8)
+    search.ts            // title-then-body substring, ranked, with an excerpt  (P8)
     utils.ts
     board_storage.ts     // storage keys and the defensive read
     note_factory.ts      // ids, timestamps, and the stamp that takes the first slot
     paper.ts             // NoteColor -> bg-paper-*, written out for the scanner
     tags.ts              // parse #tags out of body                       (P9)
     markdown.ts          // render markdown + checkboxes                  (P10)
+  context/
+    open_note_context.tsx // which note is open, shared by the board and the palette (P8)
+    use_open_note.ts      // its hook, split for react-refresh                       (P8)
   types/
     note.ts
 ```

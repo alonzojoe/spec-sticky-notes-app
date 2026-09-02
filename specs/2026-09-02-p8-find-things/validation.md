@@ -130,7 +130,11 @@ T19's frozen-state check and T35's propagation checks are the tripwires there.
 ### T60 · Typing finds notes, and the list is the matcher's — `search_dialog.test.tsx`
 
 - Typing a query renders one row per hit, in the matcher's order.
-- Each row shows the note's title, or `Untitled note` when it has none.
+- Each row shows the note's title. **An untitled note leads with its excerpt instead** — it has no
+  name, so its text is the closest thing it has to one, and `Untitled note` named nothing while
+  demoting the only distinguishing text to the caption. `Empty note` is the fallback when there is
+  no text either, matching the card's own language. Gate 3 check 3 is where this was found.
+- The footer offers the movement hints only when there are rows to move through.
 - An empty query shows the prompt and no rows.
 - A query with no matches says so and names the query.
 - The result count in the footer agrees with the number of rows.
@@ -189,6 +193,53 @@ long bodies where the match is far from the start.
 
 7. **The trigger below `sm`.** Narrow the window until the label and badge drop. Is the remaining
    magnifier still an obvious target, and does the New note button still fit beside it?
+
+### Answers — run 2026-09-02 against a thirty-note board
+
+Seeded thirty notes across all six papers: a quarter untitled, a fifth carrying a long body where
+the match sits ~230 characters in, a sixth carrying a Meet link, and ten words shared across them
+so a common query returns several hits.
+
+1. **Does it feel instant? Yes.** The 120ms debounce is below the threshold where a delay reads as
+   lag — the list is there within the same glance as the keystroke. The debounce is not protecting
+   the matcher, which is `includes` over thirty strings; it is protecting the list from building a
+   wide intermediate result on the way to a narrow one.
+
+2. **Roving selection, measured in the browser rather than in jsdom.** After `ArrowDown`:
+   `document.activeElement` is still the input, `aria-activedescendant` reads `search-result-1`,
+   and the second row carries `aria-selected="true"`. That is the pattern working, and it is the
+   half that is invisible until someone types after arrowing.
+
+3. **The excerpt is useful, and it exposed a real defect.** Windowing around the match works — a
+   note matched 230 characters in shows `…we care about here is merge.` rather than its opening
+   sentence. But three untitled hits rendered as **three identical rows reading `Untitled note`**,
+   with the only distinguishing text demoted to the quiet caption underneath. Fixed: an untitled
+   row now leads with its excerpt, because a note with no title has no name and the text is the
+   closest thing it has to one. `Empty note` is the fallback when there is no text either, matching
+   the card's own language.
+
+4. **A row is not a card.** No paper, no shadow, no date, no grain — a colour dot, a line of title
+   and a line of excerpt. It reads as an index entry into the board, which was the risk
+   requirements § Risks named.
+
+5. **The backdrop is identical**, and provably so rather than by eye: the overlay's computed
+   `backdrop-filter` is `blur(4px)` and it is the same `dialog.tsx` node the create dialog renders.
+
+6. **An empty board says something sensible** — the prompt, `0 notes`, and `No notes match "…"`
+   naming the query. `Enter` with no results does nothing and opens no view. **This check found a
+   second defect:** the footer offered `↑↓ to move · ↵ to open` to a board with nothing to move
+   through. The movement hints are now rendered only when there are rows.
+
+7. **The trigger below `sm`, measured at a 566px viewport:** it collapses to 32×32, the label and
+   the badge compute to `display: none`, the magnifier remains, and `aria-label` still reads
+   `Search notes (⌘K)` — so the name survives at every width. The New note button still fits beside
+   it.
+
+No console errors on load, on search, or on opening a result.
+
+**One thing the seed could not answer:** two untitled notes whose bodies are identical around the
+match still render as identical rows. That is a property of the seed rather than of the palette —
+real notes differ — but it is the shape of the problem a future ranking change would have to solve.
 
 Not claimed by this phase, and still outstanding from P5 and P6: the `prefers-reduced-motion` pass
 and the 100+ note drag check. Both belong to **P12** after **D1** and neither is touched here.
