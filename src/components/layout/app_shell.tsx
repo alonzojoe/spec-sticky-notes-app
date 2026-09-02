@@ -8,6 +8,7 @@ import { NewNoteDialog } from '@/components/layout/new_note_dialog'
 import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { NotesProvider } from '@/context/notes_context'
+import { OpenNoteProvider } from '@/context/open_note_context'
 import { SIDEBAR_KEY, parseSidebarOpen } from '@/lib/board_storage'
 
 export function AppShell() {
@@ -45,6 +46,7 @@ export function AppShell() {
 
   return (
     <NotesProvider>
+      <OpenNoteProvider>
       <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <AppSidebar />
         {/* SidebarInset renders the <main> element itself, so nothing here nests another
@@ -76,6 +78,7 @@ export function AppShell() {
         </SidebarInset>
         <NewNoteDialog open={creating} onOpenChange={setCreating} />
       </SidebarProvider>
+      </OpenNoteProvider>
     </NotesProvider>
   )
 }

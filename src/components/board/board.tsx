@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { NoteCard } from '@/components/board/note_card'
 import { NoteViewDialog } from '@/components/layout/note_view_dialog'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
+import { useOpenNote } from '@/context/use_open_note'
 import { useDraggable, type DragTarget } from '@/hooks/use_draggable'
 import { MIN_COLUMN } from '@/lib/grid'
 import type { Note } from '@/types/note'
@@ -30,9 +31,9 @@ export function Board() {
   )
   const { drag, start, move, end, isDragging } = useDraggable(swap)
 
-  // The id, not the note: the open note is then always a live lookup and never a stale copy of
-  // one that has since been edited, recoloured or redated.
-  const [openId, setOpenId] = useState<string | null>(null)
+  // P8 moved this into its own context so the search palette can open a note too. The board is
+  // still the only thing that renders the view; it is no longer the only thing that can open one.
+  const { openId, setOpenId } = useOpenNote()
   const open = notes.find((note) => note.id === openId) ?? null
 
   const ordered = arrange(notes)
@@ -57,7 +58,10 @@ export function Board() {
     const fresh = notes.find((note) => !seen.current?.has(note.id))
     notes.forEach((note) => seen.current?.add(note.id))
     if (fresh !== undefined && fresh.body === '') setOpenId(fresh.id)
-  }, [notes])
+    // `setOpenId` is a useState setter reached through context, so it is referentially stable
+    // forever — but the lint rule cannot see that through the provider, and silencing it with a
+    // disable comment would be worse than naming a dependency that never changes.
+  }, [notes, setOpenId])
 
   /**
    * The cards a drag hit-tests against, read from the DOM once when the press begins.

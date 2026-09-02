@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Board } from '@/components/board/board'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { NotesProvider } from '@/context/notes_context'
+import { OpenNoteProvider } from '@/context/open_note_context'
 import { useNotesDispatch } from '@/context/use_notes'
 import { BOARD_KEY } from '@/lib/board_storage'
 import { createNoteSeed } from '@/lib/note_factory'
@@ -39,9 +40,13 @@ function AddOne() {
 const renderBoard = (notes: Note[] = SEEDED) => {
   window.localStorage.setItem(BOARD_KEY, JSON.stringify({ version: 1, notes }))
   return render(
+    // P8 lifted `openId` out of the board, so the board now needs its provider the same way it
+    // needs NotesProvider. App renders both; a test that mounts <Board /> directly supplies both.
     <NotesProvider>
-      <Board />
-      <AddOne />
+      <OpenNoteProvider>
+        <Board />
+        <AddOne />
+      </OpenNoteProvider>
     </NotesProvider>,
   )
 }
@@ -125,8 +130,10 @@ describe('the board', () => {
 
     rerender(
       <NotesProvider>
-        <Board />
-        <AddOne />
+        <OpenNoteProvider>
+          <Board />
+          <AddOne />
+        </OpenNoteProvider>
       </NotesProvider>,
     )
 
