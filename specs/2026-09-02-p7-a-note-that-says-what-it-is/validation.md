@@ -126,7 +126,13 @@ Against the built CSS, the way T6 and T47 already work:
 - `line-clamp-3`, `line-clamp-4` and `line-clamp-5` all emit. Every one is reachable from **D5**'s
   table, and a missing utility fails silently by not clamping at all.
 - `h-52` emits.
-- No `line-clamp-6` or higher — if one is present, the `Record` grew a case **D5** does not describe.
+- The `BODY_LINES` table in `note_card.tsx` offers exactly those three clamps and no others — if
+  it grew a case, **D5**'s table no longer describes the card.
+
+  This one is asserted from the **source**, not from the stylesheet, and the reason is worth
+  recording: Tailwind scans the whole project, `specs/` included, so this document naming
+  `line-clamp-6` in order to forbid it is by itself enough to emit `line-clamp-6`. A stylesheet
+  assertion would fail on the spec that describes it rather than on the code that broke it.
 
 ### T52 · The create dialog carries both fields — `new_note_dialog.test.tsx`
 

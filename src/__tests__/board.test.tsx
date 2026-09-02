@@ -159,3 +159,107 @@ describe('the board · a card carries no layout of its own', () => {
     expect(screen.getByTestId('note-b').style.zIndex).toBe('')
   })
 })
+
+// T54 — P7. The card renders the summary, and the chip is a link that does not fight the four
+// gestures already on the card.
+describe('T54 · the title and the link chip on the card', () => {
+  const chip = (id: string) => screen.getByTestId(`note-${id}`).querySelector('[data-slot="note-link"]')
+  const title = (id: string) =>
+    screen.getByTestId(`note-${id}`).querySelector('[data-slot="note-title"]')
+
+  it('renders a title when the note has one', () => {
+    renderBoard([note({ id: 'a', title: 'Standup with the team' })])
+
+    expect(title('a')?.textContent).toBe('Standup with the team')
+  })
+
+  // No `Untitled` placeholder — the row goes back to the body instead.
+  it('renders no title element and no placeholder when it has none', () => {
+    renderBoard([note({ id: 'a', title: '' })])
+
+    expect(title('a')).toBeNull()
+    expect(screen.queryByText(/untitled/i)).toBeNull()
+  })
+
+  it('renders the link as one anchor carrying the stored URL', () => {
+    renderBoard([note({ id: 'a', link: 'https://meet.google.com/abc-defg-hij' })])
+
+    const anchor = chip('a')
+    expect(anchor).not.toBeNull()
+    expect(anchor?.getAttribute('href')).toBe('https://meet.google.com/abc-defg-hij')
+    expect(anchor?.textContent).toContain('meet.google.com/abc-defg-hij')
+    expect(anchor?.getAttribute('target')).toBe('_blank')
+    // noopener because a new tab holding window.opener can navigate the board out from under
+    // itself; noreferrer because there is no reason to tell the destination where it came from.
+    expect(anchor?.getAttribute('rel')).toContain('noopener')
+    expect(anchor?.getAttribute('rel')).toContain('noreferrer')
+  })
+
+  it('renders no anchor when the note has no link', () => {
+    renderBoard([note({ id: 'a', link: '' })])
+
+    expect(chip('a')).toBeNull()
+  })
+
+  // An <a> inside a <button> is invalid HTML and browsers disagree about which one a click
+  // belongs to. Asserted structurally because it is invisible at runtime until one does.
+  it('puts the chip beside the opener, never inside it', () => {
+    renderBoard([note({ id: 'a', link: 'https://meet.google.com/abc' })])
+
+    const opener = screen.getByTestId(`note-a`).querySelector('[data-testid="open"]')
+    expect(opener?.contains(chip('a') as Node)).toBe(false)
+    expect(chip('a')?.parentElement).toBe(screen.getByTestId('note-a'))
+  })
+
+  // Same contract as T35's pin and delete: following a link must not open the note behind it.
+  it('does not open the note when the chip is clicked', () => {
+    renderBoard([note({ id: 'a', link: 'https://meet.google.com/abc' })])
+
+    fireEvent.click(chip('a') as Element)
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  // And pressing it must not begin a drag, or a link would be unclickable on a board.
+  it('does not begin a drag from the chip', () => {
+    renderBoard([
+      note({ id: 'a', order: 2, link: 'https://meet.google.com/abc' }),
+      note({ id: 'b', order: 1 }),
+    ])
+    const anchor = chip('a') as Element
+
+    fireEvent.pointerDown(anchor, { clientX: 0, clientY: 0, pointerId: 1 })
+    fireEvent.pointerMove(anchor, { clientX: 200, clientY: 0, pointerId: 1 })
+    fireEvent.pointerUp(anchor, { clientX: 200, clientY: 0, pointerId: 1 })
+
+    expect(screen.getByTestId('note-a').dataset.dragging).toBeUndefined()
+  })
+})
+
+// T55 — the clamp follows requirements § D5's table, and the height does not.
+describe('T55 · the body clamp varies while the height does not', () => {
+  const LINK = 'https://meet.google.com/abc'
+  const CASES: [string, Partial<Note>, string][] = [
+    ['titled and linked', { title: 'Standup', link: LINK }, 'line-clamp-3'],
+    ['titled, no link', { title: 'Standup', link: '' }, 'line-clamp-4'],
+    ['untitled, linked', { title: '', link: LINK }, 'line-clamp-4'],
+    ['untitled, unlinked', { title: '', link: '' }, 'line-clamp-5'],
+  ]
+
+  it.each(CASES)('clamps a %s note to the stated lines', (_name, over, expected) => {
+    renderBoard([note({ id: 'a', ...over })])
+
+    expect(screen.getByTestId('note-a').querySelector(`.${expected}`)).not.toBeNull()
+  })
+
+  // The assertion the phase exists for: the clamp varies, h-52 does not.
+  it('gives all four cards the same height class', () => {
+    renderBoard(
+      CASES.map(([name, over], index) => note({ id: name, order: index + 1, ...over })),
+    )
+
+    for (const [name] of CASES) {
+      expect(screen.getByTestId(`note-${name}`).className).toContain('h-52')
+    }
+  })
+})
