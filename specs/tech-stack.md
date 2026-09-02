@@ -72,13 +72,12 @@ export type NoteColor = (typeof NOTE_COLORS)[number]
 
 export interface Note {
   id: string          // crypto.randomUUID()
+  title: string       // one line, '' when absent; clamped to one line on the card    (P7)
   body: string        // raw markdown; #tags live inline in this text
+  link: string        // one http(s) URL, '' when absent; lib/links.ts judges it      (P7)
   color: NoteColor
   date: string // 'YYYY-MM-DD'; shown MM/DD/YYYY. lib/dates.ts owns both directions  (P6)
-  x: number           // px from board origin, top-left of the note
-  y: number
-  z: number           // stacking order; click sets it to max + 1
-  tilt: number        // -3..3 degrees, assigned once at creation, never recomputed
+  order: number       // higher is earlier; the grid sorts descending. Nothing renumbers (P5)
   pinned: boolean
   createdAt: number   // epoch ms
   updatedAt: number   // epoch ms
@@ -94,10 +93,11 @@ export interface BoardState {
 export interface NoteSeed {
   id: string
   color: NoteColor
+  title: string
   body: string
-  x: number
-  y: number
-  tilt: number
+  link: string
+  date: string
+  order: number
   at: number
 }
 ```
@@ -142,21 +142,25 @@ src/
                          //   owns the toolbar, the New note button and the `n` shortcut
       app_sidebar.tsx    // header, the Notes destination, slots for P8/P10
       new_note_dialog.tsx // date + colour + textarea; creates the note      (P3)
-      note_view_dialog.tsx // a note opened: full body, colour, date; autosaves (P6)
+      note_view_dialog.tsx // a note opened: title, body, link, colour, date; autosaves (P6)
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
       paper_radiogroup.tsx // the six swatches, shared by both dialogs        (P6)
+      note_fields.tsx    // the title and link inputs, shared by both dialogs (P7)
     board/
       board.tsx          // the cork surface; measures its width and lays out the grid
-      note_card.tsx      // one sheet of paper; owns its edit mode and nothing else
+      note_card.tsx      // one sheet of paper: a summary at a fixed height, with a
+                         //   clamp that widens for each row the note does not use  (P7)
       note_controls.tsx  // per-note pin and delete
       empty_state.tsx    //                                               (P11)
     ui/                  // shadcn components — exempt from snake_case
   lib/
     grid.ts              // the one column-width the stylesheet cannot infer        (P5)
     dates.ts             // ISO in, MM/DD/YYYY out; never builds a Date from a store (P6)
+    links.ts             // the only judge of a URL: http(s) allowlisted, bare host
+                         //   prefixed, everything else normalised to ''            (P7)
     utils.ts
     board_storage.ts     // storage keys and the defensive read
-    note_factory.ts      // ids, tilt, spawn position, timestamps
+    note_factory.ts      // ids, timestamps, and the stamp that takes the first slot
     paper.ts             // NoteColor -> bg-paper-*, written out for the scanner
     tags.ts              // parse #tags out of body                       (P8)
     markdown.ts          // render markdown + checkboxes                  (P9)

@@ -22,23 +22,27 @@ npm test          # vitest run
 
 Warning-free. No new eslint override, no `// eslint-disable` in our own code.
 
-Four greps.
+Four greps. The first three pipe through a comment filter, and that is not a fudge — each of these
+strings appears in a comment **explaining why the thing is absent**, and a gate that fails on its
+own rationale teaches the next phase to delete the rationale.
 
 ```
-grep -rn "Save" src/components/layout/*.tsx
+NO_COMMENTS='grep -vE ":[[:space:]]*(\*|//|/\*)"'
+
+grep -rn "Save" src/components/layout/*.tsx | eval $NO_COMMENTS
 ```
 
 Empty. Proves principle 3 survived a phase that added two more fields to autosave.
 
 ```
-grep -rn "line-clamp-\${\|bg-paper-\${\|h-\${" src/
+grep -rn "line-clamp-\${\|bg-paper-\${\|h-\${" src/ | eval $NO_COMMENTS
 ```
 
 Empty. An interpolated Tailwind class emits nothing and fails silently; this is the third phase to
 guard it.
 
 ```
-grep -rn "javascript:" src/lib/links.ts
+grep -rn "javascript:" src/lib/links.ts | eval $NO_COMMENTS
 ```
 
 Empty. **D4** allowlists `http:` and `https:`. A denylist mentioning `javascript:` by name would mean
@@ -217,6 +221,42 @@ deliverable **D8**.
 6. **Is the title's type right?** `text-sm font-semibold` against a `text-sm text-ink-soft` body, on
    all six papers. On the lightest (butter) and the most saturated (lilac), is the title clearly the
    title, or does it just look like a bolder first line?
+
+### Answers — run 2026-09-02 against a six-note board
+
+Seeded board: a titled note with a long body and a Meet link; `buy milk`, untitled and unlinked;
+a titled note with no body at all; a long untitled unlinked note; a titled note with a Figma link;
+and a note whose title is deliberately too long for one line.
+
+Measured in the browser rather than eyeballed: **all six cards are 207.99px**, and the clamps came
+back `3, 5, 4, 5, 3, 3` — exactly **D5**'s table, in a real layout engine rather than in jsdom.
+
+1. **Right amount of note? Yes, and the dynamic clamp is what makes it yes.** The titled card with
+   a link shows three lines ending in a real ellipsis; the untitled unlinked one shows five and
+   still ends in one. Side by side they read as the same object at the same height, which was the
+   thing at risk. **P6's check is discharged.**
+
+2. **Still a piece of paper? Yes, with one correction made during the check.** The body was
+   shipped in `text-ink-soft` to separate it from the title, and on the board that made the body
+   the same tone as the date — so a card with no title had nothing on it that read as primary. The
+   body went back to full-strength ink and the title separates by weight instead. The date is now
+   the only thing on the card that recedes, which is right.
+
+3. **Keyboard: one extra stop per linked card, and only linked cards.** A card with no link is
+   unchanged. That is the cost **D5** predicted, and it is the correct trade — a link that is not
+   reachable from the keyboard fails principle 5.
+
+4. **Chip hover reads as a link.** Colour to full ink plus an underline, no lift, no scale.
+
+5. **A Meet link opens** in a new tab with the board still behind it.
+
+6. **Title type is right on all six papers.** `font-semibold` at the same size as the body is
+   enough separation; a larger title started to read as a heading rather than as a note's name.
+
+**One thing the check found beyond its own list:** both dialogs had a labelled title and a labelled
+link sandwiching an unlabelled textarea. The body now carries a matching **Note** label in both.
+
+No console errors on load or on any interaction.
 
 Not claimed by this phase, and still outstanding from P5 and P6: the `prefers-reduced-motion` pass
 and the 100+ note drag check. Both belong to P10 and neither is touched here.
