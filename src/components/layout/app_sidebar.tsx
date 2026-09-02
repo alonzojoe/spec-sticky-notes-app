@@ -1,5 +1,6 @@
 import { StickyNote } from 'lucide-react'
 
+import { StickyMark } from '@/components/layout/sticky_mark'
 import {
   Sidebar,
   SidebarContent,
@@ -17,8 +18,9 @@ import { useNotes } from '@/context/use_notes'
 // P3 moved note creation out of here and into the toolbar's dialog, so the sidebar is down
 // to its nav group. Slots later phases fill, named here so it grows by plan rather than by
 // improvisation:
-//   P7 — the search field and tag list, as a SidebarGroup below the nav group
-//   P9 — the theme toggle, in a SidebarFooter
+//   P10 — the tag list, as a SidebarGroup below the nav group (search became a ⌘K palette
+//         in the toolbar in P8, so no field lands here)
+//   Dark mode — the theme toggle, in a SidebarFooter
 // Nothing is rendered for them now. A control that cannot be used should not be drawn.
 export function AppSidebar() {
   const { notes } = useNotes()
@@ -27,7 +29,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <StickyNote className="size-5 shrink-0 text-sidebar-primary" aria-hidden />
+          {/* The same mark the tab shows. A lucide glyph here and a drawn mark in the tab meant
+              the app had two identities depending on where you looked. rounded-[5px] rather than
+              the SVG's own rx, so the corner radius reads right at 20px. */}
+          <StickyMark className="size-5 shrink-0 rounded-[5px]" />
           <span className="truncate font-medium group-data-[collapsible=icon]:hidden">
             Sticky
           </span>
