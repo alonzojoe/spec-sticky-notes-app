@@ -128,9 +128,13 @@ export function NoteCard({
           </span>
         )}
 
-        <span className={`mt-1.5 ${bodyClamp(note)} text-sm leading-relaxed whitespace-pre-wrap text-ink-soft`}>
+        {/* The body keeps full-strength ink. Softening it to separate it from the title was
+            tried and reverted: it made the body the same tone as the date, so a card with no
+            title had nothing on it that read as primary. The title separates by weight, which
+            is the right axis — the date is the only thing on the card that recedes. */}
+        <span className={`mt-1.5 ${bodyClamp(note)} text-sm leading-relaxed whitespace-pre-wrap`}>
           {/* Rendered, never stored. An empty note's body stays ''. */}
-          {note.body === '' ? 'Empty note' : note.body}
+          {note.body === '' ? <span className="text-ink-soft">Empty note</span> : note.body}
         </span>
       </button>
 

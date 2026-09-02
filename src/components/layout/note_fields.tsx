@@ -12,6 +12,19 @@ import { normalizeLink } from '@/lib/links'
 
 const LABEL = 'text-xs font-medium text-ink-soft'
 
+/**
+ * Exported so the body's textarea in both dialogs can carry the same label as the fields above
+ * and below it. Two labelled inputs sandwiching an unlabelled one reads as a mistake, and the
+ * textarea's `aria-label` alone leaves the sighted reader to infer what it is from its size.
+ */
+export function FieldLabel({ htmlFor, children }: { htmlFor: string; children: string }) {
+  return (
+    <label htmlFor={htmlFor} className={LABEL}>
+      {children}
+    </label>
+  )
+}
+
 export function TitleField({
   value,
   onChange,

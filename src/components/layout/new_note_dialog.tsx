@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { DateField } from '@/components/layout/date_field'
-import { LinkField, TitleField } from '@/components/layout/note_fields'
+import { FieldLabel, LinkField, TitleField } from '@/components/layout/note_fields'
 import { PaperRadiogroup } from '@/components/layout/paper_radiogroup'
 import { Button } from '@/components/ui/button'
 import {
@@ -122,23 +122,27 @@ export function NewNoteDialog({
 
           <TitleField value={title} onChange={setTitle} id="new-note-title" />
 
-          <textarea
-            // Focus stays here, not on the title above it, and that is the mission's call rather
-            // than a preference: "can I capture a thought in under two seconds" is the
-            // one-sentence test, and a required stop at an optional field fails it. The title is
-            // one Shift+Tab away. Same reasoning P3 used for the colour.
-            autoFocus
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            aria-label="Note text"
-            rows={4}
-            placeholder="Write the note…"
-            // Enter is a newline here, never a submit: a note body is multi-line, and a form
-            // that submitted on Enter would put the second line out of reach of the keyboard —
-            // exactly what the amended principle 2 promised not to do. Ctrl/Cmd+Enter is
-            // handled on the form above.
-            className="field-sizing-content max-h-72 min-h-24 w-full resize-none rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-ink outline-none placeholder:text-ink-soft/60 focus-visible:ring-2 focus-visible:ring-ring"
-          />
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel htmlFor="new-note-body">Note</FieldLabel>
+            <textarea
+              id="new-note-body"
+              // Focus stays here, not on the title above it, and that is the mission's call
+              // rather than a preference: "can I capture a thought in under two seconds" is the
+              // one-sentence test, and a required stop at an optional field fails it. The title
+              // is one Shift+Tab away. Same reasoning P3 used for the colour.
+              autoFocus
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              aria-label="Note text"
+              rows={4}
+              placeholder="Write the note…"
+              // Enter is a newline here, never a submit: a note body is multi-line, and a form
+              // that submitted on Enter would put the second line out of reach of the keyboard —
+              // exactly what the amended principle 2 promised not to do. Ctrl/Cmd+Enter is
+              // handled on the form above.
+              className="field-sizing-content max-h-72 min-h-24 w-full resize-none rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-ink outline-none placeholder:text-ink-soft/60 focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
 
           <LinkField value={link} onChange={setLink} onCommit={setLink} id="new-note-link" />
 

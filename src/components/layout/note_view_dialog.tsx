@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useDebounceCallback } from 'usehooks-ts'
 
 import { DateField } from '@/components/layout/date_field'
-import { LinkField, TitleField } from '@/components/layout/note_fields'
+import { FieldLabel, LinkField, TitleField } from '@/components/layout/note_fields'
 import { PaperRadiogroup } from '@/components/layout/paper_radiogroup'
 import { Button } from '@/components/ui/button'
 import {
@@ -128,16 +128,20 @@ function NoteView({
             id="note-view-title"
           />
 
-          <textarea
-            autoFocus
-            data-slot="note-body"
-            defaultValue={note.body}
-            aria-label="Note text"
-            rows={10}
-            placeholder="Write the note…"
-            className="field-sizing-content max-h-96 min-h-40 w-full resize-none rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-ink outline-none placeholder:text-ink-soft/60 focus-visible:ring-2 focus-visible:ring-ring"
-            onChange={(event) => saveBody(event.target.value)}
-          />
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel htmlFor="note-view-body">Note</FieldLabel>
+            <textarea
+              id="note-view-body"
+              autoFocus
+              data-slot="note-body"
+              defaultValue={note.body}
+              aria-label="Note text"
+              rows={10}
+              placeholder="Write the note…"
+              className="field-sizing-content max-h-96 min-h-40 w-full resize-none rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-ink outline-none placeholder:text-ink-soft/60 focus-visible:ring-2 focus-visible:ring-ring"
+              onChange={(event) => saveBody(event.target.value)}
+            />
+          </div>
 
           <LinkField
             value={link}
