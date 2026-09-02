@@ -50,7 +50,7 @@ the allowlist was not the mechanism, and a denylist loses to `JavaScript:` and t
 nobody thought of.
 
 ```
-grep -rln "P7 · Find things\|P8 · Markdown\|P9 · Dark mode\|P10 · Polish" specs/ \
+grep -rln "P7 · Find things\|P9 · Markdown\|P10 · Dark mode\|P11 · Polish" specs/ \
   --exclude-dir=2026-09-02-p7-a-note-that-says-what-it-is
 ```
 
@@ -259,7 +259,7 @@ link sandwiching an unlabelled textarea. The body now carries a matching **Note*
 No console errors on load or on any interaction.
 
 Not claimed by this phase, and still outstanding from P5 and P6: the `prefers-reduced-motion` pass
-and the 100+ note drag check. Both belong to P10 and neither is touched here.
+and the 100+ note drag check. Both belong to P11 and neither is touched here.
 
 ---
 

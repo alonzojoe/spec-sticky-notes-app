@@ -31,7 +31,7 @@ Two things this phase changes about the constitution, both named as decisions ra
 quietly:
 
 - The roadmap's P7 is *Find things* — search and tags. That work is not cancelled; it is renumbered
-  to P8 and everything after it moves down one (**D1**).
+  to P9 and everything after it moves down one (**D1**).
 - `mission.md` § Core scope lists what ships. A title and a link are not on it. **D2** adds them.
 
 ## Scope
@@ -58,11 +58,11 @@ Seven deliverables.
 
 ## Out of scope
 
-- **Search, tags, and filtering.** That is P8 after **D1**. Nothing here filters the board, and the
+- **Search, tags, and filtering.** That is P9 after **D1**. Nothing here filters the board, and the
   title is not made searchable — a title with no search box is still worth having, and a search box
   that arrives one phase later will search a corpus that already has titles in it.
 - **More than one link per note.** One `link` field. A note that needs two links can put the second
-  in its body, and P9's markdown will render it.
+  in its body, and P10's markdown will render it.
 - **Link previews, favicons, page titles, oEmbed.** Every one of those is a network request, and
   `mission.md` puts the whole category out of scope: *"no backend, database, or network request —
   the app must work fully offline."* The chip shows the URL's own host and path and nothing it had
@@ -70,7 +70,7 @@ Seven deliverables.
 - **Anything Google-specific.** No Meet API, no calendar lookup, no join-state, no "starts in 5
   minutes". A Meet URL is a URL. `mission.md` bans calendar integration and this phase does not go
   near it (**D4**).
-- **Auto-linking URLs found in the body.** That is markdown's job in P9. The `link` field is a
+- **Auto-linking URLs found in the body.** That is markdown's job in P10. The `link` field is a
   separate, deliberate thing.
 - **Sorting or grouping by title.** The board is ordered by the `order` stamp and dragging is what
   changes it. P5's guarantee is not weakened by a new field.
@@ -79,18 +79,18 @@ Seven deliverables.
 
 ## Decisions
 
-### D1 · This is P7; *Find things* becomes P8
+### D1 · This is P7; *Find things* becomes P9
 
-`roadmap.md` currently reads P7 *Find things*, P8 *Markdown and checkboxes*, P9 *Dark mode*,
-P10 *Polish*. After this phase:
+`roadmap.md` currently reads P7 *Find things*, P9 *Markdown and checkboxes*, P10 *Dark mode*,
+P11 *Polish*. After this phase:
 
 | Phase | Was | Is |
 | --- | --- | --- |
 | P7 | Find things | **A note that says what it is** |
-| P8 | Markdown and checkboxes | Find things |
-| P9 | Dark mode | Markdown and checkboxes |
-| P10 | Polish | Dark mode |
-| P11 | *(the Later list's leftovers)* | Polish |
+| P9 | Markdown and checkboxes | Find things |
+| P10 | Dark mode | Markdown and checkboxes |
+| P11 | Polish | Dark mode |
+| P12 | *(the Later list's leftovers)* | Polish |
 
 The alternative — shipping the title and the link *inside* P7 alongside search and tags — was
 rejected. That is two unrelated concerns in one diff: the card's geometry and the note's shape on
@@ -99,8 +99,8 @@ merged phase would have been the largest by a wide margin.
 
 Renumbering rather than inserting a `P6.5` keeps the phase numbers as a sequence rather than a
 history of when things were decided. The cross-references inside earlier specs that name a future
-phase by number (P6's requirements point markdown at "**P8**", P5's and P6's risks point deletion
-confirmation at "**P10**") are corrected in the same commit, because a spec pointing at the wrong
+phase by number (P6's requirements point markdown at "**P9**", P5's and P6's risks point deletion
+confirmation at "**P11**") are corrected in the same commit, because a spec pointing at the wrong
 phase number is worse than one pointing at nothing.
 
 ### D2 · Core scope gains the title and the link
@@ -281,7 +281,7 @@ against a board carrying a long note, a short note, a titled note, an untitled o
 link and a note without — because the question is about the ragged case, not the tidy one.
 
 The reduced-motion pass and the 100+ note drag check, also outstanding from P5 and P6, are **not**
-claimed here. They belong to P10's a11y and performance passes and this phase does not touch motion
+claimed here. They belong to P11's a11y and performance passes and this phase does not touch motion
 or drag.
 
 ## Constraints inherited from the constitution

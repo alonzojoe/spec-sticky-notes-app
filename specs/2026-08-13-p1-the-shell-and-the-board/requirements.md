@@ -68,13 +68,13 @@ creep rather than thoroughness:
 - **Sidebar collapse persistence.** P1 ships no persistence of any kind (**D4**). **P3.**
 - **`usehooks-ts` and `localStorage`.** **P3.**
 - **The `New note`, `Search`, and `Theme` controls.** Their slots are named and documented in
-  this phase; the controls arrive in **P2**, **P8**, and **P10**. Rendering them now as disabled
+  this phase; the controls arrive in **P2**, **P9**, and **P11**. Rendering them now as disabled
   placeholders is building ahead *and* bad interface design — a control that cannot be used
   should not be drawn.
 - **Dark mode.** The `.dark` token values are made warm in this phase because they exist in the
   file already and would otherwise be a cold-gray landmine. No toggle, no `useTheme`, no
-  `prefers-color-scheme` wiring. **P10.**
-- **Drag, editing, colors, pinning, search, markdown.** **P4–P9.**
+  `prefers-color-scheme` wiring. **P11.**
+- **Drag, editing, colors, pinning, search, markdown.** **P4–P10.**
 - **Using `button`, `input`, `tooltip`, `sheet`, or `skeleton` outside the sidebar.** They
   arrive as transitive dependencies (**D9**) and are dormant until a phase needs them.
 
@@ -99,7 +99,7 @@ the failure mode P0's decision D4 exists to prevent.
 
 **D3 — The achromatic tokens are replaced, not supplemented.**
 `shadcn init` wrote 30+ values of the form `oklch(L 0 0)` into `:root` and `.dark`. Adding warm
-tokens alongside them would leave every shadcn component that lands in P6, P10, and P11 defaulting
+tokens alongside them would leave every shadcn component that lands in P6, P11, and P12 defaulting
 to cold gray, and the violation would arrive one component at a time with no single commit to
 blame. They are edited in place, now, while there is exactly one component to check.
 
@@ -211,4 +211,4 @@ pattern that P2 has to unlearn.
 | `shadcn add sidebar` may rewrite parts of `src/index.css`, re-emitting achromatic token values over the warm ones. | **Install the sidebar before writing the tokens**, never the reverse. [plan.md](./plan.md) sequences it that way deliberately — the sidebar is group 3, the tokens are group 4. If a later phase's `shadcn add` re-flattens the palette anyway, T6 fails loudly rather than the app going quietly gray. |
 | Without `globals: true`, `@testing-library/react` does not auto-register its cleanup, and state leaks between tests as stale DOM. | Every component test file calls `afterEach(cleanup)` explicitly. Do not switch Vitest to globals to avoid this — the repo's existing tests import `describe`/`it`/`expect` explicitly and that pattern stays. |
 | Setting `environment: 'jsdom'` globally would run the slow Vite build test inside jsdom for no reason. | Do not add a `test` block to `vite.config.ts`. Opt in per file with a `// @vitest-environment jsdom` docblock on the first line of each component test. |
-| The sidebar's mobile presentation is a `Sheet` (a Radix Dialog), which renders in a portal outside the sidebar tree. | P1 asserts the desktop tree only. The mobile sheet is a Gate 3 manual check at a narrow viewport, not an automated one. Full responsive work is P11. |
+| The sidebar's mobile presentation is a `Sheet` (a Radix Dialog), which renders in a portal outside the sidebar tree. | P1 asserts the desktop tree only. The mobile sheet is a Gate 3 manual check at a narrow viewport, not an automated one. Full responsive work is P12. |

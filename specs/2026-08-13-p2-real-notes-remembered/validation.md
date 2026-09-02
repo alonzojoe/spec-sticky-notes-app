@@ -247,7 +247,7 @@ Also in `note_controls.test.tsx`.
 New file `src/__tests__/reducer_purity.test.ts`. A source assertion over
 `src/context/notes_reducer.ts`: it contains no `Date.now`, no `Math.random`, no `crypto.randomUUID`,
 and no `from 'react'`. T11's frozen-state case proves it does not mutate; this proves it will not
-quietly acquire a clock in P5 or P9 and turn every future test into one that needs fake timers.
+quietly acquire a clock in P5 or P10 and turn every future test into one that needs fake timers.
 
 ### Test setup
 
@@ -364,9 +364,9 @@ Do not block the merge on these:
 - Moving a note by any means, pointer or keyboard (**P5**). Notes sit where they spawned.
 - Click-to-front. `z` is set at creation and never changes again in this phase (**P5**).
 - Changing a note's colour after it exists (**P6**).
-- Search, tags, markdown, or checkboxes (**P8**, **P9**).
-- A theme toggle or a designed dark mode (**P10**).
+- Search, tags, markdown, or checkboxes (**P9**, **P10**).
+- A theme toggle or a designed dark mode (**P11**).
 - An empty state, spring motion on add and delete, a delete confirmation, or the 100-note
-  performance check (**P11**).
+  performance check (**P12**).
 - Cross-tab synchronisation, undo, or a trash/archive. The first is a recorded risk; the other two
   are out of scope in `mission.md`.

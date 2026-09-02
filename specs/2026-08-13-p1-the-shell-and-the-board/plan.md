@@ -352,7 +352,7 @@ const componentDirs = ['components/board', 'components/layout']
 }
 ```
 
-4.4 Rewrite the `.dark` block. Warm now, switched on in P10. Note the two alpha values — the
+4.4 Rewrite the `.dark` block. Warm now, switched on in P11. Note the two alpha values — the
     achromatic `oklch(1 0 0 / 10%)` must become a warm, non-white base or T6 fails on both counts:
 
 ```css
@@ -644,7 +644,7 @@ describe('the board', () => {
 ## 6. The shell
 
 6.1 Create `src/components/layout/app_sidebar.tsx`. One nav item. The slot comments are the
-    contract between this phase and P2/P8/P10:
+    contract between this phase and P2/P9/P11:
 
 ```tsx
 import { StickyNote } from 'lucide-react'
@@ -665,8 +665,8 @@ import {
 
 // Slots later phases fill. Named here so the sidebar grows by plan rather than by improvisation:
 //   P2 — the "New note" action, as a SidebarGroup above the nav group
-//   P8 — the search field and tag list, as a SidebarGroup below it
-//   P10 — the theme toggle, in a SidebarFooter
+//   P9 — the search field and tag list, as a SidebarGroup below it
+//   P11 — the theme toggle, in a SidebarFooter
 // Nothing is rendered for them now. A control that cannot be used should not be drawn.
 export function AppSidebar() {
   return (
@@ -841,7 +841,7 @@ this phase's commit; **Gate 4 rejects the PR without it.**
   shadow scale, easing curves, and durations. Replace shadcn's achromatic defaults.
 - `npx shadcn@latest add sidebar`. Delete its cookie persistence and its `ease-linear` motion.
 - Build the shell: a collapsible sidebar holding one nav item, **Notes**, plus named slots for
-  the New-note (P2), search (P8), and theme (P10) controls. The board fills the rest.
+  the New-note (P2), search (P9), and theme (P11) controls. The board fills the rest.
 - Build the board surface with its cork/felt texture and the paper grain utility.
 - Render three **hardcoded** notes to prove the visual language: layered shadow, tilt, grain,
   padding.
