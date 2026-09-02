@@ -6,7 +6,16 @@ export type NoteColor = (typeof NOTE_COLORS)[number]
 
 export interface Note {
   id: string // crypto.randomUUID()
+  // One line, shown under the date on the card and clamped there. `''` when the note has no
+  // title — not optional, not null. Every reader would otherwise need a fallback and one of them
+  // would forget, which is the same reason `body` has always been `''`.
+  title: string
   body: string // raw markdown; #tags live inline in this text
+  // One URL, already normalised: `lib/links.ts` is the only thing that judges a link, and what
+  // is stored here has been through it. `''` when the note has no link. Never trust it blindly
+  // anyway — board_storage.ts re-checks the scheme on read, because a value can arrive from a
+  // hand-edited localStorage rather than from the field.
+  link: string
   color: NoteColor
   // Stored ISO `YYYY-MM-DD`, shown `MM/DD/YYYY`. lib/dates.ts owns both directions and never
   // builds a Date from a stored value — see the comment there for why that matters.
@@ -31,7 +40,9 @@ export interface BoardState {
 export interface NoteSeed {
   id: string
   color: NoteColor
+  title: string
   body: string
+  link: string
   date: string
   order: number
   at: number

@@ -6,6 +6,8 @@ import { EMPTY_BOARD, type BoardState, type Note, type NoteSeed } from '@/types/
 const seed = (over: Partial<NoteSeed> = {}): NoteSeed => ({
   id: 'seed-1',
   color: 'butter',
+  title: '',
+  link: '',
   date: '2026-09-01',
   body: '',
   order: 1,
@@ -15,7 +17,9 @@ const seed = (over: Partial<NoteSeed> = {}): NoteSeed => ({
 
 const note = (over: Partial<Note> = {}): Note => ({
   id: 'note-1',
+  title: '',
   body: 'a thought',
+  link: '',
   color: 'sky',
   date: '2026-09-01',
   order: 1,
@@ -344,5 +348,84 @@ describe('T39 · notesReducer · the date', () => {
     expect(next.notes.find((n) => n.id === 'a')?.color).toBe('mint')
     expect(next.notes.find((n) => n.id === 'a')?.updatedAt).toBe(900)
     expect(next.notes.map((n) => n.order)).toEqual([1, 2])
+  })
+})
+
+// T49 — the title and the link are carried, edited, and never reorder anything.
+describe('T49 · notesReducer · the title and the link', () => {
+  it('add writes the seed title and link unchanged', () => {
+    const next = notesReducer(frozen(EMPTY_BOARD), {
+      type: 'add',
+      seed: seed({ title: 'Standup', link: 'https://meet.google.com/abc' }),
+    })
+
+    expect(next.notes[0].title).toBe('Standup')
+    expect(next.notes[0].link).toBe('https://meet.google.com/abc')
+  })
+
+  it('edit_title changes one note and stamps it', () => {
+    const state = frozen(board([note({ id: 'a' }), note({ id: 'b', title: 'untouched' })]))
+
+    const next = notesReducer(state, { type: 'edit_title', id: 'a', title: 'Standup', at: 900 })
+
+    expect(next.notes.find((n) => n.id === 'a')?.title).toBe('Standup')
+    expect(next.notes.find((n) => n.id === 'a')?.updatedAt).toBe(900)
+    expect(next.notes.find((n) => n.id === 'b')?.title).toBe('untouched')
+    expect(next.notes.find((n) => n.id === 'b')?.updatedAt).toBe(1)
+  })
+
+  it('set_link changes one note and stamps it', () => {
+    const state = frozen(board([note({ id: 'a' }), note({ id: 'b', link: 'https://b.example' })]))
+
+    const next = notesReducer(state, {
+      type: 'set_link',
+      id: 'a',
+      link: 'https://meet.google.com/abc',
+      at: 900,
+    })
+
+    expect(next.notes.find((n) => n.id === 'a')?.link).toBe('https://meet.google.com/abc')
+    expect(next.notes.find((n) => n.id === 'a')?.updatedAt).toBe(900)
+    expect(next.notes.find((n) => n.id === 'b')?.link).toBe('https://b.example')
+  })
+
+  // A title can be removed. `''` is the absent value, so clearing the field is a real edit and
+  // not something the reducer should quietly decline.
+  it('clearing a title to an empty string is a real edit', () => {
+    const state = frozen(board([note({ id: 'a', title: 'Standup' })]))
+
+    const next = notesReducer(state, { type: 'edit_title', id: 'a', title: '', at: 900 })
+
+    expect(next.notes[0].title).toBe('')
+    expect(next.notes[0].updatedAt).toBe(900)
+  })
+
+  it.each([
+    ['edit_title', { type: 'edit_title', id: 'ghost', title: 'x', at: 900 }] as const,
+    ['set_link', { type: 'set_link', id: 'ghost', link: 'https://x.example', at: 900 }] as const,
+  ])('%s is a no-op for an id that is not on the board', (_name, action) => {
+    const state = frozen(board([note({ id: 'a' })]))
+
+    expect(notesReducer(state, action)).toEqual(state)
+  })
+
+  // mission.md principle 1's surviving clause: the board reorders on create, delete and pin and
+  // on nothing else. A title edit must not be what finally breaks it.
+  it('neither action touches any note order', () => {
+    const state = frozen(
+      board([note({ id: 'a', order: 5 }), note({ id: 'b', order: 3 }), note({ id: 'c', order: 9 })]),
+    )
+    const before = state.notes.map((n) => n.order)
+
+    const titled = notesReducer(state, { type: 'edit_title', id: 'a', title: 'Standup', at: 900 })
+    const linked = notesReducer(titled, {
+      type: 'set_link',
+      id: 'b',
+      link: 'https://meet.google.com/abc',
+      at: 901,
+    })
+
+    expect(titled.notes.map((n) => n.order)).toEqual(before)
+    expect(linked.notes.map((n) => n.order)).toEqual(before)
   })
 })

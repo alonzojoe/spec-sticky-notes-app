@@ -3,6 +3,8 @@ import type { BoardState, Note, NoteColor, NoteSeed } from '@/types/note'
 export type NoteAction =
   | { type: 'add'; seed: NoteSeed }
   | { type: 'edit_body'; id: string; body: string; at: number }
+  | { type: 'edit_title'; id: string; title: string; at: number }
+  | { type: 'set_link'; id: string; link: string; at: number }
   | { type: 'set_date'; id: string; date: string; at: number }
   | { type: 'set_color'; id: string; color: NoteColor; at: number }
   | { type: 'toggle_pin'; id: string; at: number }
@@ -13,10 +15,12 @@ export function notesReducer(state: BoardState, action: NoteAction): BoardState 
   switch (action.type) {
     case 'add': {
       // Destructured rather than spread: `seed.at` is not a Note field and must not leak in.
-      const { id, color, body, date, order, at } = action.seed
+      const { id, color, title, body, link, date, order, at } = action.seed
       const note: Note = {
         id,
+        title,
         body,
+        link,
         color,
         date,
         order,
@@ -38,9 +42,27 @@ export function notesReducer(state: BoardState, action: NoteAction): BoardState 
         ),
       }
 
-    // Neither of these reorders anything. mission.md principle 1 survived P5 with one clause
-    // intact — the board reorders on create, delete and pin and on nothing else — and a date
-    // or a colour change must not be the thing that finally breaks it.
+    // None of these reorders anything. mission.md principle 1 survived P5 with one clause
+    // intact — the board reorders on create, delete and pin and on nothing else — and a date, a
+    // colour, a title or a link must not be the thing that finally breaks it.
+    case 'edit_title':
+      return {
+        ...state,
+        notes: state.notes.map((note) =>
+          note.id === action.id ? { ...note, title: action.title, updatedAt: action.at } : note,
+        ),
+      }
+
+    // The link arrives already through normalizeLink — see lib/links.ts. The reducer stores what
+    // it is given, so there is exactly one place a URL is judged rather than two that drift.
+    case 'set_link':
+      return {
+        ...state,
+        notes: state.notes.map((note) =>
+          note.id === action.id ? { ...note, link: action.link, updatedAt: action.at } : note,
+        ),
+      }
+
     case 'set_date':
       return {
         ...state,

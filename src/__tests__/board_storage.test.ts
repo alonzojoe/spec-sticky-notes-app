@@ -8,6 +8,8 @@ const valid: Note = {
   id: 'a',
   body: 'a thought',
   color: 'butter',
+  title: '',
+  link: '',
   date: '2026-09-01',
   order: 1,
   pinned: false,
@@ -131,5 +133,77 @@ describe('T40 · a board saved before the date', () => {
 
   it('leaves version at 1', () => {
     expect(hydrate({ version: 1, notes: [legacy()] }).version).toBe(1)
+  })
+})
+
+// T50 — a board saved before P7 loads whole, and a link that never went through the field is
+// re-checked on the way out of storage.
+describe('T50 · hydrate · the title and the link', () => {
+  const legacy = (over: Record<string, unknown> = {}) => ({
+    id: 'legacy',
+    body: 'written earlier',
+    color: 'butter',
+    date: '2026-09-01',
+    order: 1,
+    pinned: false,
+    createdAt: Date.parse('2026-03-04T12:00:00'),
+    updatedAt: Date.parse('2026-03-04T12:00:00'),
+    ...over,
+  })
+
+  it('gives a note with neither field an empty string for each', () => {
+    const board = hydrate({ version: 1, notes: [legacy()] })
+
+    expect(board.notes).toHaveLength(1)
+    expect(board.notes[0].title).toBe('')
+    expect(board.notes[0].link).toBe('')
+    expect(board.notes[0].body).toBe('written earlier')
+  })
+
+  it.each([[42], [null], [{}], [['a']], [true]])(
+    'repairs the malformed title %s rather than rejecting the board',
+    (title) => {
+      const board = hydrate({ version: 1, notes: [legacy({ title })] })
+
+      expect(board.notes).toHaveLength(1)
+      expect(board.notes[0].title).toBe('')
+    },
+  )
+
+  it('keeps a well-formed title and a safe link exactly as stored', () => {
+    const board = hydrate({
+      version: 1,
+      notes: [legacy({ title: 'Standup', link: 'https://meet.google.com/abc-defg-hij' })],
+    })
+
+    expect(board.notes[0].title).toBe('Standup')
+    expect(board.notes[0].link).toBe('https://meet.google.com/abc-defg-hij')
+  })
+
+  // The value this defends against never went through normalizeLink — a board hand-edited in
+  // devtools, or written by a build that predates it. It must not reach an href either.
+  it.each([
+    ['javascript:alert(1)'],
+    ['JavaScript:alert(1)'],
+    ['data:text/html,<script>alert(1)</script>'],
+    ['mailto:a@b.c'],
+    ['not a url'],
+    [42],
+    [null],
+  ])('drops the unsafe stored link %s', (link) => {
+    const board = hydrate({ version: 1, notes: [legacy({ link })] })
+
+    expect(board.notes).toHaveLength(1)
+    expect(board.notes[0].link).toBe('')
+  })
+
+  it('leaves version at 1 after the repair', () => {
+    expect(hydrate({ version: 1, notes: [legacy({ title: 7 })] }).version).toBe(1)
+  })
+
+  // The repairs are three named fields, not a general leniency.
+  it('still rejects a board that is malformed in any other way', () => {
+    expect(hydrate({ version: 1, notes: [legacy({ color: 'chartreuse' })] })).toEqual(EMPTY_BOARD)
+    expect(hydrate({ version: 1, notes: [legacy({ id: 42 })] })).toEqual(EMPTY_BOARD)
   })
 })

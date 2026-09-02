@@ -12,6 +12,8 @@ const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
   body: 'a thought',
   color: 'butter',
+  title: '',
+  link: '',
   date: '2026-09-01',
   order: 1,
   pinned: false,
