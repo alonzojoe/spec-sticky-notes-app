@@ -114,7 +114,9 @@ describe('T45 · the card is a summary', () => {
 
     // jsdom runs no layout, so a getBoundingClientRect comparison would compare two zeroes and
     // pass vacuously. The fixed height is asserted from the class that causes it.
-    for (const id of ['a', 'b']) expect(card(id).className).toContain('h-44')
+    // h-52 since P7, which grew the card for the title and the link chip. The height is what is
+    // uniform; the clamp inside it is not — T55 covers that.
+    for (const id of ['a', 'b']) expect(card(id).className).toContain('h-52')
   })
 
   it('clamps the body rather than letting it overflow', () => {
@@ -123,7 +125,9 @@ describe('T45 · the card is a summary', () => {
 
     // line-clamp rather than overflow:hidden, so the ellipsis lands on the last visible line —
     // that is what signals "there is more" instead of looking like the text stopped.
-    expect(card('a').querySelector('.line-clamp-4')).not.toBeNull()
+    // Five lines, not four: this note has neither a title nor a link, so it takes both spare
+    // rows back. P7's answer to the question P6's Gate 3 left open.
+    expect(card('a').querySelector('.line-clamp-5')).not.toBeNull()
   })
 })
 
