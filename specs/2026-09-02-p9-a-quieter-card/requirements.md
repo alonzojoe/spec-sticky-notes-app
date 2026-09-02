@@ -17,8 +17,13 @@ hover, from P2 — written when the card *was* the editor and acting on a note m
 card. That is no longer true of anything else on the board: the card is a summary, and every other
 thing you can do to a note happens in its view.
 
-This phase finishes that migration. **The card loses its controls entirely** and becomes a piece of
-paper with nothing floating on it. Pin and delete move into the note view's footer, beside Done.
+This phase splits them by what kind of act they are. **Pinning moves into the note's own view** —
+it is something you do to a note you are already reading. **Deleting stays on the card** and gains
+a confirmation — it is a judgement you make about a note at a glance, and making you open a note
+before you can throw it away is a worse trade than the one control costs.
+
+The card therefore loses its pin button, keeps one hover-revealed delete, and gains a pin *glyph*
+that is state rather than a control.
 
 Deleting also stops being instant. A note with anything written in it now asks first — a line
 `roadmap.md` has carried since P2 as a Polish-phase commitment, pulled forward because this is the
@@ -34,12 +39,12 @@ Six deliverables.
 
 1. **The constitution amendment.** `mission.md` principle 4's per-note clause rewritten; the
    unbuilt phases in `roadmap.md` lose their numbers and keep their names (**D1**, **D2**).
-2. **The card loses its controls.** `note_controls.tsx` is deleted from the card. The article stops
-   being a `group`, stops hosting an absolutely-positioned overlay, and goes back to being paper
-   (**D3**).
+2. **The card keeps delete and loses pin.** The pin button leaves; the delete control stays,
+   hidden until you touch that note (**D3**).
 3. **A pinned note still says so.** A pinned card carries a small, **non-interactive** pin glyph.
    Not a control — a state (**D4**).
-4. **Pin and delete move into the note view**, in its footer beside Done (**D5**).
+4. **Pin moves into the note view**, in its footer beside Done, and delete appears there too — one
+   shared confirmation, two entry points (**D5**).
 5. **Delete asks first, when there is something to lose.** `npx shadcn@latest add alert-dialog`; a
    note carrying a title, a body or a link confirms, an empty one does not (**D6**).
 6. **The keyboard keeps everything it had**, and gains nothing it should not (**D7**).
@@ -94,31 +99,42 @@ The bolded clause was written in P2 to stop six controls appearing on twenty car
 solved that by hiding them until hover — and this phase solves it more completely by not putting
 them on the card at all. The replacement:
 
-> …and never on the board surface itself; **a card carries no controls at all — acting on a note
-> happens in the note, which is one click away.** A card may show *state* it would otherwise be
-> impossible to see, such as whether it is pinned. The sidebar can be collapsed to a rail, and the
-> board stays fully usable with it collapsed.
+> …and never on the board surface itself; **a card carries one per-note control — delete —
+> revealed on the note you're touching, not on all of them at once. Everything else you can do to
+> a note happens in the note, which is one click away.** A card may also show *state* it would
+> otherwise be impossible to see, such as whether it is pinned. The sidebar can be collapsed to a
+> rail, and the board stays fully usable with it collapsed.
 
-The second sentence is what licences **D4**, and it is deliberately narrow: *state you could not
+**This clause was drafted twice.** The first draft said *no controls at all*, and the board it
+produced was wrong in one specific way: throwing away a note you can see from across the room
+required opening it first. Pinning and deleting are not the same kind of act — **pinning is
+something you do to a note you are already reading, and deleting is a judgement you make about a
+note at a glance** — so they do not belong in the same place. The revised clause is narrower than
+"per-note controls appear on the note you're touching" was: it names the one control, rather than
+leaving the category open.
+
+The last sentence is what licences **D4**, and it is deliberately narrow: *state you could not
 otherwise see*, not "anything useful".
 
 `roadmap.md`'s *Polish* phase loses its delete-confirmation line, which lands here instead
 (**D6**).
 
-### D3 · The card carries nothing
+### D3 · The card keeps delete and loses pin
 
-`note_card.tsx` loses `<NoteControls />`. With it goes:
+`note_card.tsx` keeps a delete control and loses everything else. The `group` class and the
+hover-reveal stay, because one control still needs revealing; the pin **button** goes, replaced by
+the pin **glyph** in **D4**.
 
-- the `group` class on the article, which existed only so `group-hover:` could reveal the controls,
-- the `absolute top-1 right-1` container and its two `stopPropagation` handlers,
-- two tab stops per card.
+The card is then: a date, an optional title, a clamped body, an optional link chip, a delete
+control that is invisible until you touch the note, and — when the note is pinned — a glyph.
 
-`note_controls.tsx` is **not deleted** — it moves to the note view (**D5**) rather than being
-rewritten there, because its pin/unpin labelling and its `aria-pressed` are already correct and
-already tested.
+Delete keeps its two `stopPropagation` handlers. Without the one on `click`, removing a note opens
+the note it just removed; without the one on `pointerdown`, pressing the control starts dragging
+the card. Both were true in P2 and both are still true.
 
-The card is then: a date, an optional title, a clamped body, an optional link chip, and — when the
-note is pinned — the glyph from **D4**. Nothing on it is positioned absolutely except that glyph.
+`note_controls.tsx` is **not deleted** — it moves to the note view (**D5**) and carries pin there,
+rather than being rewritten at its destination, because its pin/unpin labelling and its
+`aria-pressed` are already correct and already tested.
 
 ### D4 · A pinned card shows a pin, and it is not a button
 
@@ -137,9 +153,17 @@ a mark, and it is a fact rather than an affordance.
 The note's accessible name gains the word `Pinned` when it is pinned, so the state is not
 glyph-only.
 
-### D5 · Pin and delete live in the note view's footer
+### D5 · Pin lives in the note view's footer, and delete lives in both places
 
 `note_view_dialog.tsx`'s footer becomes: pin on the left, delete beside it, `Done` pushed right.
+Delete is in **both** places deliberately — you should not have to close a note to throw it away
+once you have read it and decided.
+
+**There is one confirmation for the whole board**, not one per card. `DeleteNoteProvider` mounts it
+in the shell and both entry points call `requestDelete(note)`; a hundred notes would otherwise be a
+hundred Radix layers each waiting for a click it will almost certainly never get. The provider also
+clears `openId` when it removes the open note, so the view closes because its note stopped existing
+rather than because it closed itself.
 
 Both are `ghost` icon buttons with visible-on-focus rings and real accessible names — `Pin note` /
 `Unpin note`, and `Delete note`. `NoteControls` moves here whole, so the `aria-pressed` toggle and

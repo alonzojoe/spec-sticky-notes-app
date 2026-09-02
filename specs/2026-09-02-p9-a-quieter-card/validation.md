@@ -1,8 +1,9 @@
 # P9 · A quieter card — Validation
 
-The phase's Done-when: *a card carries no controls at all; a pinned card still shows that it is
-pinned; pin and delete live in the note's own view; and deleting a note with a title, a body or a
-link asks first, while deleting an empty one does not.*
+The phase's Done-when: *a card carries exactly one control — delete — hidden until you touch that
+note; a pinned card still shows that it is pinned without carrying a pin control; pinning happens
+in the note's own view; and deleting a note with a title, a body or a link asks first from either
+place, while deleting an empty one does not.*
 
 **Gate 3 is run before this phase merges.** P7 and P8 both ran theirs and both found defects the
 suite could not; this phase keeps that going.
@@ -25,17 +26,20 @@ strings appears in a comment *explaining why the thing is absent*.
 ```
 NO_COMMENTS='grep -vE ":[[:space:]]*(\*|//|/\*)"'
 
-grep -rn "NoteControls\|note_controls" src/components/board/ | eval $NO_COMMENTS
+grep -rn "NoteControls\|note_controls\|data-testid=\"pin\"" src/components/board/ | eval $NO_COMMENTS
 ```
 
-Empty. Proves **D3** — the controls are off the card, not merely hidden on it.
+Empty. Proves **D3** — pinning is off the card, not merely hidden on it. Delete is still there and
+is written inline, so `NoteControls` appearing in `components/board/` would mean the split did not
+happen.
 
 ```
-grep -rn "group-hover\|absolute top-1 right-1" src/components/board/note_card.tsx | eval $NO_COMMENTS
+grep -rn "AlertDialog" src/components/board/ src/components/layout/note_view_dialog.tsx | eval $NO_COMMENTS
 ```
 
-Empty. The `group` class and the overlay container existed only to reveal the controls. Leaving
-them behind would mean the next phase finds a hover-reveal harness with nothing in it and fills it.
+Empty. **D5**: there is one confirmation for the whole board, mounted in the shell. An alert inside
+the card or inside the view would be one Radix layer per note, each waiting for a click it will
+almost certainly never get.
 
 ```
 grep -rn "Save" src/components/layout/*.tsx | eval $NO_COMMENTS
@@ -117,21 +121,24 @@ keeping: *clicking a card opens the note*. Deleting the test outright would quie
 - The opener's accessible name contains `Pinned` when the note is pinned, so the state is not
   glyph-only.
 
-### T67 · The card carries no controls
+### T67 · The card carries delete and nothing else
 
 The assertion that makes **D3** a constraint rather than a state of affairs.
 
-- A card contains **no `<button>` except its opener** — asserted by counting, so a control regrown
-  in a later phase fails here rather than passing unnoticed.
-- No element inside a card carries `aria-label` matching `/pin|delete/i` except through the
-  opener's own name.
+- A card contains **exactly two buttons** — its opener and delete — asserted by listing their test
+  ids, so a third regrown in a later phase fails here rather than passing unnoticed.
+- **No pin control**: nothing on the card is named `Pin note` or `Unpin note`, and there is no
+  `[data-testid="pin"]` on it.
+- Delete is `opacity-0` with the `group-hover:`, `group-focus-within:` and `focus-visible:` escapes,
+  and the card carries `group`. Without that last class every escape above is inert and nothing
+  else would notice — which is the same trap P2 wrote this assertion for.
 - Requirements § Risks: tests assert what is present, so without this one nothing stops the card
   regrowing an affordance.
 
 ### T68 · The keyboard lost nothing
 
-- A card holds two tab stops — the article and the opener — plus the link chip when there is one.
-  Two fewer than before.
+- A card holds three tab stops — the article, the opener and delete — plus the link chip when
+  there is one. One fewer than before, because pin left.
 - `Enter` on a card still opens the note; the arrow keys still reorder it.
 - Pin and delete are both reachable by keyboard inside the view, and both are operable by `Enter`.
 - `Escape` in the view still closes and saves.
@@ -142,9 +149,8 @@ The assertion that makes **D3** a constraint rather than a state of affairs.
 
 Seed a board with a mix: some pinned, some empty, some with long titles, at least twenty notes.
 
-1. **Is the board quieter?** Hover across it. Nothing should appear, anywhere. Compare against the
-   old behaviour: two controls fading in on every card you pass. Does the board read as paper now,
-   or does it read as *missing something*?
+1. **Is the board quieter?** Hover across it. One control should fade in, not two. Compare against
+   the old behaviour. Does the board read as paper now, or does it read as *missing something*?
 
 2. **Can you tell what is pinned at a glance?** Pin three notes among twenty. Scanning the board,
    is the glyph enough to explain why those three sort first — or does the ordering still look
@@ -171,6 +177,55 @@ Seed a board with a mix: some pinned, some empty, some with long titles, at leas
 
 8. **Reduced motion.** Turn it on and open the alert. It should appear without animating, like
    every other dialog in the app.
+
+### Answers — run 2026-09-02 against a twenty-note board
+
+Seeded twenty notes, three pinned, one with no body, several with long titles and links.
+
+1. **Quieter, and the first draft was too quiet.** With no controls at all the board read as paper,
+   but throwing away a note you could see from across the room meant opening it first. That is what
+   sent **D2** back for a second draft: pinning and deleting are not the same kind of act. One
+   control now fades in on the note you are touching; nothing appears on the other nineteen.
+
+2. **The pinned glyph earns its place.** Three pinned notes among twenty lead the grid, and without
+   a mark the ordering reads as arbitrary. Measured rather than eyeballed: the glyph is
+   `pointer-events: none`, the card carries exactly two buttons (`delete`, `open`) and no
+   `[data-testid="pin"]`. **The glyph moved during the check** — it was at `top-2 right-2`, floating
+   above the date in the corner; it now sits in the same row as the delete control and on the date's
+   own line, which reads as deliberate rather than as an afterthought.
+
+3. **Nobody tries to click the glyph now**, because the thing next to it is obviously the control.
+   That was a real risk while the glyph was alone in the corner and it is much reduced by having a
+   button beside it.
+
+4. **The empty-note carve-out earns its complexity.** Pressing `n`, adding without typing, and
+   deleting the result: the note is created, opens itself, and goes with **no confirmation**,
+   verified end to end in the browser. Every other delete asks.
+
+5. **The alert identifies the note** by title, or says `this note`. Enough to know what you are
+   about to lose without closing it to check.
+
+6. **It looks like this app** — the same warm popover, the same radius, the same blurred backdrop,
+   and a destructive button that reads as destructive without being the loudest thing on screen.
+
+7. **Escape does one thing at a time**, verified: the first press cancels the alert and leaves the
+   note view open with the note still on the board; the second closes the view.
+
+8. **Reduced motion** collapses the alert with everything else — it is in the same
+   `[data-slot^='alert-dialog']` block as the dialog and the popover.
+
+**The check found one real defect, and it was invisible to the entire suite.** With an exit
+animation declared, the alert never unmounted: `data-state` flipped to `closed`, but the node stayed
+in the DOM with a 160ms animation still reporting `running` seconds later, so a confirmation could
+be dismissed and never went away. Every jsdom assertion passed, because jsdom runs no animations and
+unmounts immediately. Removing the exit animation fixes it — Radix removes a layer synchronously
+when `animation-name` computes to `none` — and it is the better motion anyway: a confirmation should
+leave the instant you dismiss it. Cancel now unmounts in **42ms**.
+
+**A second finding, from the same session:** the alert was originally rendered inside the note
+view's `Dialog`. Hoisting it to a sibling did not fix the unmount, and it was moved again — out of
+the view entirely and into a provider mounted once in the shell — which is where it belongs for an
+unrelated reason: one confirmation for the whole board rather than one Radix layer per card.
 
 Still outstanding from P5 and P6, and **not** claimed here: the full reduced-motion pass and the
 100+ note drag check. Check 8 above covers only the alert. Both belong to *Polish*.

@@ -221,10 +221,13 @@ is byte-identical before, during and after.
 
 **Goal:** the board is paper and nothing else; acting on a note happens in the note.
 
-- Amend `mission.md` principle 4: **a card carries no controls at all.** It may show *state* that
-  would otherwise be invisible — nothing more.
-- `note_controls.tsx` moves from the card into the note view's footer, beside Done. The card loses
-  its `group` class, its absolutely-positioned overlay and two tab stops per note.
+- Amend `mission.md` principle 4: **a card carries one per-note control — delete.** Everything
+  else moves into the note. It may also show *state* that would otherwise be invisible.
+- **Pin** moves into the note view's footer beside Done; **delete stays on the card** and gains a
+  confirmation. Pinning is something you do to a note you are already reading; deleting is
+  something you decide about a note you can see from across the board.
+- One confirmation for the whole board, mounted in the shell rather than per card, reached from
+  either entry point.
 - A **pinned** card keeps a pin glyph: `aria-hidden`, no handler, no focus, not a control. Without
   it, principle 1's promise that pinned notes sort first has no visible cause.
 - `npx shadcn@latest add alert-dialog`. Deleting a note that carries a **title, a body or a link**
@@ -236,9 +239,9 @@ is byte-identical before, during and after.
   three times running; a name survives being reordered. P0–P9 keep theirs — their spec directories
   are named after them.
 
-**Done when:** hovering the board reveals nothing anywhere, a pinned note is still identifiable at
-a glance, pin and delete are in the note's own view, and deleting a note with something in it asks
-first.
+**Done when:** a card shows delete and nothing else, a pinned note is still identifiable at a
+glance without carrying a pin control, pinning happens in the note's own view, and deleting a note
+with something in it asks first from either place.
 
 ---
 

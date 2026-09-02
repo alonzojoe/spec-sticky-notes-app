@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Board } from '@/components/board/board'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { NotesProvider } from '@/context/notes_context'
+import { DeleteNoteProvider } from '@/components/layout/delete_note_dialog'
 import { OpenNoteProvider } from '@/context/open_note_context'
 import { useNotesDispatch } from '@/context/use_notes'
 import { BOARD_KEY } from '@/lib/board_storage'
@@ -44,8 +45,10 @@ const renderBoard = (notes: Note[] = SEEDED) => {
     // needs NotesProvider. App renders both; a test that mounts <Board /> directly supplies both.
     <NotesProvider>
       <OpenNoteProvider>
-        <Board />
-        <AddOne />
+        <DeleteNoteProvider>
+          <Board />
+          <AddOne />
+        </DeleteNoteProvider>
       </OpenNoteProvider>
     </NotesProvider>,
   )
@@ -131,8 +134,10 @@ describe('the board', () => {
     rerender(
       <NotesProvider>
         <OpenNoteProvider>
-          <Board />
-          <AddOne />
+          <DeleteNoteProvider>
+            <Board />
+            <AddOne />
+          </DeleteNoteProvider>
         </OpenNoteProvider>
       </NotesProvider>,
     )
@@ -318,37 +323,44 @@ describe('T66 · the pinned glyph is state, not a control', () => {
  * Tests assert what is present, so without this one nothing stops a later phase quietly regrowing
  * an affordance on the card. Requirements § Risks names it.
  */
-describe('T67 · a card carries no controls', () => {
-  it('contains exactly one button, its opener', () => {
+describe('T67 · a card carries delete and nothing else', () => {
+  it('contains exactly two buttons: its opener and delete', () => {
     renderBoard([
       note({ id: 'a', pinned: true, title: 'Standup', link: 'https://meet.google.com/abc' }),
     ])
 
-    const buttons = screen.getByTestId('note-a').querySelectorAll('button')
-    expect(buttons).toHaveLength(1)
-    expect(buttons[0].getAttribute('data-testid')).toBe('open')
+    const buttons = [...screen.getByTestId('note-a').querySelectorAll('button')]
+    expect(buttons.map((b) => b.getAttribute('data-testid')).sort()).toEqual(['delete', 'open'])
   })
 
-  it('names nothing on the card pin or delete', () => {
+  // Pinning is something you do to a note you are already reading, so it is not out here.
+  it('carries no pin control', () => {
     renderBoard([note({ id: 'a', pinned: true })])
 
     for (const el of screen.getByTestId('note-a').querySelectorAll('[aria-label]')) {
-      expect(el.getAttribute('aria-label')).not.toMatch(/^(Pin|Unpin|Delete) note$/)
+      expect(el.getAttribute('aria-label')).not.toMatch(/^(Pin|Unpin) note$/)
     }
+    expect(screen.getByTestId('note-a').querySelector('[data-testid="pin"]')).toBeNull()
   })
 
-  // The hover-reveal harness is gone too. Leaving it behind means the next phase finds an empty
-  // one and fills it.
-  it('is no longer a hover-reveal group', () => {
+  // Hidden until you touch this note, and reachable by keyboard anyway. opacity-0 leaves a button
+  // focusable but invisible; without these escapes, tabbing lands on something nobody can see.
+  it('hides delete until the note is hovered or focused within', () => {
     renderBoard([note({ id: 'a' })])
+    const del = screen.getByTestId('note-a').querySelector('[data-testid="delete"]')
 
-    expect(screen.getByTestId('note-a').className.split(/\s+/)).not.toContain('group')
+    expect(del?.className).toContain('opacity-0')
+    expect(del?.className).toContain('group-hover:opacity-100')
+    expect(del?.className).toContain('group-focus-within:opacity-100')
+    expect(del?.className).toContain('focus-visible:opacity-100')
+    // Without `group` on the card every group-* class above is inert, and nothing else notices.
+    expect(screen.getByTestId('note-a').className.split(/\s+/)).toContain('group')
   })
 })
 
 // T68 — the keyboard lost nothing.
 describe('T68 · the card’s tab stops', () => {
-  it('holds the article and the opener, and the chip when there is a link', () => {
+  it('holds the article, the opener and delete, plus the chip when there is a link', () => {
     renderBoard([note({ id: 'plain' }), note({ id: 'linked', link: 'https://x.example', order: 2 })])
 
     // The article itself carries tabIndex={0} and is not matched by a descendant query, so it
@@ -359,7 +371,8 @@ describe('T68 · the card’s tab stops', () => {
       return inside + (card.getAttribute('tabindex') === '0' ? 1 : 0)
     }
 
-    expect(stops('plain')).toBe(2)
-    expect(stops('linked')).toBe(3)
+    // Article, opener, delete — and the chip when there is a link.
+    expect(stops('plain')).toBe(3)
+    expect(stops('linked')).toBe(4)
   })
 })
