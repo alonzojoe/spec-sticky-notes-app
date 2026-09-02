@@ -65,9 +65,12 @@ export function DeleteNoteProvider({ children }: { children: ReactNode }) {
             <AlertDialogTitle>
               Delete {pending?.title === '' ? 'this note' : `“${pending?.title}”`}?
             </AlertDialogTitle>
+            {/* The old wording — "the notes after it close the gap" — described the animation
+                you are about to watch happen. This says the thing you cannot see instead: there
+                is no trash and no undo, which mission.md puts out of scope by name, so this is
+                the last moment the note exists. */}
             <AlertDialogDescription>
-              This cannot be undone. The note is removed from the board and the notes after it
-              close the gap.
+              This cannot be undone — there is no trash to recover it from.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
