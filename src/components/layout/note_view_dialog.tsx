@@ -7,25 +7,15 @@ import { FieldLabel, LinkField, TitleField } from '@/components/layout/note_fiel
 import { PaperRadiogroup } from '@/components/layout/paper_radiogroup'
 import { Button } from '@/components/ui/button'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useDeleteNote } from '@/context/use_delete_note'
 import { useNotesDispatch } from '@/context/use_notes'
 import { normalizeLink } from '@/lib/links'
-import { hasContent } from '@/lib/notes'
 import type { Note, NoteColor } from '@/types/note'
 
 const AUTOSAVE_MS = 300
@@ -68,11 +58,11 @@ function NoteView({
   onOpenChange: (open: boolean) => void
 }) {
   const dispatch = useNotesDispatch()
+  const { requestDelete } = useDeleteNote()
 
   // The link's raw draft lives here rather than in the field, so closing the dialog can still
   // reach it — a dismissal does not reliably blur the input first.
   const [link, setLink] = useState(note.link)
-  const [confirming, setConfirming] = useState(false)
 
   const saveBody = useDebounceCallback(
     (body: string) => dispatch({ type: 'edit_body', id: note.id, body, at: Date.now() }),
@@ -87,25 +77,21 @@ function NoteView({
     dispatch({ type: 'set_link', id: note.id, link: value, at: Date.now() })
 
   /**
-   * Deleting closes the view, because the note it was showing no longer exists. Pinning does not —
-   * that is a property of the note like its colour, and P6 established those change with the view
-   * open.
+   * Deleting is asked for, not done here. `DeleteNoteProvider` owns the one confirmation the whole
+   * board shares and it clears `openId` when the note it removes is the open one — so this view
+   * closes because its note stopped existing, rather than because it closed itself.
    *
-   * The pending autosaves are cancelled rather than flushed: writing a body to a note that is
-   * about to be removed is work whose only possible effect is a wasted render.
+   * The pending autosaves are cancelled first. Writing a body to a note that is about to be
+   * removed is work whose only possible effect is a wasted render, and if the delete is cancelled
+   * the debounce simply restarts on the next keystroke.
+   *
+   * Pinning, by contrast, does not close anything: it is a property of the note like its colour,
+   * and P6 established those change with the view open.
    */
-  const remove = () => {
+  const askToDelete = () => {
     saveBody.cancel()
     saveTitle.cancel()
-    dispatch({ type: 'delete', id: note.id })
-    onOpenChange(false)
-  }
-
-  const requestDelete = () => {
-    // An empty note has nothing to lose, and a confirmation for it is a click that protects
-    // nothing. See `hasContent` above.
-    if (hasContent(note)) setConfirming(true)
-    else remove()
+    requestDelete(note)
   }
 
   const close = (body: string, title: string) => {
@@ -128,9 +114,10 @@ function NoteView({
   }
 
   return (
-    <Dialog
-      open
-      onOpenChange={(next) => {
+    <>
+      <Dialog
+        open
+        onOpenChange={(next) => {
         if (next) return
         // Escape and the close control land here rather than on the Done button, so every
         // dismissal saves through the same path.
@@ -191,7 +178,7 @@ function NoteView({
             should not sit flush against its neighbour — and it matters more here, where the
             neighbour is the button you press to leave. */}
         <DialogFooter className="sm:justify-between">
-          <NoteControls note={note} onDelete={requestDelete} />
+          <NoteControls note={note} onDelete={askToDelete} />
           <Button
             type="button"
             onClick={(event) => {
@@ -202,39 +189,10 @@ function NoteView({
             Done
           </Button>
         </DialogFooter>
-      </DialogContent>
+        </DialogContent>
+      </Dialog>
 
-      {/* An alert-dialog rather than the ordinary one: it is `role="alertdialog"`, it puts focus
-          on the cancel, and Escape cancels — three things a confirmation built out of `Dialog`
-          would only be by accident.
-
-          It is not a Save button. Principle 3 forbids a control standing between you and
-          PERSISTING what you wrote; this stands between you and destroying it, and mission.md
-          puts delete confirmation in scope by name. */}
-      <AlertDialog open={confirming} onOpenChange={setConfirming}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete {note.title === '' ? 'this note' : `“${note.title}”`}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This cannot be undone. The note is removed from the board and the notes after it
-              close the gap.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            {/* Cancel holds the default focus, so Enter on a dialog you did not read cancels
-                rather than deletes. That is the difference between a guard and a speed bump. */}
-            <AlertDialogCancel autoFocus>Cancel</AlertDialogCancel>
-            {/* "Delete", never "OK". A destructive confirmation that says OK is one nobody
-                reads. */}
-            <AlertDialogAction variant="destructive" onClick={remove}>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </Dialog>
+    </>
   )
 }
 
