@@ -46,10 +46,13 @@ the allowlist was not the mechanism, and a denylist loses to `JavaScript:` and t
 nobody thought of.
 
 ```
-grep -rln "P7 · Find things\|P8 · Markdown\|P9 · Dark mode\|P10 · Polish" specs/
+grep -rln "P7 · Find things\|P8 · Markdown\|P9 · Dark mode\|P10 · Polish" specs/ \
+  --exclude-dir=2026-09-02-p7-a-note-that-says-what-it-is
 ```
 
-Empty. Proves **D1**'s renumber landed everywhere rather than only in `roadmap.md`.
+Empty. Proves **D1**'s renumber landed everywhere rather than only in `roadmap.md`. This file is
+excluded because it quotes the old headings in order to search for them, and would otherwise
+always match itself.
 
 `npm ls` adds no dependency this phase.
 

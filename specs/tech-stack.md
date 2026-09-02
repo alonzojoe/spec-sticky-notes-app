@@ -134,13 +134,13 @@ src/
     use_notes.ts         // the two contexts and their consumer hooks
   hooks/
     use_draggable.ts     // pointer-events drag; owns the gesture, dispatches nothing
-    use_theme.ts         // light/dark/system, persisted                  (P9)
+    use_theme.ts         // light/dark/system, persisted                  (P10)
     use-mobile.ts        // shadcn-generated — exempt from snake_case
   components/
     layout/
       app_shell.tsx      // NotesProvider + SidebarProvider + AppSidebar + SidebarInset;
                          //   owns the toolbar, the New note button and the `n` shortcut
-      app_sidebar.tsx    // header, the Notes destination, slots for P7/P9
+      app_sidebar.tsx    // header, the Notes destination, slots for P8/P10
       new_note_dialog.tsx // date + colour + textarea; creates the note      (P3)
       note_view_dialog.tsx // a note opened: full body, colour, date; autosaves (P6)
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
@@ -149,7 +149,7 @@ src/
       board.tsx          // the cork surface; measures its width and lays out the grid
       note_card.tsx      // one sheet of paper; owns its edit mode and nothing else
       note_controls.tsx  // per-note pin and delete
-      empty_state.tsx    //                                               (P10)
+      empty_state.tsx    //                                               (P11)
     ui/                  // shadcn components — exempt from snake_case
   lib/
     grid.ts              // the one column-width the stylesheet cannot infer        (P5)
@@ -158,8 +158,8 @@ src/
     board_storage.ts     // storage keys and the defensive read
     note_factory.ts      // ids, tilt, spawn position, timestamps
     paper.ts             // NoteColor -> bg-paper-*, written out for the scanner
-    tags.ts              // parse #tags out of body                       (P7)
-    markdown.ts          // render markdown + checkboxes                  (P8)
+    tags.ts              // parse #tags out of body                       (P8)
+    markdown.ts          // render markdown + checkboxes                  (P9)
   types/
     note.ts
 ```
@@ -183,7 +183,7 @@ mutation throws rather than passing quietly.
 ## Persistence contract
 
 - Board key: `sticky-notes:board:v1` · Sidebar key: `sticky-notes:sidebar` · Theme key:
-  `sticky-notes:theme` (P9)
+  `sticky-notes:theme` (P10)
 - Written through `useLocalStorage` from `usehooks-ts`.
 - **Writes are debounced ~300ms** so that typing and dragging don't hammer localStorage.
   Dragging must never write on every pointer move — only on drop.
@@ -232,7 +232,7 @@ untouched.
 `types` entry in `tsconfig.app.json`. Vitest also runs without globals here, so every component
 test calls `afterEach(cleanup)` explicitly — the automatic hook never registers.
 
-**Markdown rendering.** Deferred to the phase that needs it (P8). Whatever is chosen must
+**Markdown rendering.** Deferred to the phase that needs it (P9). Whatever is chosen must
 be small, must escape HTML by default, and must support task-list checkboxes. Record the
 choice here when it's made.
 

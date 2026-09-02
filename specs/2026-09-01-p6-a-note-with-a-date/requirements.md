@@ -63,7 +63,7 @@ Plus the documents this invalidates (**D8**).
   scope, and a date field is not a licence to add them.
 - **Date ranges, recurring dates, or more than one date per note.**
 - **Locale-aware formatting.** `MM/DD/YYYY` is specified literally (**D2**).
-- **Markdown rendering in the view.** Still **P8**. The view shows raw text.
+- **Markdown rendering in the view.** Still **P9**. The view shows raw text.
 - **Recolouring from the card.** The view dialog carries the swatches, which discharges what the old
   P6 was for; a per-card colour control is not added.
 
@@ -191,7 +191,7 @@ rejecting the whole board, because a malformed date is recoverable and losing th
 
 - **`mission.md`** — principle 2 and the Core scope bullet (**D1**).
 - **`roadmap.md`** — P6 becomes this phase. The old P6, recolouring an existing note, is **largely
-  discharged** by the view dialog's swatches; what remains of it moves to **P11**.
+  discharged** by the view dialog's swatches; what remains of it moves to the **Later** list.
 - **`tech-stack.md`** — the `Note` block gains `date`; the file tree gains `lib/dates.ts`,
   `date_field.tsx`, `paper_radiogroup.tsx`, `note_view_dialog.tsx` and the two shadcn components;
   the stack table gains `react-day-picker` as a transitive dependency.

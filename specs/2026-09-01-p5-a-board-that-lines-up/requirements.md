@@ -224,7 +224,7 @@ the only thing making it safe.
 
 - **`mission.md`** — principle 1 and the Core scope bullet (**D1**).
 - **`roadmap.md`** — P5 rewritten around the grid. P1's line about rendering three hardcoded notes
-  "to prove the visual language" is historical and stays. P10's performance check gains the grid.
+  "to prove the visual language" is historical and stays. P11's performance check gains the grid.
 - **`tech-stack.md`** — the `Note` block, the file tree (`lib/grid.ts`, `hooks/use_draggable.ts`),
   and the persistence contract's note about what a stored board contains.
 - **`README.md`** — status line to P5.

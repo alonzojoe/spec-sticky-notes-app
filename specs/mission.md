@@ -67,6 +67,8 @@ These are in the constitution. They ship.
 - **Open and edit** — click a note to read it in full and edit it; it saves itself, with
   no Save button.
 - **Colors + pin** — a curated paper palette per note; pinned notes stay above the pile.
+- **Title and link** — a note can carry a one-line title and one URL. The card shows both so
+  the board can be scanned rather than read; the link opens in a new tab.
 - **Search + tags** — a live filter box, and `#tags` parsed out of note text and clickable.
 - **Markdown + checklists** — bold, italic, links, lists, and `- [ ]` checkboxes that can
   be ticked directly on the note without entering edit mode.
