@@ -32,8 +32,9 @@ describe('the amendments to shadcn sidebar.tsx', () => {
 // T9 — D9. The transitive components are dormant until a phase needs them. P3 woke `button`:
 // the toolbar's New note control and the dialog's footer are both real uses, so it moves off
 // this list rather than the list being weakened. `dialog` was never on it — it arrived in P3
-// already in use.
-const DORMANT = ['input', 'tooltip', 'sheet', 'skeleton', 'separator']
+// already in use. P7 woke `input` the same way: the title and link fields in note_fields.tsx
+// are two real uses, shared by both dialogs.
+const DORMANT = ['tooltip', 'sheet', 'skeleton', 'separator']
 
 const sourceFiles = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((item) => {

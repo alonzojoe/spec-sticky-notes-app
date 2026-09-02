@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 import { Input } from '@/components/ui/input'
 import { normalizeLink } from '@/lib/links'
 
@@ -35,7 +33,11 @@ export function TitleField({
         placeholder="Standup with the team"
         // No maxLength. A limit enforced by the input is a rule you discover by hitting it, and
         // a title too long for the card is already visibly too long — see requirements § D3.
-        className="text-ink"
+        //
+        // The placeholder sits at 60% of the soft ink rather than at full strength. A
+        // placeholder is a hint, not content, and at equal weight it reads as text that is
+        // already there — which is the one thing it must never look like.
+        className="text-ink placeholder:text-ink-soft/60"
       />
     </div>
   )
@@ -53,22 +55,15 @@ export function TitleField({
  */
 export function LinkField({
   value,
+  onChange,
   onCommit,
   id = 'note-link',
 }: {
   value: string
+  onChange: (raw: string) => void
   onCommit: (link: string) => void
   id?: string
 }) {
-  // Draft state, seeded from the stored value and re-seeded when the stored value changes under
-  // it — which is how switching notes in the view dialog reaches this field.
-  const [draft, setDraft] = useState(value)
-  const [seeded, setSeeded] = useState(value)
-  if (value !== seeded) {
-    setSeeded(value)
-    setDraft(value)
-  }
-
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className={LABEL}>
@@ -77,19 +72,22 @@ export function LinkField({
       <Input
         id={id}
         type="url"
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
+        // The raw draft is the caller's, not this component's. A dialog that submits on
+        // Ctrl/Cmd+Enter never blurs this field, so a draft held privately here would be lost on
+        // exactly the keyboard path P3's amendment promised would work.
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
         onBlur={() => {
-          const normalized = normalizeLink(draft)
+          const normalized = normalizeLink(value)
           // Show what will actually be stored, so `https://` appearing is visible rather than a
-          // silent rewrite discovered later on the card.
-          setDraft(normalized === '' ? draft : normalized)
+          // silent rewrite discovered later on the card. An unparseable link keeps its text.
+          if (normalized !== '') onChange(normalized)
           onCommit(normalized)
         }}
         // The example the phase was asked for, and it demonstrates that a bare host is accepted
         // without a paragraph explaining that it is.
         placeholder="meet.google.com/abc-defg-hij"
-        className="text-ink"
+        className="text-ink placeholder:text-ink-soft/60"
       />
     </div>
   )
