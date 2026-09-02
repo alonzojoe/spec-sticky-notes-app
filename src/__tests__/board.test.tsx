@@ -270,3 +270,96 @@ describe('T55 · the body clamp varies while the height does not', () => {
     }
   })
 })
+
+// T66 — a pinned card says so, without carrying a control.
+describe('T66 · the pinned glyph is state, not a control', () => {
+  const glyph = (id: string) =>
+    screen.getByTestId(`note-${id}`).querySelector('span.pointer-events-none svg')
+
+  it('renders on a pinned note and not on an unpinned one', () => {
+    renderBoard([note({ id: 'pinned', pinned: true, order: 2 }), note({ id: 'plain', order: 1 })])
+
+    expect(glyph('pinned')).not.toBeNull()
+    expect(glyph('plain')).toBeNull()
+  })
+
+  // Asserted structurally, because "it looks like the control it replaced" is the whole risk.
+  it('is not a button and is not in the tab order', () => {
+    renderBoard([note({ id: 'a', pinned: true })])
+    const holder = screen.getByTestId('note-a').querySelector('span.pointer-events-none')
+
+    expect(holder?.tagName).toBe('SPAN')
+    expect(holder?.querySelector('button')).toBeNull()
+    expect(holder?.getAttribute('tabindex')).toBeNull()
+    expect(glyph('a')?.getAttribute('aria-hidden')).toBe('true')
+  })
+
+  // The glyph is aria-hidden, so the state has to reach a screen reader some other way.
+  it('puts the state into the opener’s accessible name', () => {
+    renderBoard([note({ id: 'a', pinned: true })])
+
+    expect(
+      screen.getByTestId('note-a').querySelector('[data-testid="open"]')?.getAttribute('aria-label'),
+    ).toContain('pinned')
+  })
+
+  it('leaves an unpinned note’s name alone', () => {
+    renderBoard([note({ id: 'a', pinned: false })])
+
+    expect(
+      screen.getByTestId('note-a').querySelector('[data-testid="open"]')?.getAttribute('aria-label'),
+    ).not.toContain('pinned')
+  })
+})
+
+/**
+ * T67 — the assertion that makes D3 a constraint rather than a state of affairs.
+ *
+ * Tests assert what is present, so without this one nothing stops a later phase quietly regrowing
+ * an affordance on the card. Requirements § Risks names it.
+ */
+describe('T67 · a card carries no controls', () => {
+  it('contains exactly one button, its opener', () => {
+    renderBoard([
+      note({ id: 'a', pinned: true, title: 'Standup', link: 'https://meet.google.com/abc' }),
+    ])
+
+    const buttons = screen.getByTestId('note-a').querySelectorAll('button')
+    expect(buttons).toHaveLength(1)
+    expect(buttons[0].getAttribute('data-testid')).toBe('open')
+  })
+
+  it('names nothing on the card pin or delete', () => {
+    renderBoard([note({ id: 'a', pinned: true })])
+
+    for (const el of screen.getByTestId('note-a').querySelectorAll('[aria-label]')) {
+      expect(el.getAttribute('aria-label')).not.toMatch(/^(Pin|Unpin|Delete) note$/)
+    }
+  })
+
+  // The hover-reveal harness is gone too. Leaving it behind means the next phase finds an empty
+  // one and fills it.
+  it('is no longer a hover-reveal group', () => {
+    renderBoard([note({ id: 'a' })])
+
+    expect(screen.getByTestId('note-a').className.split(/\s+/)).not.toContain('group')
+  })
+})
+
+// T68 — the keyboard lost nothing.
+describe('T68 · the card’s tab stops', () => {
+  it('holds the article and the opener, and the chip when there is a link', () => {
+    renderBoard([note({ id: 'plain' }), note({ id: 'linked', link: 'https://x.example', order: 2 })])
+
+    // The article itself carries tabIndex={0} and is not matched by a descendant query, so it
+    // is counted separately rather than being quietly left out of the total.
+    const stops = (id: string) => {
+      const card = screen.getByTestId(`note-${id}`)
+      const inside = card.querySelectorAll('button, a[href], [tabindex="0"]').length
+      return inside + (card.getAttribute('tabindex') === '0' ? 1 : 0)
+    }
+
+    expect(stops('plain')).toBe(2)
+    expect(stops('linked')).toBe(3)
+  })
+})
