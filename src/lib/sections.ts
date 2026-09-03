@@ -1,4 +1,4 @@
-import { Pin, StickyNote, type LucideIcon } from 'lucide-react'
+import { Link2, Pin, StickyNote, type LucideIcon } from 'lucide-react'
 
 import type { BoardSection, Note } from '@/types/note'
 
@@ -60,6 +60,27 @@ export const SECTIONS: readonly BoardSectionRow[] = [
       title: 'No pinned notes',
       // Names the way out. It is the one thing an empty section cannot otherwise tell you.
       hint: 'Open a note and pin it to keep it up here.',
+    },
+  },
+  {
+    section: 'linked',
+    path: '/linked',
+    label: 'Linked notes',
+    // The same glyph the card puts on its link chip.
+    icon: Link2,
+    /**
+     * The field, and never a parse of `body`.
+     *
+     * `lib/links.ts` is the only judge of what a URL is in this app: `normalizeLink` guards what
+     * the field writes and `board_storage.ts` re-checks the scheme on read. A note is here exactly
+     * when that judgement produced something — so this section can never disagree with the chip on
+     * the card, which a body-scanning rule would do the first time someone typed a bare URL into a
+     * sentence.
+     */
+    keep: (note) => note.link !== '',
+    empty: {
+      title: 'No linked notes',
+      hint: 'Add a link to a note and it will show up here.',
     },
   },
 ]

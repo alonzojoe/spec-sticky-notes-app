@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as BoardRouteRouteImport } from './routes/_board/route'
 import { Route as BoardIndexRouteImport } from './routes/_board/index'
+import { Route as BoardLinkedIndexRouteImport } from './routes/_board/linked/index'
 import { Route as BoardNotesIndexRouteImport } from './routes/_board/notes/index'
 import { Route as BoardPinnedIndexRouteImport } from './routes/_board/pinned/index'
 
@@ -21,6 +22,11 @@ const BoardRouteRoute = BoardRouteRouteImport.update({
 const BoardIndexRoute = BoardIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => BoardRouteRoute,
+} as any)
+const BoardLinkedIndexRoute = BoardLinkedIndexRouteImport.update({
+  id: '/linked/',
+  path: '/linked/',
   getParentRoute: () => BoardRouteRoute,
 } as any)
 const BoardNotesIndexRoute = BoardNotesIndexRouteImport.update({
@@ -36,11 +42,13 @@ const BoardPinnedIndexRoute = BoardPinnedIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof BoardIndexRoute
+  '/linked/': typeof BoardLinkedIndexRoute
   '/notes/': typeof BoardNotesIndexRoute
   '/pinned/': typeof BoardPinnedIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof BoardIndexRoute
+  '/linked': typeof BoardLinkedIndexRoute
   '/notes': typeof BoardNotesIndexRoute
   '/pinned': typeof BoardPinnedIndexRoute
 }
@@ -48,15 +56,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_board': typeof BoardRouteRouteWithChildren
   '/_board/': typeof BoardIndexRoute
+  '/_board/linked/': typeof BoardLinkedIndexRoute
   '/_board/notes/': typeof BoardNotesIndexRoute
   '/_board/pinned/': typeof BoardPinnedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/notes/' | '/pinned/'
+  fullPaths: '/' | '/linked/' | '/notes/' | '/pinned/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/notes' | '/pinned'
-  id: '__root__' | '/_board' | '/_board/' | '/_board/notes/' | '/_board/pinned/'
+  to: '/' | '/linked' | '/notes' | '/pinned'
+  id:
+    | '__root__'
+    | '/_board'
+    | '/_board/'
+    | '/_board/linked/'
+    | '/_board/notes/'
+    | '/_board/pinned/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -79,6 +94,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BoardIndexRouteImport
       parentRoute: typeof BoardRouteRoute
     }
+    '/_board/linked/': {
+      id: '/_board/linked/'
+      path: '/linked'
+      fullPath: '/linked/'
+      preLoaderRoute: typeof BoardLinkedIndexRouteImport
+      parentRoute: typeof BoardRouteRoute
+    }
     '/_board/notes/': {
       id: '/_board/notes/'
       path: '/notes'
@@ -98,12 +120,14 @@ declare module '@tanstack/react-router' {
 
 interface BoardRouteRouteChildren {
   BoardIndexRoute: typeof BoardIndexRoute
+  BoardLinkedIndexRoute: typeof BoardLinkedIndexRoute
   BoardNotesIndexRoute: typeof BoardNotesIndexRoute
   BoardPinnedIndexRoute: typeof BoardPinnedIndexRoute
 }
 
 const BoardRouteRouteChildren: BoardRouteRouteChildren = {
   BoardIndexRoute: BoardIndexRoute,
+  BoardLinkedIndexRoute: BoardLinkedIndexRoute,
   BoardNotesIndexRoute: BoardNotesIndexRoute,
   BoardPinnedIndexRoute: BoardPinnedIndexRoute,
 }
