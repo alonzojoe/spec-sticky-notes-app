@@ -104,7 +104,8 @@ depends on a file nobody has ever seen is worse than one that depends on a file 
 
 ### D3 · The naming rule gains its third exemption
 
-P1's `snake_case` rule is enforced by T4, and its `EXEMPT` list has held exactly two entries since:
+P1's `snake_case` rule is enforced by T4, and its `EXEMPT` list has held exactly two entries since
+P1 wrote it:
 `components/ui` and `hooks/use-mobile.ts`. P9's requirements said the pin **must not be edited** —
 in the context of a phase that had no business editing it.
 
@@ -113,6 +114,11 @@ same kind of thing the two existing entries are: **a path a CLI owns, whose name
 choose.** So the list gains `app/routeTree.gen.ts`, T4's guard assertion is updated to name three
 paths, and the amendment is argued here rather than appended quietly — which is what that guard
 assertion exists to force.
+
+**The rule also learns the router's vocabulary**, which is a second, smaller amendment: a directory
+may start with `_` when the rest of it is snake_case, because that underscore is what makes `_board`
+a pathless group, and `__root.tsx` is allowed by name. Two narrow patterns, not a loosened rule —
+`_board` passes and `_Board` does not — and the same carve-out `__tests__` has had all along.
 
 The alternative was to keep the routes code-based and mirror only the folder layout by hand. It was
 rejected because it produces a directory that *looks* like the reference and behaves differently the

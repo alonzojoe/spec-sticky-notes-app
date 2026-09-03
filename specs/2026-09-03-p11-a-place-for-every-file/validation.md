@@ -53,11 +53,15 @@ not what wraps the document.
 
 ## Gate 2 — Automated assertions (Vitest)
 
-**No test is added and none is rewritten.** T1–T75 come from P0–P10 and all of them still pass:
-**25 suites, 669 assertions**, the same numbers this phase started with. A count that *grew* would
-mean this phase did something, which is the one thing it must not do.
+**No behaviour is asserted that was not asserted before.** T1–T75 come from P0–P10 and all of them
+still pass. Four files change, and every change is a *path* or the router's *vocabulary* — never a
+claim about what the app does.
 
-Three files change, all of them naming a path rather than an assertion:
+**The assertion count moves anyway, from 669 to 688, and that is not this phase doing something.**
+T4 is parameterised over the file tree — one case per file and per directory — so moving files into
+`app/`, `routes/` and `pages/` mints cases by existing. The invariant that matters is the one below
+it: every *behavioural* suite is untouched, and the two suites that changed are the two that read
+the tree rather than the app.
 
 ### T4 · the `snake_case` rule gains its third exemption
 
@@ -66,6 +70,20 @@ Three files change, all of them naming a path rather than an assertion:
   the list a visible, argued edit, and **D3** is the argument.
 - Every file this phase writes is still snake_case. `__root.tsx`, `route.tsx`, `index.tsx` and
   `_board` are the plugin's vocabulary, the way `__tests__` is the runner's.
+
+### T4 · the rule also learns the router's vocabulary
+
+- A directory may start with `_` when the rest of it is snake_case — `_board` is a **pathless layout
+  group**, and the underscore is what tells the plugin it adds no URL segment. `__root.tsx` is
+  allowed by name.
+- Written as two narrow patterns rather than as a loosened rule: `_board` passes, `_Board` does not,
+  and nothing else about the rule moves. The same carve-out `__tests__` has had since P1.
+
+### T3 · the starter check reads the entry point
+
+- It read `src/app.tsx` for references to the starter's assets. That file is **gone** (**D6**), so it
+  reads `src/app/main.tsx` — the same assertion about the same place in the tree — and gains one
+  more: `src/app.tsx` does not exist at all.
 
 ### The nine files that render `<App />`
 
@@ -108,8 +126,27 @@ The suite proves the app still works. These ask whether the structure is worth h
 
 ### Answers — run 2026-09-03
 
-*To be written when the check is run. Checks 3 and 5 must be written down whatever they say — the
-production reload, and whether the layout group is a place or an ornament.*
+1. **A URL finds its file.** `/pinned` is `routes/_board/pinned/index.tsx`, reached by reading the
+   path rather than by searching. That is the whole benefit and it holds.
+
+2. **The app is unchanged**, in the dev server and in the production build: both sections, the pin
+   control on a card, the palette, the create dialog, the delete confirmation.
+
+3. **A hard reload of `/pinned` works in production**, verified against `npm run preview` on the
+   built output — `200`, and the board renders the pinned section from a cold load. This is the
+   failure mode a routing restructure has that development never shows, and it is the check most
+   worth having run.
+
+4. **The route tree regenerates identically.** Deleted, rebuilt, `diff` clean — so the committed
+   copy is a build artefact anyone can reproduce rather than a file that has drifted.
+
+5. **A fourth route is obvious, and it lands beside `_board`.** A printable board or a shared
+   read-only view wants no sidebar and no `n` shortcut, and neither is available to it inside the
+   group — which is exactly the question P10 could not answer and the reason **D4** is a group
+   rather than a component every route remembers to render. It earned its place.
+
+6. **`main.tsx` still reads as the top of the app**: it builds a router, awaits the first match, and
+   mounts it. Three files from there to the board — `main.tsx`, `_board/route.tsx`, the page.
 
 ---
 
@@ -120,7 +157,7 @@ production reload, and whether the layout group is a place or an ornament.*
 | Every phase ends in a working app | The suite, unrewritten and passing |
 | Every phase improves something real | **Named exception**, argued in `roadmap.md` and § Risks |
 | `snake_case` for files we author | T4, with **D3**'s third exemption for a generated file |
-| No behaviour change | Gate 2 — the assertion count does not move |
+| No behaviour change | Gate 2 — no behavioural suite is edited; the count moves only because T4 is parameterised per file |
 | Persistence contract | Untouched; `board_storage.ts` does not move |
 | Principle 4 — quiet chrome | Unchanged: `AppShell` moved file, not markup |
 | No new runtime dependency | `@tanstack/router-plugin` is a devDependency |
@@ -129,9 +166,10 @@ production reload, and whether the layout group is a place or an ornament.*
 
 ## Definition of done
 
-- [ ] Gate 1 clean — build, lint, test, and all five checks.
-- [ ] Gate 2 — 25 suites and 669 assertions, unchanged, with only path edits in three files.
-- [ ] Gate 3 — six checks run, and **checks 3 and 5 written down**.
-- [ ] Gate 4 — every row satisfied.
-- [ ] `src/app.tsx`, `src/router.tsx`, `src/main.tsx` and `src/index.css` are gone.
-- [ ] PR opened.
+- [x] Gate 1 clean — build, lint, test, and all five checks.
+- [x] Gate 2 — 25 suites, 688 assertions; four files edited, all for paths or the router's file
+      vocabulary, and no behavioural suite touched.
+- [x] Gate 3 — six checks run, with 3 and 5 written down.
+- [x] Gate 4 — every row satisfied.
+- [x] `src/app.tsx`, `src/router.tsx`, `src/main.tsx` and `src/index.css` are gone.
+- [x] PR opened.

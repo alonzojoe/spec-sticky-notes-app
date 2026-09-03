@@ -32,7 +32,14 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P10 (*a view of the pinned*) is complete: the sidebar has two destinations — `Notes` and
+P11 (*a place for every file*) is complete: the entry point, the routing and the pages live where
+`unicare-booking/src/app` puts them. Routes are files under `src/app/routes/` — a file's path is its
+URL, generated into `routeTree.gen.ts` by `@tanstack/router-plugin` — and `_board` is a pathless
+layout group holding the shell, so navigating between sections never remounts the store. A route
+file names a page; the page composes the board. Nothing about the app changed, which is the whole
+acceptance criterion: the suite P10 left passes with no behavioural assertion rewritten.
+
+Before it, P10 (*a view of the pinned*): the sidebar has two destinations — `Notes` and
 `Pinned notes` — and `/pinned` shows the pinned notes and nothing else. The sections are routes on
 TanStack Router, so the URL is what remembers which view you were in and nothing new is stored. It
 is a view rather than an edit: no note's order or pinned flag is written by navigating, and coming
