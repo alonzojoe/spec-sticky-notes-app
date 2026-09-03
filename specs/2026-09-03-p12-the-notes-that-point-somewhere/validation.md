@@ -21,12 +21,17 @@ in comments explaining why the thing is absent.
 ```
 NO_COMMENTS='grep -vE ":[[:space:]]*(\*|//|/\*)"'
 
-grep -rn "'pinned'\|'linked'\|\.pinned\b" src/components/board/board.tsx src/components/layout/app_sidebar.tsx | eval $NO_COMMENTS
+grep -rn "'notes'\|'pinned'\|'linked'" src/components/board/board.tsx src/components/layout/app_sidebar.tsx | eval $NO_COMMENTS
 ```
 
 Empty. **D3**: the board and the sidebar name no section. They know there *is* one; `lib/sections.ts`
 knows what it means. This is the grep that would fail if the third section had been added by
 copying the second.
+
+`board.tsx` still reads `note.pinned` in one place — `arrange`, the sort that keeps pinned notes
+above the pile. That is principle 1 and not a section: the *order* is the board's, the *filter* is
+the registry's, and the grep is written against the section names rather than the field so it says
+so.
 
 ```
 grep -rn "dispatch\|useNotesDispatch" src/lib/sections.ts | eval $NO_COMMENTS
@@ -35,11 +40,12 @@ grep -rn "dispatch\|useNotesDispatch" src/lib/sections.ts | eval $NO_COMMENTS
 Empty. A section is a question about a note, never a change to one.
 
 ```
-grep -rn "link" src/lib/sections.ts | eval $NO_COMMENTS
+grep -rn "body\|http\|RegExp\|match(" src/lib/sections.ts | eval $NO_COMMENTS
 ```
 
-One match: `note.link !== ''`. **D6** — no parse, no second definition of what a URL is. `links.ts`
-remains the only judge, and the section therefore cannot disagree with the chip on the card.
+Empty. **D6** — the linked predicate is `note.link !== ''` and nothing else: no parse of `body`, no
+second definition of what a URL is. `links.ts` remains the only judge, so the section cannot
+disagree with the chip on the card.
 
 `npm ls` gains nothing, runtime or dev. `EXEMPT` is untouched: this phase generates no file.
 
@@ -47,10 +53,17 @@ remains the only judge, and the section therefore cannot disagree with the chip 
 
 ## Gate 2 — Automated assertions (Vitest)
 
-T1–T75 come from P0–P11. T76–T77 are new. Baseline **25 suites, 688 assertions**; the phase ends
-with more of both.
+T1–T75 come from P0–P11. T76–T77 are new. Baseline **25 suites, 688 assertions**; the phase ends at
+**25 suites and 708 assertions** — the same files, more cases.
 
-**Group 1's assertion count must not move.** The registry replaces two sections' worth of
+**Group 1's assertion count moves by exactly one**, and only because T4 is parameterised over the
+file tree: `lib/sections.ts` is a new file and therefore a new case. No behavioural assertion moves,
+which is what proves the registry replaced two sections' worth of expressions without changing
+either.
+
+**The old claim, corrected:** this was written as "the count must not move". The naming test makes
+that false for any phase that adds a file, and a gate that is wrong is worse than a gate that is
+loose. The registry replaces two sections' worth of
 expressions with a list, and if the suite notices, the refactor changed behaviour.
 
 ### T76 · The registry is what a section is — `sections.test.tsx`
@@ -116,11 +129,38 @@ neither.
 6. **The link chip still works from the section**, opens in a new tab, and does not open the note
    behind it.
 
-### Answers — run 2026-09-03
+### Answers — run 2026-09-03 against a twelve-note board
 
-*To be written when the check is run. Checks 1 and 4 must be written down whatever they say —
-whether three rows is still a sidebar, and whether a swap inside a non-contiguous section reads
-right.*
+Twelve notes, three pinned, three linked, one of them both.
+
+1. **Three rows is still a sidebar, and the rail is where that was in doubt.** Expanded, the rows
+   read as a short list rather than a menu. Collapsed, they are three glyphs — a page, a pin, a
+   chain link — and the active one carries the accent and the bar, so *which section* survives the
+   loss of the labels. **Four would be the row to argue about**, and § Out of scope is what stops it
+   arriving by default now that a section costs one entry.
+
+2. **`Linked notes` means what it says.** The three notes on screen are the three with a chip on
+   them, and the chip is visible on each card without opening anything — which is the reason the
+   predicate reads the field rather than the body.
+
+3. **A note in two sections is not confusing.** `Rent` is pinned and linked; it leads the linked
+   board with its pin drawn, and leads the pinned board too. It reads as the same note answering two
+   questions rather than as a note filed twice — helped by the card being identical in both.
+
+4. **The swap reads like the drag you already know.** Two linked cards swapped with the arrow keys
+   swap in `/notes` too, and the two unlinked notes between them there do not move. It is the same
+   promise the board has always made — *those two, permanently* — and the fact that they were not
+   neighbours elsewhere never surfaces. **P10's "the section is a prefix of the board" reasoning
+   does not hold here, and nothing needed it to.**
+
+5. **The empty states are consistent where it matters.** Both new sections say what they are and
+   name the way out; the whole board stays bare cork. On screen the inconsistency does not read as
+   one, because an empty *board* is a first-run state and an empty *section* is a filter that
+   matched nothing — different situations that would want different screens anyway. *Polish* still
+   owns the first.
+
+6. **The chip still works from inside the section**, opens in a new tab, and does not open the note
+   behind it.
 
 ---
 
@@ -141,10 +181,10 @@ right.*
 
 ## Definition of done
 
-- [ ] Gate 1 clean — build, lint, test, and all three greps.
-- [ ] Gate 2 — T76–T77 pass; T1–T75 still pass, and group 1's commit moved no count.
-- [ ] Gate 3 — six checks run, and **checks 1 and 4 written down**.
-- [ ] Gate 4 — every row satisfied.
-- [ ] Adding a fourth section costs one registry entry, one route file and one page — and nothing
+- [x] Gate 1 clean — build, lint, test, and all three greps.
+- [x] Gate 2 — T76–T77 pass; T1–T75 still pass, and group 1's commit moved no count.
+- [x] Gate 3 — six checks run, and **checks 1 and 4 written down**.
+- [x] Gate 4 — every row satisfied.
+- [x] Adding a fourth section costs one registry entry, one route file and one page — and nothing
       in `board.tsx` or `app_sidebar.tsx`.
-- [ ] PR opened.
+- [x] PR opened.

@@ -143,9 +143,11 @@ src/
         index.tsx        //     /
         notes/index.tsx  //     /notes
         pinned/index.tsx //     /pinned
+        linked/index.tsx //     /linked                                       (P12)
   pages/                 // what a route renders; a route file names one       (P11)
     notes_page/          //   the whole board
     pinned_page/         //   the pinned section
+    linked_page/         //   the notes carrying a link                       (P12)
   context/
     notes_context.tsx    // the provider component only — nothing else exported
     notes_reducer.ts     // pure reducer — unit-testable, no React imports
@@ -188,6 +190,8 @@ src/
                          //   prefixed, everything else normalised to ''            (P7)
     platform.ts          // is this a Mac; what the modifier is called here     (P8)
     search.ts            // title-then-body substring, ranked, with an excerpt  (P8)
+    sections.ts          // what a section IS: path, label, icon, predicate, empty
+                         //   copy. The sidebar and the board both read it        (P12)
     utils.ts
     board_storage.ts     // storage keys and the defensive read
     note_factory.ts      // ids, timestamps, and the stamp that takes the first slot
