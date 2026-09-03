@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useDebounceCallback } from 'usehooks-ts'
 
 import { DateField } from '@/components/layout/date_field'
+import { NoteControls } from '@/components/layout/note_controls'
 import { FieldLabel, LinkField, TitleField } from '@/components/layout/note_fields'
 import { PaperRadiogroup } from '@/components/layout/paper_radiogroup'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useDeleteNote } from '@/context/use_delete_note'
 import { useNotesDispatch } from '@/context/use_notes'
 import { normalizeLink } from '@/lib/links'
 import type { Note, NoteColor } from '@/types/note'
@@ -56,6 +58,7 @@ function NoteView({
   onOpenChange: (open: boolean) => void
 }) {
   const dispatch = useNotesDispatch()
+  const { requestDelete } = useDeleteNote()
 
   // The link's raw draft lives here rather than in the field, so closing the dialog can still
   // reach it — a dismissal does not reliably blur the input first.
@@ -72,6 +75,24 @@ function NoteView({
 
   const commitLink = (value: string) =>
     dispatch({ type: 'set_link', id: note.id, link: value, at: Date.now() })
+
+  /**
+   * Deleting is asked for, not done here. `DeleteNoteProvider` owns the one confirmation the whole
+   * board shares and it clears `openId` when the note it removes is the open one — so this view
+   * closes because its note stopped existing, rather than because it closed itself.
+   *
+   * The pending autosaves are cancelled first. Writing a body to a note that is about to be
+   * removed is work whose only possible effect is a wasted render, and if the delete is cancelled
+   * the debounce simply restarts on the next keystroke.
+   *
+   * Pinning, by contrast, does not close anything: it is a property of the note like its colour,
+   * and P6 established those change with the view open.
+   */
+  const askToDelete = () => {
+    saveBody.cancel()
+    saveTitle.cancel()
+    requestDelete(note)
+  }
 
   const close = (body: string, title: string) => {
     // Cancel the pending debounces and write now, so the last keystroke before closing is never
@@ -93,9 +114,10 @@ function NoteView({
   }
 
   return (
-    <Dialog
-      open
-      onOpenChange={(next) => {
+    <>
+      <Dialog
+        open
+        onOpenChange={(next) => {
         if (next) return
         // Escape and the close control land here rather than on the Done button, so every
         // dismissal saves through the same path.
@@ -151,7 +173,12 @@ function NoteView({
           />
         </div>
 
-        <DialogFooter>
+        {/* Pin and delete on the left, Done pushed right by the layout rather than sitting
+            beside them. P2 made that point about the card's controls — a destructive control
+            should not sit flush against its neighbour — and it matters more here, where the
+            neighbour is the button you press to leave. */}
+        <DialogFooter className="sm:justify-between">
+          <NoteControls note={note} onDelete={askToDelete} />
           <Button
             type="button"
             onClick={(event) => {
@@ -162,8 +189,10 @@ function NoteView({
             Done
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+    </>
   )
 }
 

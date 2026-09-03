@@ -256,6 +256,30 @@
         animation: dialog-content-out var(--duration-hover) var(--ease-out);
         transform-origin: center;
     }
+
+    /* P9's alert-dialog, on the dialog's own keyframes rather than new ones. It is a modal like
+       the others, so it scales from its own centre; the generated component shipped
+       `tw-animate-css` classes, which P5 proved inert in this project, and they were removed
+       rather than left as dead text. */
+    [data-slot='alert-dialog-overlay'][data-state='open'] {
+        animation: dialog-overlay-in var(--duration-hover) var(--ease-out);
+    }
+
+    [data-slot='alert-dialog-content'][data-state='open'] {
+        animation: dialog-content-in var(--duration-drawer) var(--ease-out);
+        transform-origin: center;
+    }
+
+    /* **The alert has no exit animation, deliberately.**
+       Radix unmounts a closing layer on `animationend`. Given an exit animation, this one never
+       unmounted: the node sat in the DOM with `data-state="closed"` and a 160ms animation
+       reporting `running` seconds later, so the confirmation could be dismissed but never went
+       away. Found by pressing Cancel on a real board — every jsdom assertion passed, because
+       jsdom runs no animations and therefore unmounts immediately.
+
+       Declaring no `closed` rule leaves `animation-name: none`, which is the case Radix removes
+       synchronously. It is also the right motion: a confirmation should leave the instant you
+       dismiss it, and an exit faster than its entrance is the rule rather than the exception. */
 }
 
 @layer base {
@@ -264,6 +288,7 @@
   @media (prefers-reduced-motion: reduce) {
     [data-slot^='sidebar'],
     [data-slot^='dialog'],
+    [data-slot^='alert-dialog'],
     [data-slot^='popover'] {
       transition-property: opacity, background-color, color, box-shadow !important;
       transition-duration: var(--duration-press) !important;
@@ -287,6 +312,12 @@
 
     [data-slot='dialog-content'][data-state='closed'] {
       animation-name: dialog-overlay-out !important;
+    }
+
+    /* The alert-dialog enters on the same keyframe as the dialog and needs the same override,
+       or a confirmation would still scale while everything around it had stopped. */
+    [data-slot='alert-dialog-content'][data-state='open'] {
+      animation-name: dialog-overlay-in !important;
     }
 
     /* Same reasoning for the popover: keep the fade, drop the scale. */

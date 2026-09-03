@@ -134,18 +134,20 @@ src/
     use_notes.ts         // the two contexts and their consumer hooks
   hooks/
     use_draggable.ts     // pointer-events drag; owns the gesture, dispatches nothing
-    use_theme.ts         // light/dark/system, persisted                  (P11)
+    use_theme.ts         // light/dark/system, persisted                  (*Dark mode*)
     use-mobile.ts        // shadcn-generated — exempt from snake_case
   components/
     layout/
       app_shell.tsx      // NotesProvider + SidebarProvider + AppSidebar + SidebarInset;
                          //   owns the toolbar, the New note button and the `n` shortcut
-      app_sidebar.tsx    // header, the Notes destination, slots for P9/P11
+      app_sidebar.tsx    // header, the Notes destination, slots for *Tags*/*Dark mode*
       new_note_dialog.tsx // date + colour + textarea; creates the note      (P3)
       note_view_dialog.tsx // a note opened: title, body, link, colour, date; autosaves (P6)
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
       paper_radiogroup.tsx // the six swatches, shared by both dialogs        (P6)
       note_fields.tsx    // the title and link inputs, shared by both dialogs (P7)
+      note_controls.tsx  // pin and delete, in the note's own view              (P9)
+      delete_note_dialog.tsx // one confirmation for the whole board            (P9)
       toolbar.tsx        // sidebar toggle + search trigger + New note        (P8)
       search_trigger.tsx // a BUTTON shaped like a field; ⌘K / Ctrl+K badge   (P8)
       search_dialog.tsx  // the palette: query, results, roving selection     (P8)
@@ -153,12 +155,13 @@ src/
       board.tsx          // the cork surface; measures its width and lays out the grid
       note_card.tsx      // one sheet of paper: a summary at a fixed height, with a
                          //   clamp that widens for each row the note does not use  (P7)
-      note_controls.tsx  // per-note pin and delete
-      empty_state.tsx    //                                               (P12)
+
+      empty_state.tsx    //                                               (*Polish*)
     ui/                  // shadcn components — exempt from snake_case
   lib/
     grid.ts              // the one column-width the stylesheet cannot infer        (P5)
     dates.ts             // ISO in, MM/DD/YYYY out; never builds a Date from a store (P6)
+    notes.ts             // hasContent — what makes a note worth confirming      (P9)
     links.ts             // the only judge of a URL: http(s) allowlisted, bare host
                          //   prefixed, everything else normalised to ''            (P7)
     platform.ts          // is this a Mac; what the modifier is called here     (P8)
@@ -167,11 +170,12 @@ src/
     board_storage.ts     // storage keys and the defensive read
     note_factory.ts      // ids, timestamps, and the stamp that takes the first slot
     paper.ts             // NoteColor -> bg-paper-*, written out for the scanner
-    tags.ts              // parse #tags out of body                       (P9)
-    markdown.ts          // render markdown + checkboxes                  (P10)
+    tags.ts              // parse #tags out of body                       (*Tags*)
+    markdown.ts          // render markdown + checkboxes                  (*Markdown and checkboxes*)
   context/
     open_note_context.tsx // which note is open, shared by the board and the palette (P8)
     use_open_note.ts      // its hook, split for react-refresh                       (P8)
+    use_delete_note.ts    // requestDelete(note); the alert lives in the shell        (P9)
   types/
     note.ts
 ```
@@ -195,7 +199,7 @@ mutation throws rather than passing quietly.
 ## Persistence contract
 
 - Board key: `sticky-notes:board:v1` · Sidebar key: `sticky-notes:sidebar` · Theme key:
-  `sticky-notes:theme` (P11)
+  `sticky-notes:theme` (*Dark mode*)
 - Written through `useLocalStorage` from `usehooks-ts`.
 - **Writes are debounced ~300ms** so that typing and dragging don't hammer localStorage.
   Dragging must never write on every pointer move — only on drop.
@@ -244,7 +248,7 @@ untouched.
 `types` entry in `tsconfig.app.json`. Vitest also runs without globals here, so every component
 test calls `afterEach(cleanup)` explicitly — the automatic hook never registers.
 
-**Markdown rendering.** Deferred to the phase that needs it (P10). Whatever is chosen must
+**Markdown rendering.** Deferred to the phase that needs it (*Markdown and checkboxes*). Whatever is chosen must
 be small, must escape HTML by default, and must support task-list checkboxes. Record the
 choice here when it's made.
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 
 import App from '@/app'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
@@ -35,15 +35,49 @@ const readNotes = (): Note[] => JSON.parse(window.localStorage.getItem(BOARD_KEY
 const card = (id: string) => screen.getByTestId(`note-${id}`)
 const order = () => [...document.querySelectorAll('[data-slot="note-card"]')].map((el) => el.id || el.getAttribute('data-testid'))
 
-const pinButton = (id: string) => {
-  const button = card(id).querySelector('[data-testid="pin"]')
-  if (!(button instanceof HTMLElement)) throw new Error(`no pin control on note ${id}`)
+/**
+ * P9 took the controls off the card and put them in the note's own view, so reaching one now
+ * means opening the note first. These helpers do that, and the tests below are unchanged in what
+ * they assert — the pinning behaviour is the same behaviour, driven from its new home.
+ */
+const openNote = (id: string) => {
+  const opener = card(id).querySelector('[data-testid="open"]')
+  if (!(opener instanceof HTMLElement)) throw new Error(`no opener on note ${id}`)
+  fireEvent.click(opener)
+}
+
+const inView = (which: 'pin' | 'delete') => {
+  const dialog = screen.getByRole('dialog')
+  const button = dialog.querySelector(`[data-testid="${which}"]`)
+  if (!(button instanceof HTMLElement)) throw new Error(`no ${which} control in the note view`)
   return button
 }
+
+const closeView = () => {
+  const dialog = screen.queryByRole('dialog')
+  if (dialog !== null) fireEvent.keyDown(dialog, { key: 'Escape' })
+}
+
+/** Open the note, press pin, close again — the whole gesture pinning now takes. */
+const pinButton = (id: string) => {
+  openNote(id)
+  return inView('pin')
+}
+
 const deleteButton = (id: string) => {
-  const button = card(id).querySelector('[data-testid="delete"]')
-  if (!(button instanceof HTMLElement)) throw new Error(`no delete control on note ${id}`)
-  return button
+  openNote(id)
+  return inView('delete')
+}
+
+/**
+ * The whole delete gesture as of P9: open the note, press delete, and confirm when the note has
+ * something in it. An empty note skips the alert by design, so this tolerates its absence rather
+ * than requiring it — the rule itself is asserted in delete_confirmation.test.tsx.
+ */
+const deleteNote = (id: string) => {
+  fireEvent.click(deleteButton(id))
+  const confirm = screen.queryByRole('button', { name: 'Delete' })
+  if (confirm !== null) fireEvent.click(confirm)
 }
 
 beforeEach(() => {
@@ -161,42 +195,34 @@ describe('pinning reorders, and only within the pinned group', () => {
 })
 
 describe('the controls are quiet but reachable', () => {
-  it('hides both controls on an unhovered note', () => {
+  /**
+   * P9 replaced this trio. They asserted the hover-reveal choreography — `opacity-0` plus the
+   * `group-hover:` / `group-focus-within:` escapes that kept a focused control visible — which
+   * was the right answer while the controls lived on the card. There are no controls on the card
+   * now, so the choreography is gone and what replaces it is the assertion that it cannot come
+   * back: see T67 in board.test.tsx.
+   */
+  it('shows both controls without needing a hover, now that they are in a dialog', () => {
     seed([note()])
     render(<App />)
+    openNote('a')
 
-    expect(pinButton('a').className).toContain('opacity-0')
-    expect(deleteButton('a').className).toContain('opacity-0')
-  })
-
-  it('brings them back on hover, on focus within the note, and on their own focus', () => {
-    seed([note()])
-    render(<App />)
-
-    // opacity-0 leaves a button focusable but invisible. Without these escapes, tabbing
-    // lands on something nobody can see — an accessibility defect, not a style choice.
-    for (const control of [pinButton('a'), deleteButton('a')]) {
-      expect(control.className).toContain('group-hover:opacity-100')
-      expect(control.className).toContain('group-focus-within:opacity-100')
-      expect(control.className).toContain('focus-visible:opacity-100')
+    // A control that appears only on hover, inside a dialog the user opened deliberately, is a
+    // control they have to hunt for.
+    for (const control of [inView('pin'), inView('delete')]) {
+      expect(control.className).not.toContain('opacity-0')
     }
+    closeView()
   })
 
-  it('marks the note as the group those escapes hang off', () => {
-    seed([note()])
-    render(<App />)
-
-    // Without `group` on the card every group-* class above is inert, and no other
-    // assertion would notice.
-    expect(card('a').className.split(/\s+/)).toContain('group')
-  })
-
-  it('keeps a pinned note’s pin control visible with nothing hovering it', () => {
+  it('keeps a pinned note identifiable on the board without any control', () => {
     seed([note({ pinned: true })])
     render(<App />)
 
-    // Otherwise the only way to find out what is pinned is to point at every note in turn.
-    expect(pinButton('a').className).not.toContain('opacity-0')
+    // The glyph replaces the always-visible pin control the card used to carry. Same job — you
+    // can tell what is pinned without pointing at every note in turn — without being a button.
+    expect(card('a').textContent).not.toContain('Unpin')
+    expect(screen.getByRole('button', { name: /Open pinned note/ })).toBeDefined()
   })
 
   it('makes both controls real buttons with accessible names', () => {
@@ -224,7 +250,7 @@ describe('deleting a note', () => {
     seed(THREE)
     render(<App />)
 
-    fireEvent.click(deleteButton('b'))
+    deleteNote('b')
 
     expect(screen.getAllByRole('article')).toHaveLength(2)
     expect(screen.queryByTestId('note-b')).toBeNull()
@@ -234,7 +260,7 @@ describe('deleting a note', () => {
     seed(THREE)
     render(<App />)
 
-    fireEvent.click(deleteButton('b'))
+    deleteNote('b')
     vi.advanceTimersByTime(400)
 
     expect(readNotes().map((n) => n.id)).toEqual(['a', 'c'])
@@ -244,27 +270,41 @@ describe('deleting a note', () => {
     seed(THREE)
     render(<App />)
 
-    fireEvent.click(deleteButton('b'))
+    deleteNote('b')
 
     expect(screen.getByText('2')).toBeDefined()
   })
 })
 
 describe('the textarea is uncontrolled', () => {
-  it('keeps in-progress text when an unrelated board change re-renders it', () => {
-    seed([note({ id: 'a' }), note({ id: 'b', body: 'other' })])
+  /**
+   * P9 changed this test's premise rather than its point. It used to pin a DIFFERENT note from
+   * the board while this one was open, because that was the only board change that re-rendered
+   * without moving focus. The controls are inside the view now, so pinning another note is not
+   * something you can do with this one open — and the replacement is a better scenario anyway:
+   * pin the note you are in the middle of writing, which is a thing people actually do.
+   *
+   * The risk underneath is unchanged. A controlled textarea driven by `note.body` reverts to the
+   * stored value the moment the store changes, and the store changes on every pin.
+   */
+  it('keeps in-progress text when pinning the note being written', () => {
+    seed([note({ id: 'a' })])
     render(<App />)
-    fireEvent.click(screen.getAllByTestId('open')[0])
+    openNote('a')
     const textarea = screen.getByRole('textbox', { name: 'Note text' }) as HTMLTextAreaElement
     fireEvent.change(textarea, { target: { value: 'half a sent' } })
 
-    // Pinning another note is the only unrelated change that re-renders this card without
-    // also moving focus. A controlled textarea driven by note.body would revert here.
-    fireEvent.click(pinButton('b'))
+    fireEvent.click(inView('pin'))
 
     expect((screen.getByRole('textbox', { name: 'Note text' }) as HTMLTextAreaElement).value).toBe(
       'half a sent',
     )
-    expect(document.activeElement).toBe(textarea)
+    // And pinning does not close the view — it is a property of the note, like its colour.
+    expect(screen.getByRole('dialog')).toBeDefined()
+    // The storage mirror is debounced; drain it rather than racing it.
+    act(() => {
+      vi.advanceTimersByTime(400)
+    })
+    expect(readNotes()[0].pinned).toBe(true)
   })
 })

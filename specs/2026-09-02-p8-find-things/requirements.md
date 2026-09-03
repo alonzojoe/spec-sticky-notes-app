@@ -61,7 +61,7 @@ Plus the documents this invalidates (**D8**).
 - **A command palette.** No actions, no "create a note called…", no navigation entries. This finds
   notes. Widening it to commands is a different feature and would need its own amendment.
 - **Highlighting the matched substring inside the excerpt.** Considered; it needs the excerpt to
-  become markup rather than text, and P10's markdown renderer will change that surface anyway.
+  become markup rather than text, and *Markdown and checkboxes*'s markdown renderer will change that surface anyway.
 
 ## Decisions
 
@@ -88,9 +88,9 @@ The phase order changes with it:
 | --- | --- | --- |
 | P8 | Find things *(search + tags)* | **Find things** *(search only)* |
 | P9 | Markdown and checkboxes | **Tags** |
-| P10 | Dark mode | Markdown and checkboxes |
-| P11 | Polish | Dark mode |
-| P12 | — | Polish |
+| *Markdown and checkboxes* | Dark mode | Markdown and checkboxes |
+| *Dark mode* | Polish | Dark mode |
+| *Polish* | — | Polish |
 
 This is the **second renumber in two phases**, and § Risks says what that costs.
 

@@ -3,6 +3,7 @@ import { useLocalStorage } from 'usehooks-ts'
 
 import { Board } from '@/components/board/board'
 import { AppSidebar } from '@/components/layout/app_sidebar'
+import { DeleteNoteProvider } from '@/components/layout/delete_note_dialog'
 import { NewNoteDialog } from '@/components/layout/new_note_dialog'
 import { SearchDialog } from '@/components/layout/search_dialog'
 import { Toolbar } from '@/components/layout/toolbar'
@@ -73,6 +74,7 @@ export function AppShell() {
   return (
     <NotesProvider>
       <OpenNoteProvider>
+        <DeleteNoteProvider>
         <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <AppSidebar />
           {/* SidebarInset renders the <main> element itself, so nothing here nests another
@@ -87,6 +89,7 @@ export function AppShell() {
           <NewNoteDialog open={creating} onOpenChange={setCreating} />
           <SearchDialog open={searching} onOpenChange={setSearching} />
         </SidebarProvider>
+        </DeleteNoteProvider>
       </OpenNoteProvider>
     </NotesProvider>
   )

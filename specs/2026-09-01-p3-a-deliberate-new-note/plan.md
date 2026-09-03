@@ -271,7 +271,7 @@ Only now. Groups 3 and 4 leave two working ways to create a note; this group rem
 5.1 `git rm src/components/layout/note_palette.tsx src/__tests__/note_palette.test.tsx`.
 
 5.2 `src/components/layout/app_sidebar.tsx` — drop the `NotePalette` import and the `<NotePalette />`
-    element. The slot comment above the component lists P9 and P11 and previously listed P2; make
+    element. The slot comment above the component lists P9 and *Dark mode* and previously listed P2; make
     sure no line still reserves a New-note position.
 
 5.3 `npm test`. **T7 (`app_shell.test.tsx`) is expected to fail here** if it asserts the palette
