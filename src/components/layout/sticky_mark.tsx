@@ -9,7 +9,7 @@
  * a build dependency. If one changes, change the other — they are the same mark and a drift
  * between the tab and the sidebar is exactly the kind of thing nobody notices for months.
  *
- * The colours are the literal hex of the `oklch` tokens in `index.css` — `--color-cork`,
+ * The colours are the literal hex of the `oklch` tokens in `app/main.css` — `--color-cork`,
  * `--color-cork-deep`, `--color-paper-butter` and `--color-ink`. They are literals rather than
  * `currentColor` because the mark is a *picture of the board*, not an icon that takes on the
  * colour of the text beside it; a monochrome version of it is just a rounded square.
