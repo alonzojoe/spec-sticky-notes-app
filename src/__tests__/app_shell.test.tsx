@@ -6,6 +6,7 @@ import App from '@/__tests__/test_app'
 import { loadRouter } from '@/__tests__/router_setup'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { BOARD_KEY } from '@/lib/board_storage'
+import { SECTIONS } from '@/lib/sections'
 import type { Note } from '@/types/note'
 
 const note = (id: string): Note => ({
@@ -55,13 +56,16 @@ describe('the application shell', () => {
       name: /notes/i,
     })
 
-  it('offers two destinations, Notes and Pinned notes', () => {
+  it('offers a destination per section in the registry', () => {
     render(<App />)
-    const items = destinations()
 
     // P1 through P9 asserted exactly one, which was honest while the nav held one item: a nav
-    // with a single destination is a label that happens to be focusable. P10 gives it the second.
-    expect(items.map((item) => item.textContent?.trim())).toEqual(['Notes', 'Pinned notes'])
+    // with a single destination is a label that happens to be focusable. P10 gave it the second
+    // and P12 the third — and asserted against `lib/sections.ts`, so a row added there has to
+    // appear here rather than the two drifting apart.
+    expect(destinations().map((item) => item.textContent?.trim())).toEqual(
+      SECTIONS.map((row) => row.label),
+    )
   })
 
   // Counted rather than checked on the active one. Two current pages is a defect a screen reader
@@ -87,15 +91,17 @@ describe('the application shell', () => {
     for (const item of destinations()) {
       expect(item.tagName).toBe('A')
     }
-    expect(destinations().map((item) => item.getAttribute('href'))).toEqual(['/notes', '/pinned'])
+    expect(destinations().map((item) => item.getAttribute('href'))).toEqual(
+      SECTIONS.map((row) => row.path),
+    )
   })
 
-  it('badges an empty board with zero, on both destinations', () => {
+  it('badges an empty board with zero, on every destination', () => {
     render(<App />)
 
-    // Two zeros, not one. A badge that vanishes when it is empty makes the two rows different
-    // heights for no reason a reader could name, and a zero is information.
-    expect(screen.getAllByText('0')).toHaveLength(2)
+    // A zero per row, not a missing badge. One that vanishes when it is empty makes the rows
+    // different heights for no reason a reader could name, and a zero is information.
+    expect(screen.getAllByText('0')).toHaveLength(SECTIONS.length)
   })
 
   // Comparing the badge against a length imported from the same module the component

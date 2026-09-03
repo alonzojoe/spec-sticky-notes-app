@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { BOARD_KEY } from '@/lib/board_storage'
+import { SECTIONS, sectionAt } from '@/lib/sections'
 import { createAppRouter } from '@/app/config/router_config'
 import type { Note } from '@/types/note'
 
@@ -66,6 +67,9 @@ const cards = () =>
 const destinations = (): HTMLAnchorElement[] => [
   ...document.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Board sections"] a'),
 ]
+
+const badges = (): (string | null)[] =>
+  [...document.querySelectorAll('[data-sidebar="menu-badge"]')].map((badge) => badge.textContent)
 
 const current = () =>
   destinations().find((item) => item.getAttribute('aria-current') === 'page')?.textContent?.trim()
@@ -132,23 +136,23 @@ describe('T70 · two destinations', () => {
   })
 
   it('badges each destination with its own count', async () => {
-    await renderAt('/')
-    const badges = [...document.querySelectorAll('[data-sidebar="menu-badge"]')].map(
-      (badge) => badge.textContent,
-    )
+    // Four notes: two pinned, one of them also linked.
+    await renderAt('/', [
+      note({ id: 'pin-one', order: 5, pinned: true, link: 'https://example.com/a' }),
+      note({ id: 'plain-one', order: 4 }),
+      note({ id: 'pin-two', order: 3, pinned: true }),
+      note({ id: 'plain-two', order: 2 }),
+    ])
 
-    expect(badges).toEqual(['4', '2'])
+    expect(badges()).toEqual(['4', '2', '1'])
   })
 
   // A zero says the section exists and is empty. A badge that vanishes makes the two rows
   // different heights for no reason a reader could name.
-  it('badges an unpinned board with a zero rather than nothing', async () => {
+  it('badges an empty section with a zero rather than nothing', async () => {
     await renderAt('/', [note({ id: 'a' })])
-    const badges = [...document.querySelectorAll('[data-sidebar="menu-badge"]')].map(
-      (badge) => badge.textContent,
-    )
 
-    expect(badges).toEqual(['1', '0'])
+    expect(badges()).toEqual(['1', '0', '0'])
   })
 
   it('filters the board when the pinned destination is clicked', async () => {
@@ -321,12 +325,12 @@ describe('T74 · the pinned empty state', () => {
 
 // T75 — the keyboard gained two stops and lost nothing.
 describe('T75 · the keyboard', () => {
-  it('makes both destinations real links in the tab order', async () => {
+  it('makes every destination a real link in the tab order', async () => {
     await renderAt('/')
 
     for (const item of destinations()) {
       expect(item.tagName).toBe('A')
-      expect(item.getAttribute('href')).toMatch(/^\/(notes|pinned)$/)
+      expect(item.getAttribute('href')).toMatch(/^\/(notes|pinned|linked)$/)
       expect(item.getAttribute('tabindex')).not.toBe('-1')
     }
   })
@@ -352,5 +356,152 @@ describe('T75 · the keyboard', () => {
     fireEvent.click(screen.getByTestId('note-pin-two').querySelector('[data-testid="pin"]')!)
 
     await waitFor(() => expect(cards()).toEqual(['pin-one']))
+  })
+})
+
+/**
+ * T76 — the registry is what a section *is*.
+ *
+ * Requirements § Risks: `keep` is one expression per row and nothing type-checks that it names the
+ * right field. A section pointing at the wrong one would compile, render, and look plausible — so
+ * every predicate is asserted directly, against a note that satisfies it and one that does not.
+ */
+describe('T76 · the section registry', () => {
+  const rows = Object.fromEntries(SECTIONS.map((row) => [row.section, row]))
+
+  it('keeps every note in the notes section', () => {
+    expect(rows.notes.keep(note({ id: 'a' }))).toBe(true)
+    expect(rows.notes.keep(note({ id: 'b', pinned: true, link: 'https://example.com' }))).toBe(true)
+  })
+
+  it('keeps a pinned note out of the pinned section only when it is not pinned', () => {
+    expect(rows.pinned.keep(note({ id: 'a', pinned: true }))).toBe(true)
+    expect(rows.pinned.keep(note({ id: 'b', pinned: false }))).toBe(false)
+  })
+
+  it('keeps a note in the linked section on its link field alone', () => {
+    expect(rows.linked.keep(note({ id: 'a', link: 'https://example.com/rent' }))).toBe(true)
+    expect(rows.linked.keep(note({ id: 'b', link: '' }))).toBe(false)
+  })
+
+  // The field, not the note's substance: an empty note with a link is linked, and a note full of
+  // words without one is not.
+  it('reads the field rather than the note', () => {
+    expect(
+      rows.linked.keep(note({ id: 'a', title: '', body: '', link: 'https://example.com' })),
+    ).toBe(true)
+    expect(rows.linked.keep(note({ id: 'b', title: 'Standup', body: 'a paragraph' }))).toBe(false)
+  })
+
+  // A URL typed into the body is not a link. `lib/links.ts` judges the field, and a body-scanning
+  // rule would put notes in the section with no chip on their card.
+  it('does not scan the body for URLs', () => {
+    expect(rows.linked.keep(note({ id: 'a', body: 'see https://x.example for more' }))).toBe(false)
+  })
+
+  // Two routes render one page — P10 chose that over a redirect — so an unmatched path marks Notes
+  // current rather than marking nothing current, which is the state T70 exists to catch.
+  it('reads the root path as the notes section', () => {
+    expect(sectionAt('/').section).toBe('notes')
+    expect(sectionAt('/notes').section).toBe('notes')
+    expect(sectionAt('/pinned').section).toBe('pinned')
+    expect(sectionAt('/linked').section).toBe('linked')
+  })
+
+  // An empty whole board is still bare cork: a first-run screen wants an illustration and an
+  // invitation to write the first note, and empty_state.tsx belongs to *Polish* with those.
+  it('gives every section but the whole board an empty state', () => {
+    expect(rows.notes.empty).toBeNull()
+    expect(rows.pinned.empty).not.toBeNull()
+    expect(rows.linked.empty).not.toBeNull()
+  })
+})
+
+// T77 — the third section, and the fact that a section is a question rather than a folder.
+describe('T77 · the linked section', () => {
+  const MIXED = [
+    note({ id: 'both', order: 5, pinned: true, link: 'https://example.com/both' }),
+    note({ id: 'linked-one', order: 4, link: 'https://example.com/one' }),
+    note({ id: 'pinned-only', order: 3, pinned: true }),
+    note({ id: 'neither', order: 2 }),
+    // Deliberately last on the whole board and second-to-last in its own section: `neither` sits
+    // between the two linked notes in `/notes`, which is what makes them non-neighbours there.
+    note({ id: 'linked-two', order: 1, link: 'https://example.com/two' }),
+  ]
+
+  it('draws only the notes carrying a link', async () => {
+    await renderAt('/linked', MIXED)
+
+    expect(cards()).toEqual(['both', 'linked-one', 'linked-two'])
+  })
+
+  // Sections are questions about a note, not folders it lives in.
+  it('draws a note that is pinned and linked in both sections, and in notes', async () => {
+    await renderAt('/linked', MIXED)
+    expect(cards()).toContain('both')
+
+    fireEvent.click(destinations()[1])
+    await waitFor(() => expect(cards()).toEqual(['both', 'pinned-only']))
+
+    fireEvent.click(destinations()[0])
+    await waitFor(() => expect(cards()).toHaveLength(5))
+  })
+
+  it('says what to do when nothing is linked', async () => {
+    await renderAt('/linked', [note({ id: 'a' })])
+
+    expect(screen.getByText('No linked notes')).toBeDefined()
+    expect(screen.getByText('Add a link to a note and it will show up here.')).toBeDefined()
+  })
+
+  it('says nothing once something is linked', async () => {
+    await renderAt('/linked', MIXED)
+
+    expect(screen.queryByText('No linked notes')).toBeNull()
+  })
+
+  it('leaves every order, pin and timestamp untouched through a round trip', async () => {
+    await renderAt('/', MIXED)
+    await waitFor(() => expect(cards()).toHaveLength(5))
+    const before = shape()
+
+    fireEvent.click(destinations()[2])
+    await waitFor(() => expect(cards()).toEqual(['both', 'linked-one', 'linked-two']))
+    fireEvent.click(destinations()[0])
+    await waitFor(() => expect(cards()).toHaveLength(5))
+
+    expect(shape()).toBe(before)
+  })
+
+  it('marks the linked destination current', async () => {
+    await renderAt('/linked', MIXED)
+
+    expect(current()).toBe('Linked notes')
+    expect(destinations().filter((item) => item.getAttribute('aria-current') === 'page')).toHaveLength(1)
+  })
+
+  /**
+   * **The linked section is not a prefix of the board, and the pinned one is.**
+   *
+   * P10 leaned on that: every pinned note sorts above every unpinned one, so a swap inside the
+   * pinned view is the swap the whole board would have made. A linked note sorts nowhere in
+   * particular, so the two cards swapped here are not neighbours in `/notes` — and asserting "the
+   * same swap" would be asserting something false. What is true is what dragging has always done:
+   * those two notes swap, and nothing else moves.
+   */
+  it('swaps exactly the two notes an arrow key names, and moves nothing else', async () => {
+    await renderAt('/linked', MIXED)
+    expect(cards()).toEqual(['both', 'linked-one', 'linked-two'])
+
+    // Neighbours here, and two apart in `/notes` — `neither` is between them there.
+    fireEvent.keyDown(screen.getByTestId('note-linked-one'), { key: 'ArrowRight' })
+    await waitFor(() => expect(cards()).toEqual(['both', 'linked-two', 'linked-one']))
+
+    fireEvent.click(destinations()[0])
+    // The two swapped their places in the whole board's ordering; `pinned-only` and `neither` are
+    // exactly where they were.
+    await waitFor(() =>
+      expect(cards()).toEqual(['both', 'pinned-only', 'linked-two', 'neither', 'linked-one']),
+    )
   })
 })
