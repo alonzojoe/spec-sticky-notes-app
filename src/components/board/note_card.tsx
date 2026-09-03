@@ -1,6 +1,7 @@
 import { Link2, Pin, Trash2 } from 'lucide-react'
 
 import { useDeleteNote } from '@/context/use_delete_note'
+import { useNotesDispatch } from '@/context/use_notes'
 import { formatDate } from '@/lib/dates'
 import { linkLabel } from '@/lib/links'
 import { PAPER } from '@/lib/paper'
@@ -50,20 +51,24 @@ const bodyClamp = (note: Note): string =>
  *
  * P7 added the title and the link chip and grew the card to `h-52` to hold them.
  *
- * **P9 took pin off the card and left delete on it.** Pinning is something you do to a note you
- * are already reading, and it moved into the note's own view; deleting is something you decide
- * about a note you can see from across the board, and making you open it first to throw it away
- * is a worse trade than the one control costs. That asymmetry is what the amended principle 4
- * says, and it is why the card still carries a `group` class and a hover-revealed corner.
+ * **P9 took pin off the card and P10 put it back, as a control this time.** P9's split — pinning is
+ * something you do to a note you are already reading, deleting is something you decide about a note
+ * you can see from across the board — held for one phase and then met the section that collects
+ * pinned notes: with a `Pinned notes` destination in the sidebar, pinning stops being a thing you
+ * do while reading and becomes a thing you do while *sorting*, which is done at a glance across
+ * many notes rather than inside one. Both controls are here, and both are still in the note's own
+ * view, because either is a reasonable place to be when you decide.
  *
- * Four things now share this element and each has a deliberate answer. The body is a real button,
+ * **The pin control is its own state.** It is drawn at full strength whenever the note is pinned —
+ * filled, in full ink, with no hover needed — and hidden like delete when it is not. So a pinned
+ * card still says so from across the room, and the mark you see is the control you press, which is
+ * what P9's Gate 3 found people expected of the glyph that used to sit there.
+ *
+ * Five things now share this element and each has a deliberate answer. The body is a real button,
  * so clicking or pressing Enter on it opens the note — but only if the gesture did not become a
- * drag. The delete control stops propagation, or removing a note would open the note it just
- * removed. The link chip stops it for the same reason. The arrow keys on the article itself still
- * reorder.
- *
- * The pin glyph is **state, not a control**: it is the only way to see why a pinned note sorts
- * first, and it is deliberately not the thing you click to unpin.
+ * drag. The pin and delete controls stop propagation, or acting on a note would open it and
+ * pressing a control would start dragging the card. The link chip stops it for the same reason.
+ * The arrow keys on the article itself still reorder.
  */
 export function NoteCard({
   note,
@@ -85,6 +90,7 @@ export function NoteCard({
   onReorder: (direction: ReorderDirection) => void
 }) {
   const { requestDelete } = useDeleteNote()
+  const dispatch = useNotesDispatch()
 
   return (
     <article
@@ -115,27 +121,43 @@ export function NoteCard({
         dragging !== null ? { transform: `translate(${dragging.dx}px, ${dragging.dy}px)` } : undefined
       }
     >
-      {/* The corner: the pinned state, then the one control. They share a row so the glyph does
-          not jump when the control fades in beside it. */}
+      {/* The corner: pin, then delete. A full gap keeps the destructive control from sitting
+          flush against the one beside it — P2's point about the card's controls, still true. */}
       <div className="absolute top-3 right-3 flex items-center gap-0.5">
-        {/* State, not a control. No handler, no tabindex, `aria-hidden` — clicking it opens the
-            note like anywhere else on the card, because it is not a target. Principle 4's amended
-            clause licences exactly this: state that would otherwise be invisible. Without it,
-            principle 1's promise that pinned notes sort first has no visible cause. */}
-        {note.pinned && (
-          <span className="pointer-events-none p-1 text-ink-soft">
-            <Pin className="size-3.5" aria-hidden />
-          </span>
-        )}
+        {/* Pin is a control AND the state. Pinned, it is drawn filled and in full ink at all
+            times, so principle 1's promise that pinned notes sort first keeps its visible cause
+            with no hover; unpinned, it hides with delete like any other per-note control.
+
+            One icon in both states, deliberately: `PinOff` at rest would draw the *action* rather
+            than the fact, and a card should say what a note is before it says what you could do
+            to it. The label and `aria-pressed` carry the action instead.
+
+            stopPropagation on both click and pointerdown, or pinning would open the note and
+            pressing the control would start dragging the card. */}
+        <button
+          type="button"
+          data-testid="pin"
+          aria-pressed={note.pinned}
+          aria-label={note.pinned ? 'Unpin note' : 'Pin note'}
+          onClick={(event) => {
+            event.stopPropagation()
+            dispatch({ type: 'toggle_pin', id: note.id, at: Date.now() })
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
+          className={`cursor-pointer rounded-sm p-1 transition-opacity duration-(--duration-hover) ease-out focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring ${
+            note.pinned
+              ? 'text-ink opacity-100'
+              : 'text-ink-soft opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 hover:text-ink'
+          }`}
+        >
+          <Pin className={`size-3.5 ${note.pinned ? 'fill-current' : ''}`} aria-hidden />
+        </button>
 
         {/* Hidden until you touch this note — principle 4's "on the note you're touching, not on
             all of them at once". `opacity-0` leaves a button focusable but invisible, so the
             group-focus-within and focus-visible escapes bring it back for the keyboard; without
             them, tabbing lands on something nobody can see, which is a defect rather than a
-            style choice.
-
-            stopPropagation on both click and pointerdown, or deleting a note would open the note
-            it just removed and pressing the control would start dragging the card. */}
+            style choice. */}
         <button
           type="button"
           data-testid="delete"
@@ -145,7 +167,7 @@ export function NoteCard({
             requestDelete(note)
           }}
           onPointerDown={(event) => event.stopPropagation()}
-          className="rounded-sm p-1 text-ink-soft opacity-0 transition-opacity duration-(--duration-hover) ease-out group-hover:opacity-100 group-focus-within:opacity-100 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring"
+          className="cursor-pointer rounded-sm p-1 text-ink-soft opacity-0 transition-opacity duration-(--duration-hover) ease-out group-hover:opacity-100 group-focus-within:opacity-100 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring"
         >
           <Trash2 className="size-3.5" aria-hidden />
         </button>

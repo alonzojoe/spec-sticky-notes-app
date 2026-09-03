@@ -124,6 +124,10 @@
     /* The board behind the paper. */
     --color-cork: oklch(0.632 0.072 62);
     --color-cork-deep: oklch(0.548 0.068 56);
+    /* Text that sits on the cork rather than on paper. P10's empty pinned board is the first
+       thing to need it: warm ink on cork is unreadable, and the board is the one surface in the
+       app with no paper under the words. */
+    --color-cork-ink: oklch(0.972 0.013 88);
 
     /* Warm ink — never pure black. */
     --color-ink: oklch(0.292 0.020 58);
