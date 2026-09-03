@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { Outlet, useNavigate } from '@tanstack/react-router'
+import { useCallback, useEffect, useState } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
 
-import { Board } from '@/components/board/board'
 import { AppSidebar } from '@/components/layout/app_sidebar'
 import { DeleteNoteProvider } from '@/components/layout/delete_note_dialog'
 import { NewNoteDialog } from '@/components/layout/new_note_dialog'
@@ -23,6 +23,26 @@ export function AppShell() {
 
   const [creating, setCreating] = useState(false)
   const [searching, setSearching] = useState(false)
+
+  const navigate = useNavigate()
+
+  /**
+   * Creating a note puts you back on the whole board first.
+   *
+   * A new note is never pinned, so one created from `/pinned` would be a note you made, that opened
+   * itself, over a board that does not contain it — and the one-sentence test is about capturing a
+   * thought, not about capturing it somewhere you cannot see it.
+   *
+   * At the moment the dialog opens rather than when the note is created, so the board behind the
+   * dialog is already the board the note will land on rather than changing a beat later underneath
+   * a note that is already open. Cancelling therefore leaves you on the whole board, which is the
+   * price of a section that does not flicker back and forth depending on whether you went through
+   * with it.
+   */
+  const startCreating = useCallback(() => {
+    void navigate({ to: '/notes' })
+    setCreating(true)
+  }, [navigate])
 
   /**
    * The two global shortcuts. `n` opens the create dialog — P3 replaced a one-click sidebar
@@ -65,11 +85,11 @@ export function AppShell() {
         return
       }
       event.preventDefault()
-      setCreating(true)
+      startCreating()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [])
+  }, [startCreating])
 
   return (
     <NotesProvider>
@@ -81,9 +101,12 @@ export function AppShell() {
               landmark inside it. mission.md principle 4: chrome lives in the sidebar, never
               on the board surface. */}
           <SidebarInset>
-            <Toolbar onNewNote={() => setCreating(true)} onSearch={() => setSearching(true)} />
+            <Toolbar onNewNote={startCreating} onSearch={() => setSearching(true)} />
+            {/* The board itself is the route: `/` and `/notes` render every note, `/pinned` renders
+                the pinned ones. The shell, its providers and its shortcuts stay mounted across a
+                section change, so navigating never remounts the store or closes an open note. */}
             <div className="flex-1 overflow-hidden">
-              <Board />
+              <Outlet />
             </div>
           </SidebarInset>
           <NewNoteDialog open={creating} onOpenChange={setCreating} />

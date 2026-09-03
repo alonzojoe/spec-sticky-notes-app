@@ -4,6 +4,12 @@ export const NOTE_COLORS = ['butter', 'apricot', 'rose', 'lilac', 'sky', 'mint']
 
 export type NoteColor = (typeof NOTE_COLORS)[number]
 
+// The two sections of the board, which are two routes. `notes` draws every note; `pinned` draws
+// the pinned ones and nothing else. A section changes what is on screen and never what is stored:
+// no note's `order` or `pinned` is written by navigating, which is what mission.md principle 1's
+// section sentence promises.
+export type BoardSection = 'notes' | 'pinned'
+
 export interface Note {
   id: string // crypto.randomUUID()
   // One line, shown under the date on the card and clamped there. `''` when the note has no

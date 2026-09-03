@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 
 import App from '@/app'
+import { loadRouter } from '@/__tests__/router_setup'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { BOARD_KEY } from '@/lib/board_storage'
 import type { Note } from '@/types/note'
@@ -44,6 +45,10 @@ const pressDelete = () => {
 
 const alert = () => screen.queryByRole('alertdialog')
 const cards = () => document.querySelectorAll('[data-slot="note-card"]')
+
+// The router matches its first location asynchronously; loading it here is what makes a
+// synchronous render produce a board rather than an empty div. See router_setup.ts.
+beforeAll(loadRouter)
 
 beforeEach(() => {
   stubMatchMedia()

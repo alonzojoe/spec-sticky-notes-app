@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 
 import App from '@/app'
+import { loadRouter } from '@/__tests__/router_setup'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { NotesProvider } from '@/context/notes_context'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
@@ -78,6 +79,10 @@ const renderProbe = () =>
       <Probe />
     </NotesProvider>,
   )
+
+// The router matches its first location asynchronously; loading it here is what makes a
+// synchronous render produce a board rather than an empty div. See router_setup.ts.
+beforeAll(loadRouter)
 
 beforeEach(() => {
   stubMatchMedia()
