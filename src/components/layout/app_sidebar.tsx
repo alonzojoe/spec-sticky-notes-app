@@ -1,4 +1,5 @@
-import { StickyNote } from 'lucide-react'
+import { Link, useRouterState } from '@tanstack/react-router'
+import { Pin, StickyNote } from 'lucide-react'
 
 import { StickyMark } from '@/components/layout/sticky_mark'
 import {
@@ -15,15 +16,47 @@ import {
 } from '@/components/ui/sidebar'
 import { useNotes } from '@/context/use_notes'
 
-// P3 moved note creation out of here and into the toolbar's dialog, so the sidebar is down
-// to its nav group. Slots later phases fill, named here so it grows by plan rather than by
-// improvisation:
-//   P10 — the tag list, as a SidebarGroup below the nav group (search became a ⌘K palette
-//         in the toolbar in P8, so no field lands here)
-//   Dark mode — the theme toggle, in a SidebarFooter
+// P3 moved note creation out of here and into the toolbar's dialog. P10 gave it the second
+// destination it had been missing since P1 — a nav with one item is a label that happens to be
+// focusable, not navigation. Slots later phases fill, named here so it grows by plan rather than
+// by improvisation:
+//   *Tags* — the tag list, as a SidebarGroup below the nav group (search became a ⌘K palette
+//            in the toolbar in P8, so no field lands here)
+//   *Dark mode* — the theme toggle, in a SidebarFooter
 // Nothing is rendered for them now. A control that cannot be used should not be drawn.
+/**
+ * How a destination says it is the one you are on.
+ *
+ * The active row keeps shadcn's own `data-active` treatment — the sidebar's accent behind it and a
+ * medium weight — and everything here is about making that the *only* row that looks like that.
+ * The base variant hovers an inactive item to the same full accent, which is what made the two
+ * rows indistinguishable the moment a pointer crossed one: a hover that produces the selected
+ * appearance is a hover that lies about which section you are in.
+ *
+ * So an inactive destination is plain — the sidebar's own background, nothing behind it — and its
+ * hover is a half-strength wash that reads as "you are over this" rather than "you are on this".
+ *
+ * The accent alone was not enough to answer "which section am I in" at a glance: it sits five
+ * percent of lightness from the sidebar itself, which is visible when you look for it and invisible
+ * when you glance. The bar down the left edge is what answers it — one saturated 2px inset, in the
+ * sidebar's own primary, which survives the collapse to the icon rail where the label is gone.
+ *
+ * Colour only: navigating is a thing you do dozens of times a day, which is the category to reduce
+ * motion in rather than add it to.
+ */
+const DESTINATION =
+  'transition-colors duration-(--duration-hover) ease-out hover:bg-sidebar-accent/50 data-active:text-ink data-active:shadow-[inset_2px_0_0_var(--sidebar-primary)]'
+
 export function AppSidebar() {
   const { notes } = useNotes()
+
+  // `/` and `/notes` are the same view; only `/pinned` is the other one. Read from the router
+  // rather than held here, so the URL is the single answer to "which section is this" and the
+  // sidebar cannot disagree with the board.
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const pinnedActive = pathname === '/pinned'
+
+  const pinnedCount = notes.filter((note) => note.pinned).length
 
   return (
     <Sidebar collapsible="icon">
@@ -46,11 +79,37 @@ export function AppSidebar() {
             <SidebarGroupLabel>Board</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton isActive aria-current="page" tooltip="Notes">
-                  <StickyNote aria-hidden />
-                  <span>Notes</span>
+                {/* Anchors, not buttons with handlers. A destination that can be middle-clicked,
+                    bookmarked and restored by the back button is what makes the section a place
+                    rather than a mode. */}
+                <SidebarMenuButton asChild isActive={!pinnedActive} tooltip="Notes" className={DESTINATION}>
+                  <Link to="/notes" aria-current={pinnedActive ? undefined : 'page'}>
+                    <StickyNote aria-hidden />
+                    <span>Notes</span>
+                  </Link>
                 </SidebarMenuButton>
                 <SidebarMenuBadge>{notes.length}</SidebarMenuBadge>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                {/* The same Pin glyph the card carries when a note is pinned. The mark and the
+                    destination that collects the marked notes are one shape, so the connection is
+                    seen rather than learned. */}
+                <SidebarMenuButton
+                  asChild
+                  isActive={pinnedActive}
+                  tooltip="Pinned notes"
+                  className={DESTINATION}
+                >
+                  <Link to="/pinned" aria-current={pinnedActive ? 'page' : undefined}>
+                    <Pin aria-hidden />
+                    <span>Pinned notes</span>
+                  </Link>
+                </SidebarMenuButton>
+                {/* Rendered at 0 too. A zero says the section exists and is empty, and a badge
+                    that vanishes makes the two rows different heights for no reason a reader
+                    could name. */}
+                <SidebarMenuBadge>{pinnedCount}</SidebarMenuBadge>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>

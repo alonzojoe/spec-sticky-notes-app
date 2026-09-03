@@ -10,7 +10,7 @@ import { OpenNoteProvider } from '@/context/open_note_context'
 import { useNotesDispatch } from '@/context/use_notes'
 import { BOARD_KEY } from '@/lib/board_storage'
 import { createNoteSeed } from '@/lib/note_factory'
-import type { Note } from '@/types/note'
+import type { BoardSection, Note } from '@/types/note'
 
 const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
@@ -38,7 +38,7 @@ function AddOne() {
   )
 }
 
-const renderBoard = (notes: Note[] = SEEDED) => {
+const renderBoard = (notes: Note[] = SEEDED, section: BoardSection = 'notes') => {
   window.localStorage.setItem(BOARD_KEY, JSON.stringify({ version: 1, notes }))
   return render(
     // P8 lifted `openId` out of the board, so the board now needs its provider the same way it
@@ -46,7 +46,7 @@ const renderBoard = (notes: Note[] = SEEDED) => {
     <NotesProvider>
       <OpenNoteProvider>
         <DeleteNoteProvider>
-          <Board />
+          <Board section={section} />
           <AddOne />
         </DeleteNoteProvider>
       </OpenNoteProvider>
@@ -135,7 +135,7 @@ describe('the board', () => {
       <NotesProvider>
         <OpenNoteProvider>
           <DeleteNoteProvider>
-            <Board />
+            <Board section="notes" />
             <AddOne />
           </DeleteNoteProvider>
         </OpenNoteProvider>
@@ -276,30 +276,54 @@ describe('T55 · the body clamp varies while the height does not', () => {
   })
 })
 
-// T66 — a pinned card says so, without carrying a control.
-describe('T66 · the pinned glyph is state, not a control', () => {
-  const glyph = (id: string) =>
-    screen.getByTestId(`note-${id}`).querySelector('span.pointer-events-none svg')
+// T66 — a pinned card says so at rest, and the mark it says it with is the control.
+describe('T66 · the pin control is the pinned state', () => {
+  const pin = (id: string) =>
+    screen.getByTestId(`note-${id}`).querySelector('[data-testid="pin"]') as HTMLElement | null
 
-  it('renders on a pinned note and not on an unpinned one', () => {
+  // P9 drew the state as a glyph and hid the control in the note's view; its own Gate 3 found
+  // people clicking the glyph expecting to unpin. P10 makes the thing you see the thing you press.
+  it('is visible without a hover when the note is pinned, and hidden when it is not', () => {
     renderBoard([note({ id: 'pinned', pinned: true, order: 2 }), note({ id: 'plain', order: 1 })])
 
-    expect(glyph('pinned')).not.toBeNull()
-    expect(glyph('plain')).toBeNull()
+    expect(pin('pinned')?.className).toContain('opacity-100')
+    expect(pin('pinned')?.className).not.toContain('opacity-0')
+
+    expect(pin('plain')?.className).toContain('opacity-0')
+    expect(pin('plain')?.className).toContain('group-hover:opacity-100')
+    expect(pin('plain')?.className).toContain('group-focus-within:opacity-100')
+    expect(pin('plain')?.className).toContain('focus-visible:opacity-100')
   })
 
-  // Asserted structurally, because "it looks like the control it replaced" is the whole risk.
-  it('is not a button and is not in the tab order', () => {
-    renderBoard([note({ id: 'a', pinned: true })])
-    const holder = screen.getByTestId('note-a').querySelector('span.pointer-events-none')
+  it('names the action and carries the state, in both directions', () => {
+    renderBoard([note({ id: 'pinned', pinned: true, order: 2 }), note({ id: 'plain', order: 1 })])
 
-    expect(holder?.tagName).toBe('SPAN')
-    expect(holder?.querySelector('button')).toBeNull()
-    expect(holder?.getAttribute('tabindex')).toBeNull()
-    expect(glyph('a')?.getAttribute('aria-hidden')).toBe('true')
+    expect(pin('pinned')?.getAttribute('aria-label')).toBe('Unpin note')
+    expect(pin('pinned')?.getAttribute('aria-pressed')).toBe('true')
+    expect(pin('plain')?.getAttribute('aria-label')).toBe('Pin note')
+    expect(pin('plain')?.getAttribute('aria-pressed')).toBe('false')
   })
 
-  // The glyph is aria-hidden, so the state has to reach a screen reader some other way.
+  // One icon in both states: `PinOff` at rest would draw the action rather than the fact.
+  it('draws one pin, filled when the note is pinned', () => {
+    renderBoard([note({ id: 'pinned', pinned: true, order: 2 }), note({ id: 'plain', order: 1 })])
+
+    expect(pin('pinned')?.querySelector('svg')?.getAttribute('class')).toContain('fill-current')
+    expect(pin('plain')?.querySelector('svg')?.getAttribute('class')).not.toContain('fill-current')
+  })
+
+  it('pins from the card without opening the note', () => {
+    renderBoard([note({ id: 'a' })])
+
+    fireEvent.click(pin('a') as HTMLElement)
+
+    // Read back through what the board renders, not through the reducer: the card is the caller.
+    expect(pin('a')?.getAttribute('aria-pressed')).toBe('true')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  // The icon is aria-hidden, so the state also has to reach a screen reader through the name of
+  // the control that opens the note.
   it('puts the state into the opener’s accessible name', () => {
     renderBoard([note({ id: 'a', pinned: true })])
 
@@ -318,29 +342,24 @@ describe('T66 · the pinned glyph is state, not a control', () => {
 })
 
 /**
- * T67 — the assertion that makes D3 a constraint rather than a state of affairs.
+ * T67 — the assertion that keeps the card's control list a decision rather than an accident.
  *
  * Tests assert what is present, so without this one nothing stops a later phase quietly regrowing
- * an affordance on the card. Requirements § Risks names it.
+ * a third affordance on the card. P9 wrote it for two controls; P10 adds pin back and the count
+ * moves to three, which is the point of counting rather than checking for absences.
  */
-describe('T67 · a card carries delete and nothing else', () => {
-  it('contains exactly two buttons: its opener and delete', () => {
+describe('T67 · a card carries pin, delete and its opener', () => {
+  it('contains exactly three buttons', () => {
     renderBoard([
       note({ id: 'a', pinned: true, title: 'Standup', link: 'https://meet.google.com/abc' }),
     ])
 
     const buttons = [...screen.getByTestId('note-a').querySelectorAll('button')]
-    expect(buttons.map((b) => b.getAttribute('data-testid')).sort()).toEqual(['delete', 'open'])
-  })
-
-  // Pinning is something you do to a note you are already reading, so it is not out here.
-  it('carries no pin control', () => {
-    renderBoard([note({ id: 'a', pinned: true })])
-
-    for (const el of screen.getByTestId('note-a').querySelectorAll('[aria-label]')) {
-      expect(el.getAttribute('aria-label')).not.toMatch(/^(Pin|Unpin) note$/)
-    }
-    expect(screen.getByTestId('note-a').querySelector('[data-testid="pin"]')).toBeNull()
+    expect(buttons.map((b) => b.getAttribute('data-testid')).sort()).toEqual([
+      'delete',
+      'open',
+      'pin',
+    ])
   })
 
   // Hidden until you touch this note, and reachable by keyboard anyway. opacity-0 leaves a button
@@ -360,7 +379,7 @@ describe('T67 · a card carries delete and nothing else', () => {
 
 // T68 — the keyboard lost nothing.
 describe('T68 · the card’s tab stops', () => {
-  it('holds the article, the opener and delete, plus the chip when there is a link', () => {
+  it('holds the article, the opener, pin and delete, plus the chip when there is a link', () => {
     renderBoard([note({ id: 'plain' }), note({ id: 'linked', link: 'https://x.example', order: 2 })])
 
     // The article itself carries tabIndex={0} and is not matched by a descendant query, so it
@@ -371,8 +390,8 @@ describe('T68 · the card’s tab stops', () => {
       return inside + (card.getAttribute('tabindex') === '0' ? 1 : 0)
     }
 
-    // Article, opener, delete — and the chip when there is a link.
-    expect(stops('plain')).toBe(3)
-    expect(stops('linked')).toBe(4)
+    // Article, opener, pin, delete — and the chip when there is a link.
+    expect(stops('plain')).toBe(4)
+    expect(stops('linked')).toBe(5)
   })
 })

@@ -27,6 +27,14 @@ describe('the amendments to shadcn sidebar.tsx', () => {
   it('hosts the TooltipProvider itself rather than pushing it onto the app', () => {
     expect(sidebar).toContain('<TooltipProvider>')
   })
+
+  // P10. `data-active:` matches the attribute rather than its value, so `data-active={isActive}`
+  // rendered `data-active="false"` on every inactive item and styled it as the selected one —
+  // invisible while the sidebar held a single destination, and the whole point of the selection
+  // once it held two.
+  it('omits data-active rather than rendering it false', () => {
+    expect(sidebar).toContain('data-active={isActive || undefined}')
+  })
 })
 
 // T9 — D9. The transitive components are dormant until a phase needs them. P3 woke `button`:

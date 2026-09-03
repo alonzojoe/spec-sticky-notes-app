@@ -1,10 +1,15 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import App from '@/app'
+import { loadRouter } from '@/__tests__/router_setup'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
+
+// The router matches its first location asynchronously; loading it here is what makes a
+// synchronous render produce a board rather than an empty div. See router_setup.ts.
+beforeAll(loadRouter)
 
 beforeEach(() => {
   stubMatchMedia()

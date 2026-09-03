@@ -245,10 +245,45 @@ with something in it asks first from either place.
 
 ---
 
+## P10 · A view of the pinned
+
+**Goal:** the sidebar becomes navigation, and pinning becomes something you can look at.
+
+- A second destination — **Pinned notes**, with the same `Pin` glyph the card carries — beside
+  `Notes`. `aria-current` follows the selection; both badges carry their count, and the pinned one
+  renders at `0`.
+- The section **shows only the pinned notes**. Not dimming: pinned notes already sort first, so a
+  dimmed pinned view is the top of the board you already had.
+- **A view is not an edit.** One `filter` over the existing sort. Nothing dispatches, the reducer
+  never learns that sections exist, and returning to `Notes` shows the arrangement you left.
+- **The section is a route**, on TanStack Router: `/` and `/notes` are the whole board, `/pinned` is
+  the other one. A URL already remembers the view across a reload, survives the back button and can
+  be bookmarked, so nothing new is stored. Code-based routes — the file-based plugin's generated
+  `routeTree.gen.ts` would need an exemption from the naming rule.
+- **Pin comes back to the card**, beside delete, and is drawn without a hover while the note is
+  pinned: with a section collecting pinned notes, pinning is something you do while *sorting*
+  rather than while reading. The mark you see is the control you press, which is what P9's Gate 3
+  found people expected of the glyph.
+- **The selected sidebar row is made to look selected.** `data-active={isActive}` renders
+  `data-active="false"`, and Tailwind's `data-active:` variant matches the attribute rather than its
+  value, so every row wore the selection. Present since P1; invisible until the nav had two rows.
+- **Creating a note returns you to `Notes`**, at the moment the dialog opens. A new note is never
+  pinned, and capturing a thought somewhere you cannot see it fails the one-sentence test.
+- An empty pinned board says *No pinned notes* and names the way out. The general empty state is
+  still *Polish*'s.
+- Search still ignores the section: the palette finds every note and opens it, drawn or not.
+
+**Done when:** `/pinned` shows the pinned notes and nothing else, the URL is what remembers the
+view, navigating writes nothing, a card can pin as well as delete, and an empty pinned board
+explains itself.
+
+---
+
 # Planned, in order
 
 No numbers — see P9's last bullet. Order is a plan, not a commitment; inserting work here is an edit
-to this list rather than a rewrite of every cross-reference in `specs/`.
+to this list rather than a rewrite of every cross-reference in `specs/`. **A number belongs to a
+phase that exists**, which is why P10 above has one and nothing below does.
 
 ---
 

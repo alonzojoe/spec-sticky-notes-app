@@ -15,6 +15,7 @@ constitution, not a detail — add it deliberately or not at all.
 | Dates | **`react-day-picker`** | Arrives with shadcn's `calendar` in P6. The first dependency that is not a shadcn primitive — a real component library with its own cadence. If its styling proves hard to keep warm, the fallback is a native `<input type="date">`. |
 | Primitives | **`radix-ui`** | Arrives as shadcn's dependency — the unified package, not per-component `@radix-ui/react-*`. Source of a11y for menus, dialogs, popovers, tooltips. |
 | State | **React Context + `useReducer`** | One board reducer. No external state library. |
+| Routing | **`@tanstack/react-router`** | Arrives in P10 for the board's two sections. **Code-based routes** in `src/router.tsx`, not the file-based plugin: the plugin generates a camelCase `routeTree.gen.ts`, and P9 pinned the naming test's `EXEMPT` list shut. Three routes — `/`, `/notes`, `/pinned`. A note is not a route; the palette and the card still open it into a dialog. |
 | Persistence | **`usehooks-ts`** | `useLocalStorage` for the board and the theme. |
 | Icons | **`lucide-react`** | shadcn's icon set; nothing else. |
 | Drag | **Native pointer events** | Hand-rolled `useDraggable`. See "Decisions" below. |
@@ -140,7 +141,8 @@ src/
     layout/
       app_shell.tsx      // NotesProvider + SidebarProvider + AppSidebar + SidebarInset;
                          //   owns the toolbar, the New note button and the `n` shortcut
-      app_sidebar.tsx    // header, the Notes destination, slots for *Tags*/*Dark mode*
+      app_sidebar.tsx    // header, the Notes and Pinned notes destinations, slots for
+                         //   *Tags*/*Dark mode*                                      (P10)
       new_note_dialog.tsx // date + colour + textarea; creates the note      (P3)
       note_view_dialog.tsx // a note opened: title, body, link, colour, date; autosaves (P6)
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
@@ -155,9 +157,13 @@ src/
       board.tsx          // the cork surface; measures its width and lays out the grid
       note_card.tsx      // one sheet of paper: a summary at a fixed height, with a
                          //   clamp that widens for each row the note does not use  (P7)
+                         //   pin and delete on it; pin is drawn without a hover
+                         //   while the note is pinned, because there it is state (P10)
 
       empty_state.tsx    //                                               (*Polish*)
     ui/                  // shadcn components — exempt from snake_case
+  router.tsx             // the three routes: / and /notes are the whole board,
+                         //   /pinned is the other section                          (P10)
   lib/
     grid.ts              // the one column-width the stylesheet cannot infer        (P5)
     dates.ts             // ISO in, MM/DD/YYYY out; never builds a Date from a store (P6)

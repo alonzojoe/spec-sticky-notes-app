@@ -6,7 +6,7 @@ import { useNotes, useNotesDispatch } from '@/context/use_notes'
 import { useOpenNote } from '@/context/use_open_note'
 import { useDraggable, type DragTarget } from '@/hooks/use_draggable'
 import { MIN_COLUMN } from '@/lib/grid'
-import type { Note } from '@/types/note'
+import type { BoardSection, Note } from '@/types/note'
 
 /**
  * Pinned first, then newest first. `order` is a descending key — see types/note.ts — and this
@@ -19,7 +19,7 @@ import type { Note } from '@/types/note'
 const arrange = (notes: Note[]): Note[] =>
   [...notes].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.order - a.order)
 
-export function Board() {
+export function Board({ section }: { section: BoardSection }) {
   const { notes } = useNotes()
   const dispatch = useNotesDispatch()
 
@@ -33,10 +33,21 @@ export function Board() {
 
   // P8 moved this into its own context so the search palette can open a note too. The board is
   // still the only thing that renders the view; it is no longer the only thing that can open one.
+  // Against `notes`, never against what this section draws. The palette searches every note and
+  // opens it, drawn or not: it finds notes, and a view is not a permission.
   const { openId, setOpenId } = useOpenNote()
   const open = notes.find((note) => note.id === openId) ?? null
 
-  const ordered = arrange(notes)
+  /**
+   * What this section draws. One filter over the one sort — nothing dispatches, and the reducer
+   * never learns that sections exist, so the pinned view cannot rearrange the board even by
+   * accident.
+   *
+   * `arrange` puts every pinned note above every unpinned one, so the pinned view is a *prefix* of
+   * the full board: two notes adjacent here are adjacent there, and a swap made in this section is
+   * the same swap the full board would have made rather than an approximation of it.
+   */
+  const ordered = arrange(notes).filter((note) => section === 'notes' || note.pinned)
 
   /**
    * A note created with an empty body opens straight away. P2 through P5 expressed this as
@@ -90,6 +101,35 @@ export function Board() {
     const firstTop = (cards[0] as HTMLElement).offsetTop
     const inFirstRow = cards.filter((card) => (card as HTMLElement).offsetTop === firstTop).length
     return Math.max(1, inFirstRow)
+  }
+
+  /**
+   * The pinned section's empty state, and not the board's. It replaces the grid rather than
+   * sitting in it: a grid of `auto-rows-min` sizes its one row to its content, so a `h-full`
+   * child inside it would centre against its own height and sit at the top of the cork.
+   *
+   * The note view still mounts underneath, because the palette can open a note the section does
+   * not draw — searching from an empty pinned board must still find and open something.
+   *
+   * An empty *full* board stays bare cork: a first-run screen wants an illustration and an
+   * invitation to write the first note, and `empty_state.tsx` belongs to *Polish* with those.
+   */
+  if (section === 'pinned' && ordered.length === 0) {
+    return (
+      <div
+        data-slot="board"
+        className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-cork p-6 text-center texture-cork"
+      >
+        <p className="text-sm font-medium text-cork-ink">No pinned notes</p>
+        {/* Names the way out. It is the one thing an empty pinned board cannot otherwise tell
+            you, because the control that fills it lives on a card that is not here. */}
+        <p className="max-w-xs text-sm text-cork-ink/75">
+          Open a note and pin it to keep it up here.
+        </p>
+
+        <NoteViewDialog note={open} onOpenChange={(next) => setOpenId(next ? openId : null)} />
+      </div>
+    )
   }
 
   return (

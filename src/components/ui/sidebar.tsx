@@ -516,7 +516,11 @@ function SidebarMenuButton({
       data-slot="sidebar-menu-button"
       data-sidebar="menu-button"
       data-size={size}
-      data-active={isActive}
+      // P10's amendment. Tailwind's `data-active:` variant matches the ATTRIBUTE, not its value,
+      // so `data-active="false"` was styled exactly like `data-active="true"` — every menu item
+      // wore the selected background and the selection meant nothing. Undefined removes the
+      // attribute instead, which is what the variant is asking about.
+      data-active={isActive || undefined}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
       {...props}
     />

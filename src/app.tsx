@@ -1,7 +1,9 @@
-import { AppShell } from '@/components/layout/app_shell'
+import { RouterProvider } from '@tanstack/react-router'
+
+import { router } from '@/router'
 
 function App() {
-  return <AppShell />
+  return <RouterProvider router={router} />
 }
 
 export default App
