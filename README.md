@@ -32,7 +32,15 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P9 (*a quieter card*) is complete: a card carries one control — delete — hidden until you touch
+P10 (*a view of the pinned*) is complete: the sidebar has two destinations — `Notes` and
+`Pinned notes` — and the pinned section shows the pinned notes and nothing else. It is a view rather
+than an edit: no note's order or pinned flag is written by navigating, and coming back to `Notes`
+shows the arrangement you left. The selection is remembered under `sticky-notes:section`, anything
+unreadable opening the whole board; creating a note returns you to `Notes`, because a new note is
+never pinned; and an empty pinned board says so and names pinning in the note's own view as the way
+out. Search still ignores the section — the palette finds every note and opens it, drawn or not.
+
+Before it, P9 (*a quieter card*): a card carries one control — delete — hidden until you touch
 that note, and everything else you can do to a note happens in the note. Deleting a note that has a
 title, a body or a link asks first; an empty one goes immediately, and there is one confirmation for
 the whole board rather than one per card. Pinning moved into the note's own view, and a pinned card

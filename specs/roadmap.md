@@ -245,10 +245,35 @@ with something in it asks first from either place.
 
 ---
 
+## P10 · A view of the pinned
+
+**Goal:** the sidebar becomes navigation, and pinning becomes something you can look at.
+
+- A second destination — **Pinned notes**, with the same `Pin` glyph the card carries — beside
+  `Notes`. `aria-current` follows the selection; both badges carry their count, and the pinned one
+  renders at `0`.
+- The section **shows only the pinned notes**. Not dimming: pinned notes already sort first, so a
+  dimmed pinned view is the top of the board you already had.
+- **A view is not an edit.** One `filter` over the existing sort. Nothing dispatches, the reducer
+  never learns that sections exist, and returning to `Notes` shows the arrangement you left.
+- The selection persists under `sticky-notes:section`, read defensively: anything that is not
+  `'pinned'` is `'notes'`, so a corrupt value opens the whole board.
+- **Creating a note returns you to `Notes`**, at the moment the dialog opens. A new note is never
+  pinned, and capturing a thought somewhere you cannot see it fails the one-sentence test.
+- An empty pinned board says *No pinned notes* and names the way out. The general empty state is
+  still *Polish*'s.
+- Search still ignores the section: the palette finds every note and opens it, drawn or not.
+
+**Done when:** `Pinned notes` shows the pinned notes and nothing else, the selection survives a
+reload, navigating writes nothing, and an empty pinned board explains itself.
+
+---
+
 # Planned, in order
 
 No numbers — see P9's last bullet. Order is a plan, not a commitment; inserting work here is an edit
-to this list rather than a rewrite of every cross-reference in `specs/`.
+to this list rather than a rewrite of every cross-reference in `specs/`. **A number belongs to a
+phase that exists**, which is why P10 above has one and nothing below does.
 
 ---
 

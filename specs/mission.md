@@ -22,7 +22,8 @@ the board rearrange itself, it is wrong regardless of how good it looks.
 1. **Ordered, not scattered.** Notes live in a grid, newest first. A new note takes the
    first slot and pushes the rest along; deleting one closes the gap. The order is mine to
    change — dragging a note onto another swaps the two of them, permanently — and nothing
-   else reorders the board.
+   else reorders the board. **A section may change which notes are on screen; it never
+   changes their order, and leaving it shows the board exactly as it was.**
 2. **Direct manipulation.** Drag the note itself to reorder it. A card is a summary —
    click it and the note opens for reading and editing, with its colour and its date.
    Whatever opens a note must open, fill and dismiss from the keyboard alone.
@@ -68,7 +69,8 @@ These are in the constitution. They ship.
   except to open or close a slot.
 - **Open and edit** — click a note to read it in full and edit it; it saves itself, with
   no Save button.
-- **Colors + pin** — a curated paper palette per note; pinned notes stay above the pile.
+- **Colors + pin** — a curated paper palette per note; pinned notes stay above the pile, and
+  the sidebar has a section that shows only them.
 - **Title and link** — a note can carry a one-line title and one URL. The card shows both so
   the board can be scanned rather than read; the link opens in a new tab.
 - **Search** — a palette on `⌘K` that finds a note by its title or its text. The board never
