@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 const src = fileURLToPath(new URL('../', import.meta.url))
-const css = readFileSync(join(src, 'index.css'), 'utf8')
+const css = readFileSync(join(src, 'app/main.css'), 'utf8')
 
 // T6 — mission.md: "The palette is warm — paper colors and a cork-toned backdrop.
 // No cold grays, no pure #fff paper, no pure #000 text." shadcn's defaults are all

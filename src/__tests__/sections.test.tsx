@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 import { BOARD_KEY } from '@/lib/board_storage'
-import { createAppRouter } from '@/router'
+import { createAppRouter } from '@/app/config/router_config'
 import type { Note } from '@/types/note'
 
 const note = (over: Partial<Note> = {}): Note => ({

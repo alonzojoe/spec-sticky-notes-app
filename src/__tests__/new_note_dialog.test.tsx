@@ -3,7 +3,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import App from '@/app'
+import App from '@/__tests__/test_app'
 import { loadRouter } from '@/__tests__/router_setup'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
 

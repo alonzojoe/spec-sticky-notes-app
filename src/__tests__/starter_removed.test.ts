@@ -16,13 +16,21 @@ describe('the Vite starter UI', () => {
     expect(existsSync(fromRoot(path))).toBe(false)
   })
 
+  // P11 deleted `src/app.tsx` outright — `main.tsx` composes the router and there is no App
+  // component under it — so the entry point is what this reads now. The assertion is the same one:
+  // the starter's assets are referenced nowhere at the top of the app.
   it.each(['react.svg', 'vite.svg', 'hero.png', 'icons.svg'])(
-    'leaves no reference to %s in app.tsx',
+    'leaves no reference to %s in the entry point',
     (asset) => {
-      const app = readFileSync(fromRoot('src/app.tsx'), 'utf8')
-      expect(app).not.toContain(asset)
+      const entry = readFileSync(fromRoot('src/app/main.tsx'), 'utf8')
+      expect(entry).not.toContain(asset)
     },
   )
+
+  // The starter's own component is gone rather than emptied.
+  it('ships no src/app.tsx at all', () => {
+    expect(existsSync(fromRoot('src/app.tsx'))).toBe(false)
+  })
 })
 
 // T4 — criterion: decision D1. Tailwind v4 still works with a config file present,

@@ -5,11 +5,25 @@ import { describe, expect, it } from 'vitest'
 
 const src = fileURLToPath(new URL('../', import.meta.url))
 
-// D6 — CLI-generated paths. `shadcn add` rewrites these; renaming them breaks the CLI.
-const EXEMPT = ['components/ui', 'hooks/use-mobile.ts']
+// D6 — CLI-generated paths. `shadcn add` rewrites these; renaming them breaks the CLI. P11 added
+// the third: `@tanstack/router-plugin` writes the route tree on every dev start and build, so its
+// camelCase name is no more ours to choose than shadcn's kebab-case one.
+const EXEMPT = ['components/ui', 'hooks/use-mobile.ts', 'app/routeTree.gen.ts']
 
 const SNAKE_DIR = /^[a-z0-9]+(_[a-z0-9]+)*$/
 const SNAKE_FILE = /^[a-z0-9]+(_[a-z0-9]+)*(\.test)?\.(ts|tsx|css)$/
+
+/**
+ * P11. The router's file convention has its own vocabulary, and it is snake_case with two marks
+ * on top of it: a leading `_` makes a directory a **pathless layout group** (`_board`), and
+ * `__root.tsx` is the tree's root. Both are read by the plugin, not chosen by us — the same reason
+ * `__tests__` is allowed below, and the same reason `EXEMPT` exists at all.
+ *
+ * Written as two narrow patterns rather than as a loosened rule: `_board` passes and `_Board` does
+ * not, and nothing else about the rule moves.
+ */
+const PATHLESS_DIR = /^_[a-z0-9]+(_[a-z0-9]+)*$/
+const ROUTER_FILES = ['__root.tsx']
 
 type Entry = { path: string; isDirectory: boolean }
 
@@ -34,16 +48,19 @@ describe('the snake_case file-name rule', () => {
 
   it.each(directories)('names the $path directory in snake_case', ({ path }) => {
     const name = path.split('/').pop() as string
-    // `__tests__` is a runner convention every JS developer already reads.
-    expect(name === '__tests__' || SNAKE_DIR.test(name)).toBe(true)
+    // `__tests__` is a runner convention every JS developer already reads; `_board` is the
+    // router's, and means "this directory adds no URL segment".
+    expect(name === '__tests__' || SNAKE_DIR.test(name) || PATHLESS_DIR.test(name)).toBe(true)
   })
 
   it.each(files)('names $path in snake_case', ({ path }) => {
-    expect(SNAKE_FILE.test(path.split('/').pop() as string)).toBe(true)
+    const name = path.split('/').pop() as string
+    expect(ROUTER_FILES.includes(name) || SNAKE_FILE.test(name)).toBe(true)
   })
 
-  // Growing the exemption list must be a visible, reviewed edit — not a quiet append.
-  it('exempts exactly the two CLI-owned paths', () => {
-    expect(EXEMPT).toEqual(['components/ui', 'hooks/use-mobile.ts'])
+  // Growing the exemption list must be a visible, reviewed edit — not a quiet append. P11 is the
+  // first phase to grow it since P1 wrote it, and its D3 is the argument.
+  it('exempts exactly the three CLI-owned paths', () => {
+    expect(EXEMPT).toEqual(['components/ui', 'hooks/use-mobile.ts', 'app/routeTree.gen.ts'])
   })
 })
