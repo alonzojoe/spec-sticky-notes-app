@@ -256,16 +256,26 @@ with something in it asks first from either place.
   dimmed pinned view is the top of the board you already had.
 - **A view is not an edit.** One `filter` over the existing sort. Nothing dispatches, the reducer
   never learns that sections exist, and returning to `Notes` shows the arrangement you left.
-- The selection persists under `sticky-notes:section`, read defensively: anything that is not
-  `'pinned'` is `'notes'`, so a corrupt value opens the whole board.
+- **The section is a route**, on TanStack Router: `/` and `/notes` are the whole board, `/pinned` is
+  the other one. A URL already remembers the view across a reload, survives the back button and can
+  be bookmarked, so nothing new is stored. Code-based routes — the file-based plugin's generated
+  `routeTree.gen.ts` would need an exemption from the naming rule.
+- **Pin comes back to the card**, beside delete, and is drawn without a hover while the note is
+  pinned: with a section collecting pinned notes, pinning is something you do while *sorting*
+  rather than while reading. The mark you see is the control you press, which is what P9's Gate 3
+  found people expected of the glyph.
+- **The selected sidebar row is made to look selected.** `data-active={isActive}` renders
+  `data-active="false"`, and Tailwind's `data-active:` variant matches the attribute rather than its
+  value, so every row wore the selection. Present since P1; invisible until the nav had two rows.
 - **Creating a note returns you to `Notes`**, at the moment the dialog opens. A new note is never
   pinned, and capturing a thought somewhere you cannot see it fails the one-sentence test.
 - An empty pinned board says *No pinned notes* and names the way out. The general empty state is
   still *Polish*'s.
 - Search still ignores the section: the palette finds every note and opens it, drawn or not.
 
-**Done when:** `Pinned notes` shows the pinned notes and nothing else, the selection survives a
-reload, navigating writes nothing, and an empty pinned board explains itself.
+**Done when:** `/pinned` shows the pinned notes and nothing else, the URL is what remembers the
+view, navigating writes nothing, a card can pin as well as delete, and an empty pinned board
+explains itself.
 
 ---
 

@@ -36,12 +36,14 @@ Six deliverables.
    count, with `aria-current` following the selection (**D2**).
 3. **The section is a view, not an edit.** The board renders a subset; nothing is written, and
    coming back to `Notes` shows the arrangement you left (**D3**, **D4**).
-4. **The selection persists.** `sticky-notes:section`, read defensively like every other stored
-   value (**D5**).
+4. **The section is a route.** `/notes` and `/pinned`, on TanStack Router, so the URL is what
+   remembers which view you were in (**D5**).
 5. **Creating a note returns you to `Notes`**, because a new note is never pinned and you must be
    able to see the thing you just made (**D6**).
 6. **An empty pinned board says what to do about it** (**D7**), and search, the note view and the
    keyboard all keep working across the seam (**D8**, **D9**).
+7. **Pinning returns to the card**, beside delete, now that there is a section collecting pinned
+   notes (**D11**) — and the sidebar's selected row is made to look selected (**D12**).
 
 Plus the documents this invalidates (**D10**).
 
@@ -56,8 +58,9 @@ Plus the documents this invalidates (**D10**).
   are untouched by anything in this phase.
 - **Reordering the sections, or hiding one when it is empty.** A destination that disappears is
   worse than an empty one, because you cannot navigate to it to find out why.
-- **A URL, a router, or deep-linkable sections.** One board, one user, no server; the section is
-  state, like the sidebar's own open/closed.
+- **Routing anything but the sections.** A note does not get a URL of its own; the palette and the
+  card still open it into a dialog, and `openId` stays state. `/notes` and `/pinned` are the whole
+  route table (plus `/`).
 - **Multi-select of sections** (both at once). `Notes` already contains the pinned ones.
 
 ## Decisions
@@ -156,40 +159,45 @@ Because `arrange` sorts every pinned note above every unpinned one, the pinned n
 at the front of the full ordering, and the pinned view is that front slice with nothing removed from
 the middle. **D9** leans on this.
 
-### D5 · The selection persists
+### D5 · The section is a route, not a stored preference
 
-`SECTION_KEY = 'sticky-notes:section'`, beside `sticky-notes:sidebar`, written through
-`useLocalStorage` and read through a guard in `board_storage.ts` shaped like the sidebar's:
+This decision was taken twice. The first version was one piece of context persisted under a
+`sticky-notes:section` key, defended by principle 3: state is restored exactly on reload, and which
+view you were in is part of the state of the board.
 
-```ts
-export const parseSection = (raw: string): BoardSection =>
-  parseStored(raw) === 'pinned' ? 'pinned' : 'notes'
-```
+**It is a route instead**, on **TanStack Router**, with `/notes` and `/pinned` (and `/` for the
+whole board). A URL already remembers the section across a reload, which is the whole of what the
+key was for; it also survives the back button, can be bookmarked, and can be sent to yourself. And
+holding the same fact in two places — a path and a key — would be worse than either alone, so the
+storage contract is **unchanged by this phase**: `localStorage` still holds the board and the
+sidebar and nothing else.
 
-Anything that is not exactly `'pinned'` is `'notes'` — a corrupt value opens the whole board, which
-is the failure that loses nothing.
+Two decisions inside it:
 
-Principle 3 says state is restored exactly on reload, and which view you were in is part of the
-state of the board. The counter-argument is real and is named in § Risks: **reopening onto a
-filtered board can look like a board that lost notes.** Two things pay for it — the sidebar shows
-which destination is active on every load, and **D7**'s empty state says in words that the board is
-filtered rather than empty. If Gate 3 says that is not enough, the fallback is to drop the key and
-always open on `Notes`; it is one line and it is recorded here so the choice is available rather
-than re-argued.
+**Code-based routes, not the file-based plugin.** `@tanstack/router-plugin` generates
+`routeTree.gen.ts`, which is camelCase, and P1's naming rule is enforced by a test whose `EXEMPT`
+list P9 pinned shut. A hand-written route tree is three routes long and costs less than an amendment
+to that list.
 
-`SidebarProvider`'s own persistence stays where P2 put it — in `app_shell.tsx` — and this key sits
-in the section provider instead, because the section has a provider and the sidebar does not. Two
-keys, one owner each.
+**`/` renders the whole board rather than redirecting to `/notes`.** A redirect resolves
+asynchronously, and every test in the suite renders the app at `/` and expects a board on the first
+commit. `/notes` is a real route to the same view, so the sidebar has something to link at and the
+URL names the section once you have chosen one.
 
-### D6 · Creating a note returns you to `Notes`
+The one thing the router costs is that it matches its first location asynchronously: a
+`RouterProvider` rendered before that resolves commits an empty frame. `main.tsx` awaits the first
+match before mounting — `mission.md` asks for no layout shift on load — and the tests load a router
+before rendering, which `router_setup.ts` explains.
+
+### D6 · Creating a note returns you to the whole board
 
 A new note is never pinned. Created while `Pinned notes` is selected it would be a note you made,
 that opened itself, over a board that does not contain it — and the one-sentence test is about
 capturing a thought, not about capturing it somewhere you cannot see.
 
-So **creating switches the section back to `Notes`**, from both entry points, because they are the
-same one: the toolbar button and the `n` shortcut both call `setCreating(true)` in `app_shell.tsx`,
-and the section reset goes there with them.
+So **creating navigates to `/notes`**, from both entry points, because they are the same one: the
+toolbar button and the `n` shortcut both call `setCreating(true)` in `app_shell.tsx`, and the
+navigation goes there with them.
 
 The switch happens **when the dialog opens**, not when the note is created. Opening the create
 dialog is the moment you have decided to make a note; doing it then means the board behind the
@@ -241,8 +249,11 @@ Deleting still closes the view, from either section, because the note is gone ra
 
 ### D9 · The keyboard loses nothing, and gains two tab stops
 
-The two sidebar items are `SidebarMenuButton`s — real buttons, in the tab order, operable by `Enter`
-and `Space`, with tooltips on the collapsed rail. That is the whole keyboard surface this phase adds.
+The two sidebar items are `SidebarMenuButton`s rendered `asChild` around a router `Link` — real
+anchors with real `href`s, in the tab order, operable by `Enter`, with tooltips on the collapsed
+rail. Anchors rather than buttons with handlers, because a destination you can middle-click,
+bookmark and return to with the back button is a place rather than a mode. That is the whole
+keyboard surface this phase adds.
 
 **Arrow-key reordering inside the pinned view is the same operation it is anywhere else.** The board
 already reorders against `ordered`, which becomes the filtered list, so `left` and `right` step
@@ -261,18 +272,79 @@ reading that is not surprising.
 - **`mission.md`** — principle 1 gains the section sentence; Colors + pin gains the view (**D1**).
 - **`roadmap.md`** — P10 is this phase. **The Planned list keeps its names and gains no numbers**:
   P9's rule was that a number belongs to a phase that exists, and this one now does.
-- **`tech-stack.md`** — the tree gains `section_context.tsx`, `use_section.ts` and the second
-  sidebar destination; the persistence contract gains `sticky-notes:section`.
+- **`tech-stack.md`** — the stack gains TanStack Router; the tree gains `router.tsx` and the second
+  sidebar destination. **The persistence contract is unchanged** (**D5**).
 - **`README.md`** — status to P10.
 - **`app_sidebar.tsx`'s own comment**, which still says `P10 — the tag list`. P9 renamed the unbuilt
   phases and its Gate 1 grep covered `specs/` only, so this line survived — and it is now actively
   wrong, because P10 is this phase. It becomes *Tags*, and this phase's grep covers `src/` too.
 
+### D11 · Pinning returns to the card, beside delete
+
+P9 took pin off the card on the reasoning that *pinning is something you do to a note you are
+already reading*. That held for exactly one phase, and this is the phase that breaks it: with a
+section that collects pinned notes, pinning stops being a thing you do while reading and becomes a
+thing you do while **sorting** — across many notes at a glance, which is the card's job and not the
+note view's.
+
+So the card carries **two** controls: pin and delete. Both are still in the note's own view too,
+because either is a reasonable place to be standing when you decide.
+
+**The pin control is also the pinned state.** Drawn filled and in full ink whenever the note is
+pinned — no hover needed — and hidden with delete when it is not. That folds P9's `D4` glyph into
+the control it looked like: P9's own Gate 3 recorded people clicking the glyph expecting to unpin,
+and now the mark you see *is* the button you press. One icon in both states, deliberately: `PinOff`
+at rest would draw the action rather than the fact, and a card should say what a note **is** before
+it says what you could do to it. The label and `aria-pressed` carry the action instead.
+
+`mission.md` principle 4 is amended a second time by this phase: **a card carries two per-note
+controls — pin and delete** — revealed on the note you are touching, except that pin stays visible
+while the note is pinned, because there it is state.
+
+### D12 · The selected sidebar row has to look selected
+
+Found by looking at it: with two destinations, both rows carried the selected background.
+
+`SidebarMenuButton` renders `data-active={isActive}`, and React writes `data-active="false"` for a
+falsy one. **Tailwind's `data-active:` variant matches the attribute, not its value**, so every
+inactive item was styled exactly like the active one. Invisible while the nav held a single
+destination — the bug had been there since P1 — and the whole point of the selection once it holds
+two.
+
+The fix is at the source, as P1's amendments to the same file were: `data-active={isActive ||
+undefined}`, so the attribute is absent rather than false. T5 gains an assertion, because
+`shadcn add sidebar` would restore the original silently.
+
+On top of that, our own two rows say: an **inactive destination is plain** — the sidebar's own
+background, nothing behind it — and hovers to a half-strength wash rather than to the full accent,
+because a hover that produces the selected appearance is a hover that lies about where you are. The
+**active** row keeps the accent it always had and gains a 2px inset bar in the sidebar's primary,
+which is what answers "which section am I in" at a glance and survives the collapse to the icon rail
+where the label is gone.
+
+### D13 · The empty pinned board replaces the grid
+
+**D7**'s copy cannot be a child of the grid. The board is `auto-rows-min` with `content-start`, so
+its one row is content-height and an `h-full` child centres against itself — the copy lands at the
+top of the cork rather than in the middle of it. The empty section returns its own centred surface
+instead, with the same `bg-cork` and grain.
+
+It mounts the note view underneath, because the palette can open a note the section does not draw
+(**D8**) and searching from an empty pinned board must still open something.
+
+The copy also needed a colour that does not exist yet: warm ink on cork is unreadable, and the board
+is the only surface in the app with no paper under its words. `--color-cork-ink` is added to
+`@theme` for it.
+
 ## Constraints inherited from the constitution
 
 - **`npm run build`, `npm run lint`, `npm test` pass, warning-free.**
 - **No new shadcn component.** `sidebar.tsx` already exports `SidebarMenuBadge` and everything else
-  this needs; T5's amendments and T9's dormancy list are untouched.
+  this needs, and T9's dormancy list is untouched. `sidebar.tsx` itself gains **one** amendment,
+  guarded by T5 like P1's (**D12**).
+- **One new runtime dependency**, `@tanstack/react-router`, recorded in `tech-stack.md`. It pushes
+  the bundle past rollup's 500kB warning, so the build splits `node_modules` into its own chunk
+  rather than raising the limit.
 - **No Save button**, and no new dispatch: the sidebar navigates and never writes (Gate 1 grep).
 - **Every file we author is `snake_case`** — `section_context.tsx`, `use_section.ts`.
 - **Warm tokens only.** The empty-state copy uses `text-ink-soft`, not a grey literal.
@@ -283,11 +355,11 @@ reading that is not surprising.
 
 ## Risks
 
-**Persisting the section can look like a board that lost its notes.** You pin three notes, click
-`Pinned notes`, close the tab, and come back tomorrow to seventeen missing notes and no memory of
-having filtered anything. **D5** accepts this and pays for it with the active destination in the
-sidebar and **D7**'s copy; Gate 3 check 2 is exactly this scenario, run cold, and the fallback is one
-line.
+**A URL can put you on a filtered board with no memory of having filtered it.** Bookmark `/pinned`,
+come back next week, and seventeen notes are missing until you notice which row is highlighted. The
+sidebar's selected row and **D7**'s copy are what pay for it, and Gate 3 check 2 is exactly this
+scenario run cold. It is a smaller risk than the storage key it replaced, because the address bar
+says `/pinned` in words.
 
 **Switching sections is a grid reflow, and the grid animates nothing today.** Notes will appear and
 disappear instantly. That is honest and it is not obviously right — a section switch is the largest

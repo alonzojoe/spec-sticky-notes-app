@@ -33,12 +33,14 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 ## Status
 
 P10 (*a view of the pinned*) is complete: the sidebar has two destinations — `Notes` and
-`Pinned notes` — and the pinned section shows the pinned notes and nothing else. It is a view rather
-than an edit: no note's order or pinned flag is written by navigating, and coming back to `Notes`
-shows the arrangement you left. The selection is remembered under `sticky-notes:section`, anything
-unreadable opening the whole board; creating a note returns you to `Notes`, because a new note is
-never pinned; and an empty pinned board says so and names pinning in the note's own view as the way
-out. Search still ignores the section — the palette finds every note and opens it, drawn or not.
+`Pinned notes` — and `/pinned` shows the pinned notes and nothing else. The sections are routes on
+TanStack Router, so the URL is what remembers which view you were in and nothing new is stored. It
+is a view rather than an edit: no note's order or pinned flag is written by navigating, and coming
+back to `Notes` shows the arrangement you left. Creating a note returns you to the whole board,
+because a new note is never pinned; an empty pinned board says so and names the way out; and search
+still ignores the section — the palette finds every note and opens it, drawn or not. A card carries
+two controls again, pin and delete, and a pinned note draws its pin without a hover: with a section
+collecting pinned notes, the mark you see is the control you press.
 
 Before it, P9 (*a quieter card*): a card carries one control — delete — hidden until you touch
 that note, and everything else you can do to a note happens in the note. Deleting a note that has a
