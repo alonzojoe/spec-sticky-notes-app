@@ -1,4 +1,11 @@
-import { router } from '@/router'
+import { createAppRouter } from '@/app/config/router_config'
+
+/**
+ * The suite's own router, over the jsdom History. `main.tsx` builds the app's; a test file that
+ * needs to start somewhere other than `/`, or to navigate without leaking the result into the next
+ * test, builds its own over a memory history instead.
+ */
+export const router = createAppRouter()
 
 /**
  * P10 put the board behind a router, and TanStack Router matches its first location

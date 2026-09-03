@@ -279,11 +279,41 @@ explains itself.
 
 ---
 
+## P11 · A place for every file
+
+**Goal:** the routing looks like the routing it was modelled on, and nothing else changes.
+
+- Adopt `unicare-booking`'s `src/app/`: the entry point, the stylesheet as `main.css`,
+  `config/router_config.ts`, and the route tree.
+- **Routes become files.** `@tanstack/router-plugin` generates `src/app/routeTree.gen.ts` from
+  `src/app/routes/`, so a file's path is its URL and adding a route is adding a file.
+- **`_board` is a pathless layout group** holding the shell — the sidebar, the toolbar, the
+  providers and the two shortcuts — so navigating between sections cannot remount the store, and
+  the next thing that wants no sidebar lands beside it rather than inside it.
+- A **`pages/` layer**: a route file says what the URL is, a page says what is on the screen.
+- `src/app.tsx` is deleted — `main.tsx` composes the router, as the reference does — and the tests
+  render a fixture that says in its name why it exists.
+- The naming rule gains its **third** exemption, for the generated route tree, plus the router's own
+  vocabulary: a leading `_` for a pathless group, and `__root.tsx`.
+- **`mission.md` is not amended.** Nothing here is visible to a user.
+
+**This phase improves nothing a user can see, which the rules above forbid — and it is a named
+exception rather than a quiet one.** It ships a working app and one commit sequence, and it exists
+so that *Tags* — a parser, a filter and a chip — is not also the phase that pays for P10's
+three-routes-in-one-file shortcut. The exception is recorded here so it is a decision rather than a
+precedent.
+
+**Done when:** the source tree matches the reference structure, a URL can be found by reading a
+path, a hard reload of `/pinned` works against the production build, and the suite P10 left passes
+with no behavioural assertion rewritten.
+
+---
+
 # Planned, in order
 
 No numbers — see P9's last bullet. Order is a plan, not a commitment; inserting work here is an edit
 to this list rather than a rewrite of every cross-reference in `specs/`. **A number belongs to a
-phase that exists**, which is why P10 above has one and nothing below does.
+phase that exists**, which is why P10 and P11 above have them and nothing below does.
 
 ---
 

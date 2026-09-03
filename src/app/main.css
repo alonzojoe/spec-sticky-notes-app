@@ -183,7 +183,7 @@
    shipped — therefore had no animation whatsoever. Keyframes rather than transitions because
    Radix waits on `animationend` before unmounting, so an exit transition never gets to run.
 
-   mission.md's motion criteria, and index.css's own note that ease-in delays the frame being
+   mission.md's motion criteria, and this file's own note that ease-in delays the frame being
    watched, both apply here. Enter is 200ms; exit is faster at 160ms, because the user has
    already decided. */
 @keyframes dialog-overlay-in {
