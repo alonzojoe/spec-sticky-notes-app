@@ -309,11 +309,32 @@ with no behavioural assertion rewritten.
 
 ---
 
+## P12 · The notes that point somewhere
+
+**Goal:** the third section, built by generalising rather than by copying the second.
+
+- **A section registry.** `lib/sections.ts` holds one row per section — path, label, icon,
+  predicate, empty-state copy — and the sidebar and the board both read it. Neither names a section
+  any more. This pays the debt P10's § Risks recorded: *two sections is not a section framework.*
+- **`Linked notes` at `/linked`**, the notes carrying a URL. Named for what is on the screen: a row
+  called `Links` would promise a list of URLs rather than a board of notes.
+- A note is linked when **`note.link !== ''`** — the field, judged by `lib/links.ts`, never a parse
+  of `body`. The section therefore cannot disagree with the chip on the card.
+- The same board, filtered. No link-first layout, and **no new control on the card** — principle 4
+  is not amended.
+- A fourth section now costs one registry row, one route file and one page. **That is cheap, which
+  is exactly why the next one has to be argued for**: four rows is where a sidebar becomes a menu.
+
+**Done when:** `/linked` shows the notes with links and nothing else, what a section *is* lives in
+one list, and navigating still writes nothing.
+
+---
+
 # Planned, in order
 
 No numbers — see P9's last bullet. Order is a plan, not a commitment; inserting work here is an edit
 to this list rather than a rewrite of every cross-reference in `specs/`. **A number belongs to a
-phase that exists**, which is why P10 and P11 above have them and nothing below does.
+phase that exists**, which is why P10 through P12 above have them and nothing below does.
 
 ---
 

@@ -32,7 +32,14 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P11 (*a place for every file*) is complete: the entry point, the routing and the pages live where
+P12 (*the notes that point somewhere*) is complete: the sidebar has three destinations — `Notes`,
+`Pinned notes` and `Linked notes` — and `/linked` shows the notes carrying a URL. What a section
+*is* lives in one list, `lib/sections.ts`: a path, a label, an icon, a predicate and the copy for an
+empty one, which the sidebar and the board both read, so neither of them names a section. A note is
+linked when its `link` field is not empty — the field `lib/links.ts` judges, never a parse of the
+body — so the section can never disagree with the chip on the card. Navigating still writes nothing.
+
+Before it, P11 (*a place for every file*): the entry point, the routing and the pages live where
 `unicare-booking/src/app` puts them. Routes are files under `src/app/routes/` — a file's path is its
 URL, generated into `routeTree.gen.ts` by `@tanstack/router-plugin` — and `_board` is a pathless
 layout group holding the shell, so navigating between sections never remounts the store. A route

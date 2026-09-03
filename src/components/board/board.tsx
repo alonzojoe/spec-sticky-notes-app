@@ -6,6 +6,7 @@ import { useNotes, useNotesDispatch } from '@/context/use_notes'
 import { useOpenNote } from '@/context/use_open_note'
 import { useDraggable, type DragTarget } from '@/hooks/use_draggable'
 import { MIN_COLUMN } from '@/lib/grid'
+import { rowFor } from '@/lib/sections'
 import type { BoardSection, Note } from '@/types/note'
 
 /**
@@ -39,15 +40,15 @@ export function Board({ section }: { section: BoardSection }) {
   const open = notes.find((note) => note.id === openId) ?? null
 
   /**
-   * What this section draws. One filter over the one sort — nothing dispatches, and the reducer
-   * never learns that sections exist, so the pinned view cannot rearrange the board even by
-   * accident.
+   * What this section draws: the one sort, then the section's own predicate out of
+   * `lib/sections.ts`. **This file names no section.** It knows there is one; the registry knows
+   * what it means, which is what stopped the third section costing an arm in this expression.
    *
-   * `arrange` puts every pinned note above every unpinned one, so the pinned view is a *prefix* of
-   * the full board: two notes adjacent here are adjacent there, and a swap made in this section is
-   * the same swap the full board would have made rather than an approximation of it.
+   * Nothing dispatches, and the reducer never learns that sections exist, so a section cannot
+   * rearrange the board even by accident.
    */
-  const ordered = arrange(notes).filter((note) => section === 'notes' || note.pinned)
+  const row = rowFor(section)
+  const ordered = arrange(notes).filter(row.keep)
 
   /**
    * A note created with an empty body opens straight away. P2 through P5 expressed this as
@@ -58,6 +59,9 @@ export function Board({ section }: { section: BoardSection }) {
    * now from one loaded out of localStorage, which was harmless while it only chose where focus
    * went and is not harmless now that it opens a modal: reloading a board whose newest note was
    * empty would pop the dialog every time, and Radix would aria-hide the board behind it.
+   *
+   * It watches `notes` rather than what this section draws, so navigating between sections — which
+   * changes only what is drawn — cannot pop a note open.
    */
   const seen = useRef<Set<string> | null>(null)
   useEffect(() => {
@@ -104,28 +108,25 @@ export function Board({ section }: { section: BoardSection }) {
   }
 
   /**
-   * The pinned section's empty state, and not the board's. It replaces the grid rather than
-   * sitting in it: a grid of `auto-rows-min` sizes its one row to its content, so a `h-full`
-   * child inside it would centre against its own height and sit at the top of the cork.
+   * What an empty section says, when it says anything. The copy is the registry's — `Notes` carries
+   * none, so an empty *whole* board stays bare cork and `empty_state.tsx` still belongs to *Polish*
+   * along with the illustration and the invitation that a first-run screen wants.
    *
-   * The note view still mounts underneath, because the palette can open a note the section does
-   * not draw — searching from an empty pinned board must still find and open something.
+   * It replaces the grid rather than sitting in it: a grid of `auto-rows-min` sizes its one row to
+   * its content, so an `h-full` child inside it would centre against its own height and sit at the
+   * top of the cork.
    *
-   * An empty *full* board stays bare cork: a first-run screen wants an illustration and an
-   * invitation to write the first note, and `empty_state.tsx` belongs to *Polish* with those.
+   * The note view still mounts underneath, because the palette can open a note the section does not
+   * draw — searching from an empty section must still open something.
    */
-  if (section === 'pinned' && ordered.length === 0) {
+  if (ordered.length === 0 && row.empty !== null) {
     return (
       <div
         data-slot="board"
         className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-cork p-6 text-center texture-cork"
       >
-        <p className="text-sm font-medium text-cork-ink">No pinned notes</p>
-        {/* Names the way out. It is the one thing an empty pinned board cannot otherwise tell
-            you, because the control that fills it lives on a card that is not here. */}
-        <p className="max-w-xs text-sm text-cork-ink/75">
-          Open a note and pin it to keep it up here.
-        </p>
+        <p className="text-sm font-medium text-cork-ink">{row.empty.title}</p>
+        <p className="max-w-xs text-sm text-cork-ink/75">{row.empty.hint}</p>
 
         <NoteViewDialog note={open} onOpenChange={(next) => setOpenId(next ? openId : null)} />
       </div>

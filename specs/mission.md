@@ -73,7 +73,8 @@ These are in the constitution. They ship.
 - **Colors + pin** — a curated paper palette per note; pinned notes stay above the pile, and
   the sidebar has a section that shows only them.
 - **Title and link** — a note can carry a one-line title and one URL. The card shows both so
-  the board can be scanned rather than read; the link opens in a new tab.
+  the board can be scanned rather than read; the link opens in a new tab, and the sidebar has a
+  section that shows only the notes carrying one.
 - **Search** — a palette on `⌘K` that finds a note by its title or its text. The board never
   filters, dims, or reorders.
 - **Tags** — `#tags` parsed out of note text, shown on the note and clickable to filter.

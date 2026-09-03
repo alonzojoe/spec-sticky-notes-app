@@ -4,11 +4,15 @@ export const NOTE_COLORS = ['butter', 'apricot', 'rose', 'lilac', 'sky', 'mint']
 
 export type NoteColor = (typeof NOTE_COLORS)[number]
 
-// The two sections of the board, which are two routes. `notes` draws every note; `pinned` draws
-// the pinned ones and nothing else. A section changes what is on screen and never what is stored:
-// no note's `order` or `pinned` is written by navigating, which is what mission.md principle 1's
-// section sentence promises.
-export type BoardSection = 'notes' | 'pinned'
+// The sections of the board, which are also its routes. `notes` draws every note; `pinned` and
+// `linked` draw the ones that answer a question about themselves. What each of them *means* lives
+// in `lib/sections.ts` — this union is only the set of names, so a registry row for a section that
+// does not exist fails to compile.
+//
+// A section changes what is on screen and never what is stored: no note's `order`, `pinned` or
+// `link` is written by navigating, which is what mission.md principle 1's section sentence
+// promises.
+export type BoardSection = 'notes' | 'pinned' | 'linked'
 
 export interface Note {
   id: string // crypto.randomUUID()
