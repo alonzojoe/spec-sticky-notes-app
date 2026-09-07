@@ -80,7 +80,7 @@ untouched: the four new files are `snake_case` and nothing generates a file.
 ## Gate 2 — Automated assertions (Vitest)
 
 T1–T77 come from P0–P12. **T78–T81 are new.** Baseline **25 suites** and the green count group 0
-records. **The phase ends at 28 suites and 750 assertions** — three new files, `user.test.ts`,
+records. **The phase ends at 28 suites and 753 assertions** — three new files, `user.test.ts`,
 `user_name.test.tsx` and `lib_barrel.test.ts`, plus the cases `naming_convention.test.ts` gains for
 every file this phase adds.
 
@@ -108,12 +108,19 @@ able to reach, and the fix is in the rewrite rather than in the expectation.
 ### T79 · The dialog asks once — `user_name.test.tsx`
 
 - With **no stored name**, the dialog is open on the first render.
+- **It cannot be closed.** Escape is refused; a pointer-down and a click on the overlay are refused;
+  and nothing is stored by any of it. `userEvent` cannot even click the backdrop — Radix sets
+  `pointer-events: none` on the body while a modal is up — which is half the answer on its own, so
+  the assertion goes through `fireEvent` on the overlay to reach the dismiss handler itself.
+- **There is no ✕, no Skip and no Cancel on the intro**, drawn or otherwise. A control that exists
+  and does nothing reads as a broken dialog; one that was never drawn reads as a required one.
+- **The rename is not blocking**: it carries a Cancel, Escape closes it, and the stored name is
+  unchanged afterwards.
 - With **a stored name**, it is not — not on the first render and not on any frame after it. This is
   the assertion that catches an asynchronous read (**D5**).
-- **Escape closes it and stores nothing.** `sticky-notes:user` is absent afterwards, and the board is
-  interactive with the dialog gone.
-- **It does not come back.** A second render with the same store, after a dismissal, opens nothing.
-  Being asked once is the difference between a question and a nag (**D2**).
+- **The board is handed over the moment a name exists** — cards queryable, the toolbar reachable.
+- **It does not come back.** A second render against the same store opens nothing. Asked exactly
+  once per browser: the visit that names the board (**D2**).
 - A submitted name is stored under `sticky-notes:user` as `{ name }`, trimmed.
 - **Submit is inert while the trimmed value is empty**, so a space is not a name.
 - **The whole path runs from the keyboard alone**: the dialog opens focused on the input, types,
@@ -154,13 +161,15 @@ Run against a board with at least a dozen notes, in a browser profile with `stic
 cleared. **Every check is run with the sidebar expanded and again collapsed to the rail** — check 9
 exists because the first pass was not.
 
-1. **Does the first visit feel like a question or a door?** Load the app cold. The dialog is the
-   first thing the product ever says. **Written down whatever it says** — § Risks names this as the
-   phase's real risk, and *dismissible* contains the damage rather than removing it.
+1. **Does the first visit read as a welcome or as a door?** Load the app cold. The dialog is the
+   first thing the product ever says, and it cannot be left without answering. **Written down
+   whatever it says** — § Risks names this as the phase's real risk, and with no way to dismiss it,
+   **the copy is the entire mitigation**. If it reads as a door, the sentence is what to fix.
 
-2. **Dismiss it and try to capture a thought.** Escape, then `n`, then type. Under two seconds, on
-   the very first visit, with no name stored. That is the one-sentence test on the one path that has
-   never been walked before.
+2. **Try to get past it without answering.** Escape, click the board behind it, look for a ✕. There
+   is no way through, which is the decision — then type a name and check the cost that buys: the
+   board is there, and `n`-then-type is under two seconds from that moment on. **The first visit now
+   costs a name**, and § D2 says why `mission.md` is not amended for it.
 
 3. **Is the top of the sidebar two identities or two logos?** Look at the corner cold, expanded and
    then collapsed to the rail. The square mark is the app, the round circle is you — does that land,
@@ -193,17 +202,18 @@ exists because the first pass was not.
 Twelve notes, three pinned, three linked, one of them both, in a profile with `sticky-notes:user`
 cleared.
 
-1. **It reads as a question, and the copy is what makes it one.** An earlier draft was titled *Who
-   is this board for?* over a field, which is a form and reads like a door — the board is visible
-   behind it and unreachable, and the only visible way past it was a button called Cancel. What
-   ships is the intro: the mark, *Make it yours*, one sentence about what a corkboard is for, and
-   **Skip** named as a way through rather than as an undo. The board behind is dimmed and legible,
-   so the thing being offered is visible while you decide. **Written down**: this is the phase's
-   named risk, and the copy is the whole of the mitigation. If it ever reads as a door again, the
-   dialog is not the thing to fix — the sentence is.
+1. **It reads as a welcome, and the copy is the whole of why.** An earlier draft was titled *Who is
+   this board for?* over a field, which is a form and reads like a door. What ships is the intro:
+   the mark, *Make it yours*, one sentence about what a corkboard is for, one field labelled `Name`
+   with no placeholder in it, and one button. The board behind is dimmed and legible, so what is
+   being offered is visible while you answer. **Written down**: with no way out but a name, the
+   sentence is carrying the entire first impression, and it is the thing to change if this ever
+   stops being true.
 
-2. **Escape, then `n`, then type — under two seconds, and nothing was stored.** The one-sentence
-   test holds on the first visit, which is the only path it had never been walked on.
+2. **There is genuinely no way past it, and the cost is one name.** Escape does nothing, the
+   backdrop does nothing, there is no ✕ and no Skip. Type a name and the board is there; from that
+   moment `n`-then-type is under two seconds, every visit, forever. Verified in the browser: the
+   dialog survived Escape and an overlay click with `sticky-notes:user` still `null`.
 
 3. **Two identities, not two logos, and the circle's size was the finding.** Drawn first at the
    mark's `size-5` on the argument that the header rows are a pair and a person's badge larger than
@@ -252,6 +262,14 @@ cleared.
    **This is the check the gate did not have, and now does.** jsdom runs no layout, so no assertion
    in the suite could have seen either; T80 pins the mechanism, and the geometry is measured here.
 
+10. **The suite's own flake, found by running it rather than by reading it.** `user_name.test.tsx`
+    failed about one run in four on `ResizeObserver is not defined`: jsdom implements none, Radix's
+    tooltip positioning does, and a `userEvent` click on the identity row hovers it on the way in.
+    Whether the tooltip's open delay elapsed before the assertion decided the run. Stubbed in
+    `dom_setup.ts`; twelve consecutive clean runs of the file and three of the whole suite. **A test
+    that passes when you look at it is not a passing test** — this was found by looping it, which is
+    now how a flake gets confirmed here.
+
 **The defect this gate did not have to find**, because T79 found it first: skipping stored nothing,
 so the next load asked again. Recorded in § D2 rather than fixed quietly — the promise was *asked
 once*, and the build was delivering *asked once per visit*.
@@ -281,8 +299,8 @@ once*, and the build was delivering *asked once per visit*.
 - [x] Gate 0 — the suite is **green before the phase begins**: 25 suites, 708 passed.
 - [x] Gate 1 clean — build, lint, test, and all six greps.
 - [x] Gate 2 — T78–T81 pass; T1–T77 still pass, and **group 2 moved no behavioural assertion**.
-      **28 suites, 750 assertions.**
-- [x] Gate 3 — nine checks run, and **checks 1, 3, 4 and 9 written down**.
+      **28 suites, 753 assertions.**
+- [x] Gate 3 — ten checks run, and **checks 1, 3, 4, 9 and 10 written down**.
 - [x] Gate 4 — every row satisfied.
 - [x] The name can be given, refused, corrected, and deleted, and the board is identical through all
       four.

@@ -33,3 +33,25 @@ export const stubMatchMedia = (matches = false) => {
  */
 export const seedUser = (name = 'Joe Alonzo') =>
   window.localStorage.setItem(USER_KEY, JSON.stringify({ name }))
+
+/**
+ * jsdom implements no `ResizeObserver`, and Radix's positioning does.
+ *
+ * A `SidebarMenuButton` carrying a `tooltip` mounts a Radix tooltip beside it. Hovering one — which
+ * is what a `userEvent` click does on the way in — opens it, floating-ui measures, and the app
+ * throws into its error boundary mid-test. It is a **race with the tooltip's own open delay**, so it
+ * fails perhaps one run in four and passes every time you go looking for it.
+ *
+ * Stubbed rather than mocked away: the three methods are all Radix calls, and nothing under test
+ * cares what they return.
+ */
+export const stubResizeObserver = () => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  )
+}

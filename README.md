@@ -33,9 +33,9 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 ## Status
 
 P13 (*a board with your name on it*) is complete: the app asks for a name once, on the first visit,
-as an intro rather than a form — and takes no for an answer. Skipping is stored as an answer, so it
-is never asked twice; the sidebar's own row keeps asking in place, where it can be ignored forever.
-The name draws as a circle of initials under the mark, at the top of the sidebar, and clicking that
+as an intro rather than a form — and there is no way past it but a name. It is asked exactly once
+per browser, on the visit that names the board. The name draws as a circle of initials under the
+mark, at the top of the sidebar, and clicking that
 row is also how it is corrected. It lives in one key, `sticky-notes:user`, and **owns nothing** —
 the stored board is byte-identical before a name exists, after one is stored, and after it is
 changed, which is what makes it a label rather than an account. `mission.md` carries the amendment

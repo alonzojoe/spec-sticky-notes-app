@@ -25,15 +25,17 @@ import { useUser } from '@/hooks/use_user'
  * That is the whole of the difference. **No tour, no steps, no second screen**: an intro that takes
  * more than one look is onboarding, and this app fits in a sentence.
  *
- * It opens on a visit with no stored name, and **Escape closes it, the backdrop closes it, and
- * Cancel closes it** — nothing is stored, and the board behind it is immediately usable. The
- * one-sentence test — *can I capture a thought in under two seconds* — has to hold on the first
- * visit too, and a modal that must be answered before the board exists makes the first thought the
- * slowest one the app will ever take.
+ * **The intro has no way out but a name.** No Escape, no backdrop, no ✕, no Skip. This reverses the
+ * decision the phase shipped on — see requirements § D2, where both versions and the reasoning for
+ * each are written down — and it is the version that matches what the dialog is *for*: an intro
+ * that can be waved away is a thing to wave away, and a person who skips it lands on an app that
+ * spends the rest of its life asking them again in the corner.
  *
- * **It does not reopen by itself**, not on the next load and not after a reload. A modal that
- * returns until you comply was never dismissible. Once it is gone the sidebar is the only thing
- * that still asks — quietly, in place, where it can be ignored forever.
+ * The cost is real and is paid once. The first visit is no longer two seconds to a captured
+ * thought; it is a name and then two seconds, on that visit only, and never again.
+ *
+ * **The rename is not blocking.** Opened from the sidebar it takes Escape, the backdrop, the ✕ and
+ * Cancel, because by then there is a name to fall back to and nothing to force.
  *
  * The same component is also the rename: opened from the sidebar row it arrives prefilled, so a
  * typo is fixable without editing localStorage by hand. Creation and correction are the same act
@@ -49,7 +51,7 @@ export function UserNameDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const { name, setName, skip } = useUser()
+  const { name, setName } = useUser()
   const [draft, setDraft] = useState(name)
 
   // Resynced when the dialog opens rather than once at mount — the row can open this after the name
@@ -71,34 +73,38 @@ export function UserNameDialog({
     onOpenChange(false)
   }
 
-  /**
-   * Closing the intro without a name **records the refusal**, by every route out of it — Skip, the
-   * corner ✕, the backdrop and Escape. Otherwise the next load cannot tell someone who declined
-   * from someone who has never been here, and the promise that this is asked once becomes a
-   * promise that it is asked once *per visit*, which is the nag D2 exists to forbid.
-   *
-   * A rename closed without saving records nothing: the question was answered a while ago.
-   */
+  // The intro cannot be closed; a rename can. Every route out of a Radix dialog funnels through
+  // `onOpenChange`, so refusing here is what makes the three below — Escape, the backdrop, the ✕ —
+  // consistent rather than three separate handlers that could disagree.
   const close = () => {
-    if (intro) skip()
+    if (intro) return
     onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent
+        className="sm:max-w-sm"
+        // The ✕ is removed rather than made inert. A control that is drawn and does nothing is
+        // worse than one that was never there — it reads as a broken dialog rather than as a
+        // required one.
+        showCloseButton={!intro}
+        onEscapeKeyDown={(event) => intro && event.preventDefault()}
+        onPointerDownOutside={(event) => intro && event.preventDefault()}
+        onInteractOutside={(event) => intro && event.preventDefault()}
+      >
         <DialogHeader>
           {/* The mark, once, at the only moment it is worth showing large: the intro. Absent on a
               rename, where it would be a logo on a settings dialog. */}
           {intro && <StickyMark className="mb-1 size-10 rounded-[10px]" />}
           <DialogTitle>{intro ? 'Make it yours' : 'Your name'}</DialogTitle>
           <DialogDescription>
-            {/* Says what the app is and that the name is optional, and does *not* say where the
-                name ends up. On the intro that would be an instruction about an interface nobody
-                has looked at yet — the sidebar is two seconds away and explains itself. The rename
-                does say it, because by then it is the answer to "where does this go". */}
+            {/* Says what the app is, and asks. It does *not* say where the name ends up: on the
+                intro that would be an instruction about an interface nobody has looked at yet, and
+                the sidebar is one screen away and explains itself. The rename does say it, because
+                by then that is the question being asked. */}
             {intro
-              ? 'A corkboard for the thoughts you want back tomorrow. Add your name to get started, or skip — the board works either way.'
+              ? 'A corkboard for the thoughts you want back tomorrow. Tell it your name to get started.'
               : 'It goes in the sidebar and nowhere else.'}
           </DialogDescription>
         </DialogHeader>
@@ -117,20 +123,24 @@ export function UserNameDialog({
               autoFocus
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Joe Alonzo"
-              // No maxLength, following `note_fields.tsx`: a limit enforced by the input is a rule
-              // you discover by hitting it. A name too long for the row truncates in the row.
+              // No placeholder. A field labelled `Name` on a dialog that is asking for your name
+              // needs no example, and a greyed-out name in the box is one more thing to read past
+              // on the first screen the app ever shows.
+              //
+              // No maxLength either, following `note_fields.tsx`: a limit enforced by the input is
+              // a rule you discover by hitting it. A name too long for the row truncates in the row.
               autoComplete="name"
             />
           </div>
 
           <DialogFooter>
-            {/* "Skip" rather than "Cancel" on the intro. Cancel implies undoing something you
-                started; nothing has started here, and naming the way past it is what makes the
-                dialog honest about being optional. */}
-            <Button type="button" variant="ghost" onClick={close}>
-              {intro ? 'Skip' : 'Cancel'}
-            </Button>
+            {/* No Cancel on the intro — there is nothing to cancel into. The rename keeps one,
+                because there a name already exists to fall back to. */}
+            {!intro && (
+              <Button type="button" variant="ghost" onClick={close}>
+                Cancel
+              </Button>
+            )}
             {/* Inert on whitespace: a space is not a name, and a disabled button says so before
                 you press it rather than after. */}
             <Button type="submit" disabled={draft.trim() === ''}>

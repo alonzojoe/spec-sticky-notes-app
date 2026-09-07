@@ -33,25 +33,9 @@ export function useUser() {
 
   const name = readUserName(stored)
 
-  /**
-   * Whether the question has been *asked*, which is not the same as whether it was answered.
-   *
-   * P13 promised the intro would not reopen by itself, and the first build could not keep that:
-   * skipping stored nothing, so the next load saw an empty store and could not tell a returning
-   * visitor from a new one. So a skip is an answer — `{ name: '' }` — and this is what the shell
-   * reads to decide whether to ask at all.
-   *
-   * A malformed value is deliberately *not* asked. It is repaired to no name, which makes it a
-   * first visit in every other respect, and a first visit is asked.
-   */
-  const asked = typeof stored === 'object' && stored !== null && !Array.isArray(stored)
-
   return {
     name,
     initials: initialsOf(name),
-    asked,
     setName: (next: string) => setStored({ name: next.trim() }),
-    /** Declining is an answer, and is recorded as one. */
-    skip: () => setStored({ name: '' }),
   }
 }

@@ -31,13 +31,13 @@ export function AppShell() {
    * Initialised from the store on the first render rather than in an effect — `useLocalStorage`
    * reads synchronously by default, so a returning user never sees this open for a frame.
    *
-   * From **`asked`**, not from the name. Declining is an answer and is stored as one, so a person
-   * who skipped is not asked again on the next load — the difference between a question and a nag.
-   * After that the sidebar row is the only thing that still asks, in place, where it can be ignored
-   * forever.
+   * From the name, and **the intro cannot be dismissed without one** — so this is true exactly
+   * once per browser, on the visit that names the board. An earlier build let it be skipped and had
+   * to record the refusal to avoid asking again on every load; with no way to refuse, there is
+   * nothing to record and the name itself is the answer.
    */
-  const { asked } = useUser()
-  const [asking, setAsking] = useState(!asked)
+  const { name } = useUser()
+  const [asking, setAsking] = useState(name === '')
 
   const navigate = useNavigate()
 

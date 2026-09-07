@@ -341,11 +341,14 @@ one list, and navigating still writes nothing.
 - **This phase is not on the list below, and was never on it.** It is an insertion, which the list's
   own preamble allows — *order is a plan, not a commitment*.
 - **The intro.** A visit with no stored name opens the dialog every other dialog uses, written as a
-  welcome rather than a form. **Escape, the backdrop, the ✕ and Skip all close it**, because the
-  one-sentence test has to hold on the first visit too.
-- **Declining is an answer.** A skip stores `{ name: '' }`, so the next load can tell someone who
-  refused from someone who has never been here. The first build stored nothing, which made *asked
-  once* mean *asked once per visit* — the nag the decision existed to forbid, found by its own test.
+  welcome rather than a form. **There is no way past it but a name** — no Escape, no backdrop, no ✕,
+  no Skip. An intro that can be waved away is a thing to wave away, and the app then spends the rest
+  of its life asking in the corner instead. The first visit costs a name; every visit after it does
+  not, and `mission.md`'s one-sentence test is about the recurring capture rather than the one-time
+  setup.
+- **The dismissible version shipped first**, with a skip recorded as `{ name: '' }` so it could not
+  become a modal that returns until you comply. Both versions and the argument between them are in
+  the phase's § D2 — the reasoning outlasts the outcome.
 - `lib/user.ts` — the key, the defensive read and `initialsOf`, together. One code point per word,
   so an astral character is not rendered as half a surrogate pair.
 - **The identity row is in `SidebarHeader`, under the mark.** A square is the app and a circle is a
@@ -355,8 +358,8 @@ one list, and navigating still writes nothing.
   imports and `components/ui/`'s `@/lib/utils` stay deep, both for reasons with precedents.
 
 **Done when:** the app asks once and never again, the sidebar draws the initials and the name, the
-board is byte-identical through naming, renaming and refusing, and every module in `lib/` is
-reachable through one barrel.
+board is byte-identical through naming and renaming, and every module in `lib/` is reachable through
+one barrel.
 
 ---
 

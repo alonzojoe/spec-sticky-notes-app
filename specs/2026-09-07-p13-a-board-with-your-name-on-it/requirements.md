@@ -39,8 +39,8 @@ Seven deliverables.
    (**D1**).
 2. **`lib/user.ts`** — the storage key, the defensive read, and the initials (**D4**, **D5**).
 3. **`hooks/use_user.ts`** — the one way to read and write the name (**D5**).
-4. **The name dialog** — opens on a first visit, dismissible, and reopened from the sidebar
-   (**D2**, **D3**).
+4. **The name dialog** — the intro on a first visit, with no way past it but a name; the rename
+   after that (**D2**, **D3**).
 5. **The sidebar header identity row** — the initials, the name, and the way back to the dialog
    (**D3**, **D6**).
 6. **`lib/index.ts`** — one barrel, and every import we author rewritten to use it (**D7**).
@@ -90,42 +90,52 @@ the phase before the code existed. This one is the most load-bearing of the six:
 what the app does, and this one draws a boundary around a feature that is famously the thin end of
 a wedge.
 
-### D2 · The dialog opens once, and can be dismissed
+### D2 · The intro asks once, and there is no way past it but a name
 
-On a visit with no stored name, the dialog opens. **Escape closes it, the backdrop closes it, and
-Cancel closes it** — and nothing is stored, so the board is immediately usable by someone who does
-not want to answer.
+On a visit with no stored name the dialog opens, and **it cannot be closed.** No Escape, no
+backdrop, no ✕, no Skip, no Cancel. One disabled `Get started`, live the moment the field holds
+something that is not whitespace.
 
-**The one-sentence test is what decides this.** *Can I capture a thought in under two seconds* has
-to hold on the first visit too, and a modal that must be answered before the board exists makes the
-first thought the slowest one the app will ever take. A blocking dialog would also need an answer
-for what an empty submit does, and every answer to that is worse than not asking.
+**This reverses what the phase shipped, and both versions are kept here because the reasoning
+matters more than the outcome.**
 
-**It does not reopen by itself.** Not on the next load, not after a reload. A modal that returns
-until you comply is a modal that was not really dismissible, and being asked once is the difference
-between a question and a nag. Once dismissed, the sidebar is the only thing that still asks
-(**D3**) — quietly, in place, where it can be ignored forever.
+*The first version — dismissible.* The one-sentence test, *can I capture a thought in under two
+seconds*, was read as governing the first visit as well, so the intro took Escape, the backdrop and
+a `Skip`; refusing was recorded as an answer (`{ name: '' }`) so it could not turn into a modal that
+returns until you comply; and the sidebar row kept asking, quietly, where it could be ignored
+forever.
 
-**Declining is an answer, and is stored as one.** This was discovered during implementation, by the
-test written for the paragraph above. The first build opened the dialog when the *name* was empty,
-and a skip stored nothing — so the next load saw an empty store, could not tell someone who refused
-from someone who had never been here, and asked again. *Asked once* had quietly become *asked once
-per visit*.
+*What replaced it.* An intro that can be waved away is a thing to be waved away — and what a person
+who waves it away gets is not a faster first visit, it is an application that spends the rest of its
+life asking them again in the corner. The row that was designed as *quietly, in place, where it can
+be ignored* is, from the other side, a small unfinished thing that never goes away. Asking properly
+once is kinder than asking gently forever.
 
-So a skip writes `{ name: '' }`, by every route out of the intro — Skip, the corner ✕, the backdrop
-and Escape — and the shell opens the dialog on **`asked`** rather than on the name. `asked` is
-"there is a well-formed value under this key", which keeps **D5**'s repair honest: a *malformed*
-value is not an answer, so a corrupted key asks again, exactly as a cleared one does.
+**The cost is real and is stated rather than argued away.** The first visit is no longer two seconds
+to a captured thought; it is a name, and then two seconds. `mission.md` is **not** amended, and the
+reading that makes that honest is written down here: the one-sentence test is a promise about the
+*recurring* act of capture — the thing you do a dozen times a day, on a board that already exists —
+not about the one-time setup of a browser that has never seen the app. If that reading is ever
+rejected, this decision is the one that has to go, not the sentence.
 
-A rename closed without saving records nothing. The question was answered a while ago.
+**Two things fall out of it.** Refusal no longer needs recording, because there is no refusal — the
+name *is* the answer, and `asked` and `skip` are gone from `use_user.ts`. And the sidebar's
+*Add your name* row stops being a designed state: it is now only reachable by emptying the key by
+hand, and the app treats that as what it is — a board that has not been named — and asks again.
 
-**It is written as the intro, because that is what it is.** On a first visit this dialog is the
-whole product for a moment, so it carries the mark, a sentence about what a board is for, and a way
-in — *Make it yours*, `Skip` and `Get started` — rather than a title and a field. It deliberately
-does **not** say where the name will end up: on the intro that is an instruction about an interface
-nobody has looked at yet, and the sidebar is two seconds away and explains itself. Opened later from
-the sidebar it is not an intro at all; it is a rename, it says *Your name*, and *there* it does say
-where the name goes, because by then that is the question being asked.
+**The rename is not blocking.** Opened from the sidebar row it takes Escape, the backdrop, the ✕ and
+Cancel, because by then there is a name to fall back to and nothing to force.
+
+**It is written as the intro, because that is what it is.** On a first visit this dialog is the whole
+product for a moment, so it carries the mark, a sentence about what a board is for, and a way in —
+*Make it yours* and `Get started` — rather than a title and a field. It deliberately does **not** say
+where the name will end up: on the intro that is an instruction about an interface nobody has looked
+at yet. Opened later it is a rename, it says *Your name*, and *there* it does say where the name
+goes, because by then that is the question being asked.
+
+**No placeholder in the field.** A field labelled `Name`, on a dialog that has just asked for your
+name, needs no example — and a greyed-out name in the box is one more thing to read past on the
+first screen the app ever shows.
 
 **No tour, no steps, no second screen.** An intro that takes more than one look is onboarding, and
 this app fits in a sentence.
@@ -155,8 +165,8 @@ which are all here.
 ```
 
 **With no name stored**, the same row reads *Add your name* beside an empty circle, and clicking it
-opens the dialog. That is what **D2** means by *the sidebar keeps asking*: the question survives its
-own dismissal, without a second modal and without a badge or a dot demanding attention.
+opens the dialog. Under the blocking intro (**D2**) that is a state you can only reach by emptying
+the key by hand — the row still has to render something, and what it renders is the way back.
 
 **With a name stored**, the row still opens the dialog, prefilled — so a typo is fixable and the
 phase does not ship a name you can only change by editing localStorage by hand. This is a judgment
@@ -338,11 +348,13 @@ function between lib modules stops being a rename across thirty files.
 
 ## Risks
 
-**The first thing the app ever does is open a modal.** For a returning user that is invisible, and
-for a new one it is the whole first impression. **D2** makes it dismissible, which contains the
-damage but does not remove the fact that the board is behind a blur for as long as the dialog is
-open. Gate 3 asks the only question that matters here — *does the first visit feel like being asked
-a question, or like being stopped at a door* — and it is written down whatever the answer is.
+**The first thing the app ever does is open a modal you cannot leave.** For a returning user that is
+invisible; for a new one it is the whole first impression, and the board is behind a blur until they
+answer. **D2** takes that cost deliberately and says why. What carries it is the copy and nothing
+else: the dialog has to read as a welcome that is asking, not as a gate that is demanding, and the
+difference is entirely in the words and the mark. Gate 3 asks that question — *a welcome, or a
+door?* — and it is written down whatever the answer is. **If it ever reads as a door, the sentence
+is what to fix, not the dialog.**
 
 **localStorage is not identity, and the app will act like it is.** Clearing site data, a private
 window, or a different browser all produce a stranger, and the dialog will open again as if this

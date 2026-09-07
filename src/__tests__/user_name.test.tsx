@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import App from '@/__tests__/test_app'
 import { loadRouter } from '@/__tests__/router_setup'
-import { seedUser, stubMatchMedia } from '@/__tests__/dom_setup'
+import { seedUser, stubMatchMedia, stubResizeObserver } from '@/__tests__/dom_setup'
 import { BOARD_KEY, USER_KEY } from '@/lib'
 import type { Note } from '@/types/note'
 
@@ -18,9 +18,25 @@ beforeAll(loadRouter)
  */
 beforeEach(() => {
   stubMatchMedia()
+  // This file is the one that clicks a sidebar row carrying a tooltip, repeatedly. See dom_setup.
+  stubResizeObserver()
+  // TanStack Router scrolls to the top on navigation and jsdom implements no scrollTo — left
+  // unstubbed it prints "Not implemented" through every test in this file.
+  window.scrollTo = () => {}
   window.localStorage.clear()
 })
-afterEach(cleanup)
+/**
+ * Radix locks the body while a modal is up and unlocks it on the way out — and several tests here
+ * end with the intro still open, because refusing to close is the thing being asserted. jsdom runs
+ * no animations, so that unlock never happens and the next test inherits a `pointer-events: none`
+ * body and a scroll lock: every pointer interaction throws and every role query comes back empty.
+ * Cleared here rather than worked around in each test.
+ */
+afterEach(() => {
+  cleanup()
+  document.body.removeAttribute('data-scroll-locked')
+  document.body.style.pointerEvents = ''
+})
 
 const note = (over: Partial<Note> = {}): Note => ({
   id: 'a',
@@ -68,11 +84,14 @@ describe('T79 · the app asks once', () => {
   })
 
   /**
-   * Escape closes it and **records the refusal**, which is not the same as storing a name. The
-   * board learns nothing, the sidebar still asks in place, and the next load knows the question has
-   * already been put — see the skip test below for why that distinction had to exist.
+   * **The intro has no way out but a name**, and this is the whole of it: every route out of a
+   * Radix dialog — Escape, the backdrop, the ✕ — is refused while there is no name.
+   *
+   * The phase shipped the opposite first, and § D2 records both. What settled it is that an intro
+   * you can wave away is a thing to wave away, and the app then spends the rest of its life asking
+   * in the corner instead.
    */
-  it('closes on Escape and stores no name', async () => {
+  it('cannot be closed with Escape', async () => {
     const user = userEvent.setup()
     seedBoard()
     render(<App />)
@@ -80,50 +99,91 @@ describe('T79 · the app asks once', () => {
 
     await user.keyboard('{Escape}')
 
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    await waitFor(() => expect(JSON.parse(storedUser() ?? '{}')).toEqual({ name: '' }))
+    expect(screen.getByRole('dialog')).toBeDefined()
+    expect(storedUser()).toBeNull()
   })
 
-  // The board is behind a blur while the dialog is up, and usable the moment it is gone. The
-  // one-sentence test has to hold on the first visit too.
-  it('leaves the board usable once it is dismissed', async () => {
-    const user = userEvent.setup()
+  it('cannot be closed by clicking away from it', async () => {
     seedBoard()
     render(<App />)
     await screen.findByRole('dialog')
 
-    await user.keyboard('{Escape}')
+    // `userEvent` cannot click here at all — Radix sets `pointer-events: none` on the body while a
+    // modal is up, which is itself half the answer. `fireEvent` on the overlay is what asks the
+    // remaining question: does the dismiss handler fire, and is it refused?
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]')!
+    fireEvent.pointerDown(overlay)
+    fireEvent.click(overlay)
 
+    expect(screen.getByRole('dialog')).toBeDefined()
+    expect(storedUser()).toBeNull()
+  })
+
+  /**
+   * Removed rather than made inert. A control that is drawn and does nothing reads as a broken
+   * dialog; one that was never drawn reads as a required one.
+   */
+  it('draws no close button and no way to skip', async () => {
+    seedBoard()
+    render(<App />)
+    const dialog = await screen.findByRole('dialog')
+
+    expect(within(dialog).queryByRole('button', { name: 'Close' })).toBeNull()
+    expect(within(dialog).queryByRole('button', { name: 'Skip' })).toBeNull()
+    expect(within(dialog).queryByRole('button', { name: 'Cancel' })).toBeNull()
+  })
+
+  // The board is behind it until a name exists, and reachable the moment one does.
+  it('hands over the board once a name is given', async () => {
+    const user = userEvent.setup()
+    seedBoard()
+    render(<App />)
+    const dialog = await screen.findByRole('dialog')
+
+    await user.type(within(dialog).getByLabelText('Name'), 'Joe Alonzo')
+    await user.keyboard('{Enter}')
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
     expect(screen.getByRole('button', { name: 'New note' })).toBeDefined()
   })
 
   /**
-   * Being asked once is the difference between a question and a nag, and this is the assertion that
-   * made the feature honest. The first build stored nothing on a skip, so the next load saw an
-   * empty store, could not tell a returning visitor from a new one, and asked again — a dialog that
-   * returns until you comply, which was exactly what D2 forbade. **Declining is an answer**, stored
-   * as `{ name: '' }`, and the shell asks on *asked* rather than on the name.
+   * Asked exactly once per browser: the visit that names the board. An earlier build let the intro
+   * be skipped and had to *record* the refusal to avoid asking on every load — with no way to
+   * refuse, the name itself is the answer and there is nothing else to store.
    */
-  it('does not come back after it is skipped', async () => {
+  it('does not come back once a name exists', async () => {
     const user = userEvent.setup()
     seedBoard()
     const first = render(<App />)
-    await screen.findByRole('dialog')
-
-    await user.click(screen.getByRole('button', { name: 'Skip' }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Name'), 'Joe Alonzo')
+    await user.keyboard('{Enter}')
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    await waitFor(() => expect(JSON.parse(storedUser() ?? '{}')).toEqual({ name: '' }))
     first.unmount()
 
     // A second visit against the same store — a reload, in the only terms a test has for one.
     render(<App />)
 
     expect(screen.queryByRole('dialog')).toBeNull()
-    // And the sidebar is what still asks, in place, where it can be ignored forever.
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Add your name' })).toBeDefined(),
-    )
+  })
+
+  // The rename is not the intro and is not forced: there is a name to fall back to.
+  it('lets the rename be dismissed', async () => {
+    const user = userEvent.setup()
+    seedUser()
+    seedBoard()
+    render(<App />)
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
+    await user.click(identity())
+    const rename = await screen.findByRole('dialog')
+
+    expect(within(rename).getByRole('button', { name: 'Cancel' })).toBeDefined()
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(JSON.parse(storedUser() ?? '{}')).toEqual({ name: 'Joe Alonzo' })
   })
 
   it('stores the submitted name, trimmed, and nowhere else', async () => {
@@ -255,14 +315,21 @@ describe('T80 · the identity in the sidebar', () => {
     expect(document.querySelector('[data-sidebar="footer"]')).toBeNull()
   })
 
-  it('asks in place when there is no name', async () => {
+  /**
+   * The unnamed row is a degenerate state now rather than a designed one: the intro cannot be left
+   * without a name, so an empty stored name is something only a hand-edited store produces — and
+   * the app treats it as what it is, a board that has not been named, and asks again.
+   *
+   * The row still has to render something behind that dialog. Queried out of the DOM rather than by
+   * role, because Radix `aria-hidden`s everything behind an open modal.
+   */
+  it('asks again, and still draws a way back, when the stored name is empty', async () => {
+    seedUser('')
     seedBoard()
     render(<App />)
-    const dialog = await screen.findByRole('dialog')
-    await userEvent.setup().keyboard('{Escape}')
-    await waitFor(() => expect(dialog.isConnected).toBe(false))
 
-    expect(within(header()).getByRole('button', { name: 'Add your name' })).toBeDefined()
+    await screen.findByRole('dialog')
+    expect(header().textContent).toContain('Add your name')
   })
 
   // Two letters read aloud on top of the word they were cut from is noise.
