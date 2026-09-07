@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 
 import App from '@/__tests__/test_app'
 import { loadRouter } from '@/__tests__/router_setup'
-import { stubMatchMedia } from '@/__tests__/dom_setup'
+import { seedUser, stubMatchMedia } from '@/__tests__/dom_setup'
 import { BOARD_KEY, SECTIONS } from '@/lib'
 import type { Note } from '@/types/note'
 
@@ -31,6 +31,7 @@ beforeAll(loadRouter)
 beforeEach(() => {
   stubMatchMedia()
   window.localStorage.clear()
+  seedUser()
 })
 afterEach(cleanup)
 

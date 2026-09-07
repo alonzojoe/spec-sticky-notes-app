@@ -7,9 +7,11 @@ import { DeleteNoteProvider } from '@/components/layout/delete_note_dialog'
 import { NewNoteDialog } from '@/components/layout/new_note_dialog'
 import { SearchDialog } from '@/components/layout/search_dialog'
 import { Toolbar } from '@/components/layout/toolbar'
+import { UserNameDialog } from '@/components/layout/user_name_dialog'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { NotesProvider } from '@/context/notes_context'
 import { OpenNoteProvider } from '@/context/open_note_context'
+import { useUser } from '@/hooks/use_user'
 import { parseSidebarOpen, SHORTCUT_KEY, SIDEBAR_KEY } from '@/lib'
 
 export function AppShell() {
@@ -22,6 +24,18 @@ export function AppShell() {
 
   const [creating, setCreating] = useState(false)
   const [searching, setSearching] = useState(false)
+
+  /**
+   * The one question the app asks, asked once.
+   *
+   * Initialised from the store on the first render rather than in an effect — `useLocalStorage`
+   * reads synchronously by default, so a returning user never sees this open for a frame. And it is
+   * `useState`, not a derivation: dismissing sets it false and **nothing sets it true again** on a
+   * later render or a later load. Being asked once is the difference between a question and a nag;
+   * after that the sidebar row is the only thing that still asks.
+   */
+  const { name } = useUser()
+  const [asking, setAsking] = useState(name === '')
 
   const navigate = useNavigate()
 
@@ -108,6 +122,7 @@ export function AppShell() {
               <Outlet />
             </div>
           </SidebarInset>
+          <UserNameDialog open={asking} onOpenChange={setAsking} />
           <NewNoteDialog open={creating} onOpenChange={setCreating} />
           <SearchDialog open={searching} onOpenChange={setSearching} />
         </SidebarProvider>
