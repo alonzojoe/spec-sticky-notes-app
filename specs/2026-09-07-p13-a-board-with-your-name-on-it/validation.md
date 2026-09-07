@@ -16,10 +16,12 @@ npm test          # vitest run
 
 Warning-free, chunk warning included.
 
-**The baseline is the fixed one.** `npm test` on `main` today reports `2 failed | 706 passed (708)`
-— `T71` and `T77`, both *"leaves every order, pin and timestamp untouched through a round trip"*, on
-a debounced write leaking between tests. Group 0 fixes that and records the green baseline. **Every
-count below is measured against the green number, never against the red one.**
+**The baseline is the fixed one.** `npm test` on `main` reports `2 failed | 706 passed (708)` —
+`T71` and `T77`, both *"leaves every order, pin and timestamp untouched through a round trip"*, on a
+debounced write leaking between tests. Group 0 fixes it in `notes_context.tsx` (see the plan: the
+library cancels the wrong debounce instance on unmount) and the green baseline is
+**25 suites, 708 passed**. **Every count below is measured against that number, never against the
+red one.**
 
 Six greps.
 
@@ -210,7 +212,7 @@ cleared.
 
 ## Definition of done
 
-- [ ] Gate 0 — the suite is **green before the phase begins**, and the baseline is recorded.
+- [x] Gate 0 — the suite is **green before the phase begins**: 25 suites, 708 passed.
 - [ ] Gate 1 clean — build, lint, test, and all five greps.
 - [ ] Gate 2 — T78–T81 pass; T1–T77 still pass, and **group 2 moved no behavioural assertion**.
 - [ ] Gate 3 — eight checks run, and **checks 1, 3 and 4 written down**.

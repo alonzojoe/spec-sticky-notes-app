@@ -50,10 +50,17 @@ diff is the feature. Groups 3 and 4 are the feature, split at the seam between *
 0.2 **Fix the red suite first.** `T71` and `T77` — both *"leaves every order, pin and timestamp
     untouched through a round trip"* — fail on `main`. `notes_context.tsx` mirrors the board through
     a 300 ms `useDebounceCallback`, and a test that creates a note leaves that write in flight; it
-    lands during a later test, after `beforeEach` has cleared `BOARD_KEY`. The fix is in
-    `sections.test.tsx`, not in the product: the pending write is settled or cancelled at teardown
-    so a test cannot inherit one. **No product file changes in this step**, and no assertion is
-    rewritten to accommodate the bug.
+    lands during a later test, after `beforeEach` has cleared `BOARD_KEY`.
+
+    **This was specified as a test defect and it is a product one.** `useDebounceCallback` builds
+    *two* debounced functions — the memoised one it calls, and a second one assigned to a ref in an
+    effect — and its unmount handler cancels the ref, which is the copy that was never invoked. The
+    pending write therefore belongs to the instance nothing cancels. No arrangement of the test file
+    can cancel a timer the library holds privately, so the fix is one effect in
+    `notes_context.tsx` cancelling `persist` on unmount. `persist` is stable — `setStored` comes
+    from `useEventCallback` — so it runs on unmount and at no other time.
+
+    **No assertion is rewritten to accommodate the bug**, and `sections.test.tsx` is untouched.
 
 0.3 Full gate on the fixed branch. Record the true baseline — it is the number every count in
     [validation.md](./validation.md) is measured against, and the current `708 passed` includes two
@@ -61,7 +68,7 @@ diff is the feature. Groups 3 and 4 are the feature, split at the seam between *
 
 0.4 Walk the "To verify" list. Record each answer in the group-0 commit message.
 
-0.5 Commit: `fix(test): settle the debounced board write between section tests`
+0.5 Commit: `fix(board): cancel the pending write when the provider unmounts`
 
 ---
 
