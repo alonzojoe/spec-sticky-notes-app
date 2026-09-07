@@ -37,8 +37,9 @@ diff is the feature. Groups 3 and 4 are the feature, split at the seam between *
   stored and a returning user never sees the dialog flash (**D5**).
 - **A barrel does not break the `@/` alias test or Vitest's resolver.** `alias.test.ts` asserts
   `@/` resolves; a re-export chain is a different question from a path alias.
-- **`SidebarFooter` exists in the generated `sidebar.tsx`** and collapses to the rail with the
-  content it is given, without an edit to that file.
+- **`SidebarHeader` collapses to the rail with the content it is given**, without an edit to the
+  generated `sidebar.tsx`. It already holds the mark row, which hides its label at
+  `group-data-[collapsible=icon]:hidden` and keeps the glyph — the pattern the identity row copies.
 
 ---
 
@@ -141,8 +142,10 @@ writable before a component exists.
 
 Test-first: extend `sections.test.tsx`'s neighbours with T80 in `user_name.test.tsx`.
 
-4.1 `app_sidebar.tsx` — a `SidebarFooter` holding one `SidebarMenuButton` row: the circle, then the
-    name. Collapsed, the circle alone, with the name in the tooltip the sidebar already provides.
+4.1 `app_sidebar.tsx` — the identity row goes in `SidebarHeader`, directly under the mark row and
+    above the `Board` group. Collapsed, the circle alone, with the name in the tooltip the sidebar
+    already provides. **`SidebarFooter` is not added** (**D3**): the bottom of the sidebar is left
+    exactly as it was found, and *Dark mode* keeps the slot `tech-stack.md` promised it.
 
 4.2 The circle is a `div` — `size-6 rounded-full bg-sidebar-primary text-sidebar-primary-foreground`
     — carrying the initials, `aria-hidden` (**D6**). With no name: `bg-sidebar-accent`,
@@ -155,7 +158,11 @@ Test-first: extend `sections.test.tsx`'s neighbours with T80 in `user_name.test.
     sidebar accent, `--duration-hover`, `--ease-out` — the treatment an inactive destination gets,
     for the reason in **D3**: this row is on screen every second the app is.
 
-4.5 Commit: `feat(sidebar): draw the initials and the name in the footer`
+4.5 The circle keeps `rounded-full` against the mark's `rounded-[5px]`. **They are not harmonised.**
+    A square is the paper the app is made of and a circle is a person; softening one toward the
+    other to make the corner look tidy is what would turn two kinds of thing into two logos.
+
+4.6 Commit: `feat(sidebar): draw the initials and the name under the mark`
 
 ---
 
@@ -185,7 +192,8 @@ Test-first: extend `sections.test.tsx`'s neighbours with T80 in `user_name.test.
 
 6.1 `tech-stack.md` — the persistence row names all three keys; § Hard rules gains the barrel rule
     and its two exemptions (**D7**); the tree gains `lib/index.ts`, `lib/user.ts`,
-    `hooks/use_user.ts` and `components/layout/user_name_dialog.tsx`.
+    `hooks/use_user.ts` and `components/layout/user_name_dialog.tsx`. The *Dark mode* line keeps its
+    `SidebarFooter`, and the note beside it says the footer is still empty.
 
 6.2 `roadmap.md` — P13, and why it is not on the *Planned, in order* list.
 
@@ -219,5 +227,7 @@ provider.
 wrong.** It is written test-first, from **D4**'s table, including the case a naive implementation
 gets wrong — one code point, not one `charAt`.
 
-**The footer now has an occupant, and *Dark mode* was promised the slot.** Nothing collides today.
-It is written into `tech-stack.md` in group 6 so the next phase finds it rather than discovers it.
+**The top of the sidebar is now its densest region** — mark, wordmark, circle, name, group label,
+and only then a destination. Nothing there is wrong on paper, and that is the kind of thing that
+reads as cluttered on screen anyway. Group 4 must not answer it by shrinking the identity until it
+disappears; Gate 3 check 3 answers it by looking, and the answer is written down.

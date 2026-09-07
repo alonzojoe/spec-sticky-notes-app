@@ -12,12 +12,11 @@
 Twelve phases built a board. Nothing on it says whose it is.
 
 That is a small absence and it is felt in one specific place: the sidebar. It carries the app's own
-mark, three destinations and their counts, and then a large empty space above the rail. Every
-application shaped like this one puts an identity at the bottom of that space, and this one has
-nothing to put there — not because it was decided against, but because the question never came up.
+mark, three destinations and their counts, and nothing that belongs to a person — not because it was
+decided against, but because the question never came up.
 
-So this phase asks the question once, on the first visit, and draws the answer in the sidebar: a
-circle carrying your initials, and your name beside it.
+So this phase asks the question once, on the first visit, and draws the answer at the top of the
+sidebar, under the mark: a circle carrying your initials, and your name beside it.
 
 **This is the phase where the constitution has to be read carefully rather than quoted.**
 `mission.md` says *"Built for one user (me). No accounts, no sync, no collaboration, no server"*,
@@ -42,7 +41,7 @@ Seven deliverables.
 3. **`hooks/use_user.ts`** — the one way to read and write the name (**D5**).
 4. **The name dialog** — opens on a first visit, dismissible, and reopened from the sidebar
    (**D2**, **D3**).
-5. **The sidebar footer identity row** — the initials, the name, and the way back to the dialog
+5. **The sidebar header identity row** — the initials, the name, and the way back to the dialog
    (**D3**, **D6**).
 6. **`lib/index.ts`** — one barrel, and every import we author rewritten to use it (**D7**).
 7. The documents this invalidates (**D8**).
@@ -59,9 +58,9 @@ Seven deliverables.
 - **Per-user boards.** One board, one browser, unchanged. Clearing the name does not clear the
   board and does not partition it; nothing in `BoardState` is keyed to a person (**D1**).
 - **shadcn's `avatar` component.** **D6**.
-- **A theme toggle in the new footer.** `tech-stack.md` reserves `SidebarFooter` for *Dark mode*.
-  That phase lands **beside** this row, not on top of it — and this phase does not build the slot
-  for it, because a control that cannot be used should not be drawn.
+- **`SidebarFooter`.** Not built, not filled, not touched (**D3**). `tech-stack.md` reserves it for
+  *Dark mode* and that reservation is now unencumbered — this phase leaves the bottom of the sidebar
+  exactly as it found it.
 - **A migration for anything.** No stored board changes shape, and `BOARD_KEY` keeps its `v1`.
 
 ## Decisions
@@ -113,21 +112,21 @@ ones already on screen rather than a fourth copy. **No new shadcn component is i
 roadmap's *don't build ahead* rule, and this phase needs a `Dialog`, an `Input` and a `Button`,
 which are all here.
 
-### D3 · The name lives in the sidebar footer, and the row is the way back
+### D3 · The name lives in the sidebar header, under the mark
 
-`SidebarFooter`, below the nav group and above the rail:
+`SidebarHeader`, as a second row beneath the wordmark and above the `Board` group:
 
 ```
 ┌──────────────────┐
 │ ▣ Sticky         │
+│ (JA) Joe Alonzo  │
 │                  │
 │ BOARD            │
 │ ▤ Notes       8  │
 │ ⚲ Pinned notes 3 │
 │ ⛓ Linked notes 2 │
 │                  │
-├──────────────────┤
-│ (JA) Joe Alonzo  │
+│                  │
 └──────────────────┘
 ```
 
@@ -140,14 +139,29 @@ phase does not ship a name you can only change by editing localStorage by hand. 
 call rather than an answered question, and it is small enough to cut: deleting the prefill and the
 click handler leaves the row a static label, and nothing else in the phase changes.
 
-**Not the header.** The header is the application's identity — the mark and the word *Sticky* — and
-putting a second identity beside it makes the corner ask *which one of these is the app?* The
-footer is where every sidebar-shaped application puts a person, which is a convention worth having
-rather than an accident worth breaking.
+**`SidebarFooter` is not built.** An earlier draft of this decision put the row there, on the
+strength of the convention that every sidebar-shaped application puts a person at the bottom. That
+is superseded: the footer is where *Dark mode* was promised its toggle in `tech-stack.md`, and a
+phase that occupies a slot another phase was promised should have a reason better than convention.
+This one does not. The bottom of the sidebar is left exactly as it was found.
+
+**The objection to the header, and the answer to it.** The header is the application's identity —
+the drawn mark and the word *Sticky* — and a second identity in the same corner risks the corner
+asking *which one of these is the app?* Two things keep them apart, and they are the reason this
+placement works rather than decoration on top of it:
+
+- **They stack rather than sit side by side.** One row is the product, the row under it is the
+  person. Beside each other they would compete; above and below, the second reads as *whose copy of
+  it this is*.
+- **The mark is a square and the identity is a circle.** `sticky_mark.tsx` renders at
+  `rounded-[5px]`, which is a sheet of paper; the identity is `rounded-full`, which is a person.
+  That distinction is doing real work here, and it is the reason the circle is not softened toward
+  the mark's radius to make the pair look tidier.
 
 **Collapsed to the rail** the row is the circle alone, with the name in the tooltip the sidebar
 already provides for its rows. Initials survive the collapse; a name does not, which is most of the
-reason to draw initials at all.
+reason to draw initials at all. Collapsed, the header becomes two glyphs — the square mark, the
+round identity — which is the clearest the distinction ever gets.
 
 **No motion.** The row is on screen every second the app is open, and it is one of the things a
 person looks at dozens of times a day without meaning to. The hover is a colour change on the
@@ -264,13 +278,13 @@ function between lib modules stops being a rename across thirty files.
 
 - **`mission.md`** — the § Explicitly out of scope carve-out and the § What this is sentence
   (**D1**). § Core scope gains no bullet: the name is not a feature of the board.
-  **Principle 4 is amended in one word** — the sidebar holds global controls, and it now also holds
-  an identity, which is neither a control nor a note.
+  **Principle 4 is amended in one clause** — the sidebar holds global controls, and it now also
+  holds an identity, which is neither a control nor a note.
 - **`roadmap.md`** — P13 is added and the phase is written down. It is not on the *Planned, in
   order* list, which is a thing the roadmap explicitly allows: *"Order is a plan, not a
   commitment; inserting work here is an edit to this list."*
 - **`tech-stack.md`** — the persistence row names the third key; the tree gains `lib/user.ts`,
-  `lib/index.ts`, `hooks/use_user.ts` and `components/layout/user_name_dialog.tsx`; and the barrel
+  `lib/index.ts`, `hooks/use_user.ts` and `components/layout/user_name_dialog.tsx`; that `SidebarFooter` is still unclaimed; and the barrel
   rule (**D7**) is written into § Hard rules, where the `snake_case` rule already lives.
 - **`README.md`** — status to P13.
 
@@ -317,10 +331,13 @@ enough that a real change could ride along inside it unnoticed, which is why it 
 commit, before the feature, with the suite unchanged across it. The lib-internal deep-import rule
 (**D7**) is what keeps the cycle from existing; the grep in Gate 1 is what keeps the rule.
 
-**The footer is claimed by two phases now.** *Dark mode* was promised `SidebarFooter` in
-`tech-stack.md` long before this phase existed. Nothing breaks — a footer holds two rows — but the
-next phase to reach for that slot will find it occupied, and it should find that written down here
-rather than discovering it.
+**The header now carries two identities, and the sidebar's top is its densest region.** The mark,
+the wordmark, the person, their initials, and then a group label — five things before the first
+destination. Nothing about that is wrong on paper and it is exactly the kind of thing that reads as
+cluttered on screen. Gate 3 check 3 looks at the corner cold, expanded and collapsed, and asks
+whether the square and the circle read as two different kinds of thing or as two logos. **Written
+down whatever it says**; the answer decides whether the wordmark survives the next phase to touch
+this file.
 
 **The suite is red on `main`.** `T71` and `T77` — both *"leaves every order, pin and timestamp
 untouched through a round trip"* — fail because a debounced board write from an earlier test in

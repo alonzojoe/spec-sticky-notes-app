@@ -1,8 +1,8 @@
 # P13 · A board with your name on it — Validation
 
 The phase's Done-when: *the app asks for a name once, takes no for an answer, draws the initials and
-the name in the sidebar footer, stores it in one key that owns nothing, and every module in `lib/` is
-reachable through one barrel.*
+the name at the top of the sidebar under the mark, stores it in one key that owns nothing, and every
+module in `lib/` is reachable through one barrel.*
 
 ---
 
@@ -21,7 +21,7 @@ Warning-free, chunk warning included.
 a debounced write leaking between tests. Group 0 fixes that and records the green baseline. **Every
 count below is measured against the green number, never against the red one.**
 
-Five greps.
+Six greps.
 
 ```
 NO_COMMENTS='grep -vE ":[[:space:]]*(\*|//|/\*)"'
@@ -62,6 +62,13 @@ grep -rn "localStorage" src/components/layout/user_name_dialog.tsx src/component
 ```
 
 Empty. One reader, one writer, one hook.
+
+```
+grep -rn "SidebarFooter" src/components/layout/app_sidebar.tsx | eval $NO_COMMENTS
+```
+
+Empty. **D3**: the identity is in the header and the bottom of the sidebar is untouched, so *Dark
+mode* still finds the slot `tech-stack.md` promised it.
 
 `npm ls` gains nothing, runtime or dev — **no `shadcn add` in this phase** (**D6**). `EXEMPT` is
 untouched: the four new files are `snake_case` and nothing generates a file.
@@ -114,13 +121,17 @@ able to reach, and the fix is in the rewrite rather than in the expectation.
 
 ### T80 · The sidebar says whose board it is — `user_name.test.tsx`
 
-- With a stored name, the footer row draws `JA` and `Joe Alonzo`.
+- With a stored name, the header row draws `JA` and `Joe Alonzo`, **under the mark and above the
+  `Board` group** — asserted by position, because *which end of the sidebar* is the decision **D3**
+  reversed and a test that only asks *is it somewhere in the sidebar* would not have noticed.
 - With none, it reads **Add your name**.
 - **The circle is `aria-hidden`** and the row's accessible name is the name itself, or *Add your
   name* — two letters read aloud on top of the word they came from is noise (**D6**).
 - Activating the row opens the dialog **prefilled** with the stored name, so a typo is fixable
   (**D3**).
-- The row is a button in the tab order, after the three destinations.
+- The row is a button in the tab order, **before** the three destinations — it is above them on
+  screen, and a tab order that disagrees with the reading order is the kind of thing only a keyboard
+  user ever finds.
 - Changing the name updates the row **without a reload** — the same-tab sync group 0 verifies,
   asserted rather than assumed (**D5**).
 
@@ -147,10 +158,13 @@ cleared.
    the very first visit, with no name stored. That is the one-sentence test on the one path that has
    never been walked before.
 
-3. **Is the footer row an identity or a control?** Look at the sidebar expanded, then collapsed to
-   the rail. Does the circle read as *you*, or as a fourth thing to click? Principle 4 says the
-   sidebar holds controls; this row is the first thing in it that is neither a control nor a note,
-   and the amendment is only honest if that is visible.
+3. **Is the top of the sidebar two identities or two logos?** Look at the corner cold, expanded and
+   then collapsed to the rail. The square mark is the app, the round circle is you — does that land,
+   or does it read as a product with two badges and a cluttered header? Also: does the circle read as
+   *you*, or as a fourth thing to click? Principle 4 says the sidebar holds controls; this row is the
+   first thing in it that is neither a control nor a note, and the amendment is only honest if that
+   is visible. **Written down whatever it says** — § Risks names the header's density as the cost of
+   moving the row out of the footer, and this is the only check that can price it.
 
 4. **Type a name the rule handles badly** — one word, a name with four parts, a name in a script
    without case, a name with an emoji in it. Not to check it does not crash; to check the row is
@@ -158,7 +172,7 @@ cleared.
    least-wrong rule, not a correct one.
 
 5. **Type a very long name.** The row truncates, the sidebar does not widen, nothing wraps to two
-   lines, and the rail still shows two letters.
+   lines, the `Board` group below does not move, and the rail still shows two letters.
 
 6. **Rename yourself.** Open the row, correct a typo, save. The row updates immediately, the board
    does not move, and nothing else on screen changes.
@@ -185,7 +199,7 @@ cleared.
 | Principle 1 — nothing else reorders the board | No dispatch in this phase; nothing touches `notes_reducer.ts` |
 | Principle 2 — a card is a summary | Unchanged; nothing on the board moves |
 | Principle 3 — no Save button | The dialog commits a value, as P3's create dialog does; nothing that already exists is edited without autosave |
-| Principle 4 — quiet chrome | **Amended in one clause**: the sidebar holds one identity, which is neither a control nor a note. Nothing is added to a card |
+| Principle 4 — quiet chrome | **Amended in one clause**: the sidebar holds one identity, which is neither a control nor a note. Nothing is added to a card, and `SidebarFooter` stays empty |
 | Principle 5 — keyboard-reachable | T79's keyboard path; T80's row in the tab order |
 | No accounts, auth, multi-user, sync | **D1**'s carve-out, and T79's proof that the board is byte-identical across a name |
 | Every colour and duration from a token | `--sidebar-primary`, `--duration-hover`, `--ease-out`; Gate 1's build |
@@ -199,7 +213,7 @@ cleared.
 - [ ] Gate 0 — the suite is **green before the phase begins**, and the baseline is recorded.
 - [ ] Gate 1 clean — build, lint, test, and all five greps.
 - [ ] Gate 2 — T78–T81 pass; T1–T77 still pass, and **group 2 moved no behavioural assertion**.
-- [ ] Gate 3 — eight checks run, and **checks 1 and 4 written down**.
+- [ ] Gate 3 — eight checks run, and **checks 1, 3 and 4 written down**.
 - [ ] Gate 4 — every row satisfied.
 - [ ] The name can be given, refused, corrected, and deleted, and the board is identical through all
       four.
