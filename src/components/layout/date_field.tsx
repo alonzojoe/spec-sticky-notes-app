@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { dateFromISO, formatDate, isoFromLocalDate } from '@/lib/dates'
+import { dateFromISO, formatDate, isoFromLocalDate } from '@/lib'
 
 /**
  * The ISO boundary lives here and nowhere else. Callers pass and receive `YYYY-MM-DD` strings;

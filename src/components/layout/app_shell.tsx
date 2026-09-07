@@ -10,8 +10,7 @@ import { Toolbar } from '@/components/layout/toolbar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { NotesProvider } from '@/context/notes_context'
 import { OpenNoteProvider } from '@/context/open_note_context'
-import { SIDEBAR_KEY, parseSidebarOpen } from '@/lib/board_storage'
-import { SHORTCUT_KEY } from '@/lib/platform'
+import { parseSidebarOpen, SHORTCUT_KEY, SIDEBAR_KEY } from '@/lib'
 
 export function AppShell() {
   // P1 deleted shadcn's `sidebar_state` cookie and deliberately shipped no replacement, so

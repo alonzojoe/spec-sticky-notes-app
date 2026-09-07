@@ -14,7 +14,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { useNotes } from '@/context/use_notes'
-import { SECTIONS, sectionAt } from '@/lib/sections'
+import { sectionAt, SECTIONS } from '@/lib'
 
 // P3 moved note creation out of here and into the toolbar's dialog. P10 gave it the second
 // destination it had been missing since P1 — a nav with one item is a label that happens to be

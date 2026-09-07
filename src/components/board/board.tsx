@@ -5,8 +5,7 @@ import { NoteViewDialog } from '@/components/layout/note_view_dialog'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
 import { useOpenNote } from '@/context/use_open_note'
 import { useDraggable, type DragTarget } from '@/hooks/use_draggable'
-import { MIN_COLUMN } from '@/lib/grid'
-import { rowFor } from '@/lib/sections'
+import { MIN_COLUMN, rowFor } from '@/lib'
 import type { BoardSection, Note } from '@/types/note'
 
 /**

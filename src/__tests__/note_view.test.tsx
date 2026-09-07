@@ -5,8 +5,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import App from '@/__tests__/test_app'
 import { loadRouter } from '@/__tests__/router_setup'
 import { stubMatchMedia } from '@/__tests__/dom_setup'
-import { BOARD_KEY } from '@/lib/board_storage'
-import { formatDate, todayISO } from '@/lib/dates'
+import { BOARD_KEY, formatDate, todayISO } from '@/lib'
 import type { Note } from '@/types/note'
 
 const note = (over: Partial<Note> = {}): Note => ({

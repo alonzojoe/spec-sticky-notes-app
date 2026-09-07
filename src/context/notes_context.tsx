@@ -3,7 +3,7 @@ import { useDebounceCallback, useLocalStorage } from 'usehooks-ts'
 
 import { notesReducer } from '@/context/notes_reducer'
 import { NotesDispatchContext, NotesStateContext } from '@/context/use_notes'
-import { BOARD_KEY, hydrate, parseStored } from '@/lib/board_storage'
+import { BOARD_KEY, hydrate, parseStored } from '@/lib'
 import { EMPTY_BOARD } from '@/types/note'
 
 // tech-stack.md: "Writes are debounced ~300ms so that typing and dragging don't hammer

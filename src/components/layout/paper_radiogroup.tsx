@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 
-import { PAPER, paperLabel } from '@/lib/paper'
+import { PAPER, paperLabel } from '@/lib'
 import { NOTE_COLORS, type NoteColor } from '@/types/note'
 
 /**

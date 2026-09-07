@@ -4,8 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { stubMatchMedia } from '@/__tests__/dom_setup'
-import { BOARD_KEY } from '@/lib/board_storage'
-import { SECTIONS, sectionAt } from '@/lib/sections'
+import { BOARD_KEY, sectionAt, SECTIONS } from '@/lib'
 import { createAppRouter } from '@/app/config/router_config'
 import type { Note } from '@/types/note'
 

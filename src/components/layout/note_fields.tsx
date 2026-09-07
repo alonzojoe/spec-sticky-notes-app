@@ -1,5 +1,5 @@
 import { Input } from '@/components/ui/input'
-import { normalizeLink } from '@/lib/links'
+import { normalizeLink } from '@/lib'
 
 /**
  * The title and the link, shared by the create dialog and the note view exactly as

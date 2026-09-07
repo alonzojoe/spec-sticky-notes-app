@@ -5,8 +5,7 @@ import { useDebounceValue } from 'usehooks-ts'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useNotes } from '@/context/use_notes'
 import { useOpenNote } from '@/context/use_open_note'
-import { PAPER } from '@/lib/paper'
-import { search } from '@/lib/search'
+import { PAPER, search } from '@/lib'
 
 const ROW_ID = (index: number) => `search-result-${index}`
 

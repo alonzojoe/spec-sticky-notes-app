@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { search } from '@/lib/search'
+import { search } from '@/lib'
 import type { Note } from '@/types/note'
 
 const note = (over: Partial<Note> = {}): Note => ({

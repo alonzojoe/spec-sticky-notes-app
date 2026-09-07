@@ -8,8 +8,7 @@ import { NotesProvider } from '@/context/notes_context'
 import { DeleteNoteProvider } from '@/components/layout/delete_note_dialog'
 import { OpenNoteProvider } from '@/context/open_note_context'
 import { useNotesDispatch } from '@/context/use_notes'
-import { BOARD_KEY } from '@/lib/board_storage'
-import { createNoteSeed } from '@/lib/note_factory'
+import { BOARD_KEY, createNoteSeed } from '@/lib'
 import type { BoardSection, Note } from '@/types/note'
 
 const note = (over: Partial<Note> = {}): Note => ({
