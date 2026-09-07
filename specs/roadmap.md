@@ -381,8 +381,50 @@ phase that exists**, which is why P10 through P12 above have them and nothing be
 - Non-matching notes **dim in place** rather than disappearing — positions never change.
 - Escape clears the filter.
 
-**Done when:** filtering never moves a note, and clicking a tag shows exactly the notes carrying
-it.
+### Two questions answered in advance
+
+Both came out of P13 and are settled here so the phase inherits answers rather than rediscovering
+them. Either can be overturned by the phase that builds this — but deliberately, and in its own
+requirements.
+
+**A tag filter is not a section, and does not go in the registry.**
+
+P12 put every section in `lib/sections.ts` and the roadmap says tags *dim*, which is a different
+mechanism for what looks like the same job. It is not the same job:
+
+| | A section | A tag filter |
+| --- | --- | --- |
+| What it answers | *which notes are in this view* | *which of these notes match* |
+| Where it lives | the URL — bookmarkable, back-button-able | nowhere; Escape clears it |
+| What it does to the rest | removes them from the view | dims them where they are |
+| How long it lasts | until you navigate | until you press Escape |
+
+A section is a **place**. A tag filter is a **lens over the board you are already looking at**, which
+is why it can dim: the board is visible while you use it. That is the exact property P8 could not
+have — a palette blurs the board behind it, so a filter driven from one would be a filter you cannot
+see — and it is the reason search does not filter and this does.
+
+So: no registry row, no route, nothing persisted, `lib/tags.ts` is its own thing. **The registry
+stays at three rows and learns nothing about tags.**
+
+**The risk this takes on**, written down now because dimming is the decision: three matches on a
+hundred-note board is ninety-seven dimmed cards. Dimming keeps principle 1's promise perfectly and
+may still be unreadable at that size. That is a Gate 3 question — *look at it with a hundred notes*
+— and the fallback if it fails is not to filter, it is to make the dim deeper.
+
+**Tags get a group, not destinations.**
+
+P12's last bullet: *four rows is where a sidebar becomes a menu*, and the next section to want a row
+has to argue for it. Tags does not need one. P1 already reserved the right shape — *the tag list, as
+a `SidebarGroup` below the nav group* — and a group of tags is not a fourth destination any more
+than `Board` is a fourth section.
+
+The nav group stays at **three rows**, from the registry, in their own `<nav aria-label="Board
+sections">`. The tag list is a separate group outside that landmark, because it is not navigation:
+clicking a tag does not go anywhere.
+
+**Done when:** filtering never moves a note, clicking a tag shows exactly the notes carrying it, the
+section registry is untouched, and the board's three destinations are still three.
 
 ---
 

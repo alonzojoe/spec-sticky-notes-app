@@ -210,7 +210,8 @@ src/
     board_storage.ts     // storage keys and the defensive read
     note_factory.ts      // ids, timestamps, and the stamp that takes the first slot
     paper.ts             // NoteColor -> bg-paper-*, written out for the scanner
-    tags.ts              // parse #tags out of body                       (*Tags*)
+    tags.ts              // parse #tags out of body. NOT a section: no registry row, no
+                         //   route, nothing persisted — see roadmap.md § Tags   (*Tags*)
     markdown.ts          // render markdown + checkboxes                  (*Markdown and checkboxes*)
   context/
     open_note_context.tsx // which note is open, shared by the board and the palette (P8)
