@@ -236,21 +236,33 @@ describe('T79 · the app asks once', () => {
   })
 
   /**
-   * **The name owns nothing.** D1's whole argument, asserted rather than described: the stored
-   * board is byte-identical before a name exists, after one is stored, and after it is changed.
-   * An identity that owns data is an account whatever the dialog is called.
+   * **The name owns nothing.** D1's whole argument, asserted rather than described: not one note
+   * changes when a name is stored, or changed. An identity that owns data is an account whatever
+   * the dialog is called.
+   *
+   * **Compared parsed rather than as a string, and the first version of this was wrong to.** It
+   * asserted the stored board was *byte-identical*, which is false for a reason that has nothing to
+   * do with names: the provider mirrors the board back through `hydrate`, which **rebuilds** each
+   * note object rather than spreading it — that is deliberate, and it is how `x` and `y` from a
+   * pre-P5 board were given nowhere to survive. Rebuilding reorders the keys. Same notes, same
+   * values, different JSON.
+   *
+   * So it failed only once the debounced mirror had fired, which is a race, which made it a flake
+   * that blamed the feature. The claim is now the one that is true and the one that was always
+   * meant: **nothing in the board changes.**
    */
-  it('leaves the board byte-identical through naming and renaming', async () => {
+  it('leaves every note untouched through naming and renaming', async () => {
     const user = userEvent.setup()
     seedBoard([note({ id: 'a', order: 2 }), note({ id: 'b', order: 1, pinned: true })])
-    const before = window.localStorage.getItem(BOARD_KEY)
+    const board = () => JSON.parse(window.localStorage.getItem(BOARD_KEY) ?? '{}')
+    const before = board()
     render(<App />)
     const dialog = await screen.findByRole('dialog')
 
     await user.type(within(dialog).getByLabelText('Name'), 'Joe Alonzo')
     await user.keyboard('{Enter}')
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    expect(window.localStorage.getItem(BOARD_KEY)).toBe(before)
+    expect(board()).toEqual(before)
 
     await user.click(identity())
     const rename = await screen.findByRole('dialog')
@@ -259,7 +271,12 @@ describe('T79 · the app asks once', () => {
     await user.keyboard('{Enter}')
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 
-    expect(window.localStorage.getItem(BOARD_KEY)).toBe(before)
+    expect(board()).toEqual(before)
+    // Belt and braces on the fields a section, a sort or a stray dispatch would disturb.
+    expect(board().notes.map((n: Note) => [n.id, n.order, n.pinned, n.updatedAt])).toEqual([
+      ['a', 2, false, 1],
+      ['b', 1, true, 1],
+    ])
   })
 
   // Opened from the sidebar it is not an intro. Same component, different copy, and it says so.

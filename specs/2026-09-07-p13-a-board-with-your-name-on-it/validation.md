@@ -126,8 +126,15 @@ able to reach, and the fix is in the rewrite rather than in the expectation.
 - **The whole path runs from the keyboard alone**: the dialog opens focused on the input, types,
   submits on Enter, and closes. Principle 5, and the terms P3 set for a dialog standing between a
   person and their board.
-- **`sticky-notes:board:v1` is byte-identical** before the name is stored, after it is stored, and
-  after it is changed. The name owns nothing (**D1**).
+- **Not one note changes** when the name is stored, or changed — every note, order, pin and
+  timestamp identical. The name owns nothing (**D1**).
+
+  **The first version of this asserted the stored board was *byte-identical*, and that is false.**
+  The provider mirrors the board back through `hydrate`, which rebuilds each note object rather than
+  spreading it — deliberately, since that is what gave `x` and `y` from a pre-P5 board nowhere to
+  survive — and rebuilding reorders the keys. Same notes, same values, different JSON. The
+  assertion only failed once the debounced mirror had fired, so it was a race that blamed the
+  feature. Compared parsed now, which is the claim that was always meant.
 
 ### T80 · The sidebar says whose board it is — `user_name.test.tsx`
 
