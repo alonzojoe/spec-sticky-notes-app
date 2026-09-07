@@ -277,6 +277,34 @@ describe('T80 · the identity in the sidebar', () => {
     expect(circle?.getAttribute('aria-hidden')).toBe('true')
   })
 
+  /**
+   * The collapsed rail, asserted the only way jsdom can: by the classes, not by the geometry.
+   *
+   * `SidebarMenuButton` forces `size-8! p-2!` in icon mode — a 32px box with a 16px content area,
+   * right for a 16px glyph and wrong for a 28px circle, which started at the content edge, sat 6px
+   * right of every other mark in the rail and was clipped by `overflow-hidden` on the way out. The
+   * suite could not see any of that (**jsdom runs no layout**) and neither could a reviewer; the
+   * rail did, immediately.
+   *
+   * So this pins the mechanism that fixes it. The measurement belongs to Gate 3, and it is written
+   * down there: five marks, all centred on the same axis.
+   */
+  it('takes the rail button\'s padding off so the circle can centre', async () => {
+    seedUser()
+    seedBoard()
+    render(<App />)
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
+
+    const row = within(header()).getByRole('button', { name: 'Joe Alonzo' })
+    expect(row.className).toContain('group-data-[collapsible=icon]:p-0!')
+    expect(row.className).toContain('group-data-[collapsible=icon]:justify-center')
+
+    // Hidden rather than clipped: left in the flex row, the label would be centred along with the
+    // circle and push it back off to the left.
+    const label = [...row.querySelectorAll('span')].find((span) => span.textContent === 'Joe Alonzo')
+    expect(label?.className).toContain('group-data-[collapsible=icon]:hidden')
+  })
+
   it('is a button in the tab order, before the destinations', async () => {
     seedUser()
     seedBoard()

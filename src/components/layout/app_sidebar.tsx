@@ -61,7 +61,23 @@ const DESTINATION =
  * the appearance of a selected destination. No scale on press and no animation when the name
  * changes.
  */
-const IDENTITY = 'transition-colors duration-(--duration-hover) ease-out hover:bg-sidebar-accent/50'
+/**
+ * Collapsed, the row is the circle and only the circle.
+ *
+ * `SidebarMenuButton` forces `size-8! p-2!` in icon mode, which is a 32px box with a 16px content
+ * area — right for the 16px glyphs every destination carries, and wrong for anything bigger. The
+ * 28px circle started at the content box's left edge and ran 4px past the button's right, where
+ * `overflow-hidden` clipped it: it sat 6px right of every other mark in the rail *and* lost a
+ * sliver of its own edge. The bug was invisible expanded, because there the padding is exactly what
+ * the row wants.
+ *
+ * So the padding goes and the content is centred, which is what `size="lg"` in that same file
+ * already does for the same reason. The label is hidden rather than clipped — with it still in the
+ * flex row, centring would centre *circle plus label* and push the circle back off to the left. The
+ * mark above does the same thing to the word "Sticky", and the tooltip carries the name.
+ */
+const IDENTITY =
+  'transition-colors duration-(--duration-hover) ease-out hover:bg-sidebar-accent/50 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0!'
 
 /**
  * `size-7` — well above the mark's `size-5` and the destinations' `size-4` glyphs.
@@ -90,7 +106,11 @@ export function AppSidebar({ onEditName }: { onEditName: () => void }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-1.5">
+        {/* Collapsed, this row centres the same way the identity below it does. Its `px-2` sits the
+            20px mark at x=16, and every button in the rail is inset 8px and 32px wide — so the mark
+            was centred at 26 while the identity and all three destinations were at 24. Two pixels,
+            invisible until the rail put four marks in one column. */}
+        <div className="flex items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
           {/* The same mark the tab shows. A lucide glyph here and a drawn mark in the tab meant
               the app had two identities depending on where you looked. rounded-[5px] rather than
               the SVG's own rx, so the corner radius reads right at 20px. */}
@@ -132,7 +152,9 @@ export function AppSidebar({ onEditName }: { onEditName: () => void }) {
                     two logos. */}
                 {name === '' ? <Plus className="size-3.5" /> : initials}
               </span>
-              <span className="truncate">{name === '' ? ADD_YOUR_NAME : name}</span>
+              <span className="truncate group-data-[collapsible=icon]:hidden">
+                {name === '' ? ADD_YOUR_NAME : name}
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

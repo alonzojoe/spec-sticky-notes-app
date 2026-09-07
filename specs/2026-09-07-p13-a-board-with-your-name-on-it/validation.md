@@ -80,7 +80,7 @@ untouched: the four new files are `snake_case` and nothing generates a file.
 ## Gate 2 — Automated assertions (Vitest)
 
 T1–T77 come from P0–P12. **T78–T81 are new.** Baseline **25 suites** and the green count group 0
-records. **The phase ends at 28 suites and 749 assertions** — three new files, `user.test.ts`,
+records. **The phase ends at 28 suites and 750 assertions** — three new files, `user.test.ts`,
 `user_name.test.tsx` and `lib_barrel.test.ts`, plus the cases `naming_convention.test.ts` gains for
 every file this phase adds.
 
@@ -151,7 +151,8 @@ able to reach, and the fix is in the rewrite rather than in the expectation.
 ## Gate 3 — Checks no test can make
 
 Run against a board with at least a dozen notes, in a browser profile with `sticky-notes:user`
-cleared.
+cleared. **Every check is run with the sidebar expanded and again collapsed to the rail** — check 9
+exists because the first pass was not.
 
 1. **Does the first visit feel like a question or a door?** Load the app cold. The dialog is the
    first thing the product ever says. **Written down whatever it says** — § Risks names this as the
@@ -236,6 +237,21 @@ cleared.
    intact board, and the console stays clean — the custom deserializer, rather than the library's
    own, which would `console.error` on every load.
 
+9. **The rail, added to this gate after it failed.** Collapsed, the identity circle sat 6px right of
+   every other mark in the column and lost a sliver of its right edge to `overflow-hidden`.
+   `SidebarMenuButton` forces `size-8! p-2!` in icon mode — a 32px box with a 16px content area,
+   which is exactly right for the 16px glyph every destination carries and wrong for anything
+   bigger. The padding comes off in icon mode and the label is hidden rather than clipped, which is
+   what `size="lg"` in that same file already does for the same reason.
+
+   Fixing it turned up a second, older one: the mark's row sits at `px-2`, which centred it at 26
+   while every button in the rail centred at 24. Two pixels, present since P1, and invisible until
+   the rail had four marks in one column to compare. **Both measured rather than eyeballed** — all
+   five marks now centre on 24.
+
+   **This is the check the gate did not have, and now does.** jsdom runs no layout, so no assertion
+   in the suite could have seen either; T80 pins the mechanism, and the geometry is measured here.
+
 **The defect this gate did not have to find**, because T79 found it first: skipping stored nothing,
 so the next load asked again. Recorded in § D2 rather than fixed quietly — the promise was *asked
 once*, and the build was delivering *asked once per visit*.
@@ -265,8 +281,8 @@ once*, and the build was delivering *asked once per visit*.
 - [x] Gate 0 — the suite is **green before the phase begins**: 25 suites, 708 passed.
 - [x] Gate 1 clean — build, lint, test, and all six greps.
 - [x] Gate 2 — T78–T81 pass; T1–T77 still pass, and **group 2 moved no behavioural assertion**.
-      **28 suites, 749 assertions.**
-- [x] Gate 3 — eight checks run, and **checks 1, 3 and 4 written down**.
+      **28 suites, 750 assertions.**
+- [x] Gate 3 — nine checks run, and **checks 1, 3, 4 and 9 written down**.
 - [x] Gate 4 — every row satisfied.
 - [x] The name can be given, refused, corrected, and deleted, and the board is identical through all
       four.
