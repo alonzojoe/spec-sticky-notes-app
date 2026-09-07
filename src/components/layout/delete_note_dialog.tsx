@@ -13,7 +13,7 @@ import {
 import { DeleteNoteContext } from '@/context/use_delete_note'
 import { useNotesDispatch } from '@/context/use_notes'
 import { useOpenNote } from '@/context/use_open_note'
-import { hasContent } from '@/lib/notes'
+import { hasContent } from '@/lib'
 import type { Note } from '@/types/note'
 
 /**

@@ -32,7 +32,16 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P12 (*the notes that point somewhere*) is complete: the sidebar has three destinations — `Notes`,
+P13 (*a board with your name on it*) is complete: the app asks for a name once, on the first visit,
+as an intro rather than a form — and there is no way past it but a name. It is asked exactly once
+per browser, on the visit that names the board. The name draws as a circle of initials under the
+mark, at the top of the sidebar, and clicking that
+row is also how it is corrected. It lives in one key, `sticky-notes:user`, and **owns nothing** —
+the stored board is byte-identical before a name exists, after one is stored, and after it is
+changed, which is what makes it a label rather than an account. `mission.md` carries the amendment
+that says so. `src/lib/` also gained a barrel: every import we author reads `@/lib`.
+
+Before it, P12 (*the notes that point somewhere*): the sidebar has three destinations — `Notes`,
 `Pinned notes` and `Linked notes` — and `/linked` shows the notes carrying a URL. What a section
 *is* lives in one list, `lib/sections.ts`: a path, a label, an icon, a predicate and the copy for an
 empty one, which the sidebar and the board both read, so neither of them names a section. A note is

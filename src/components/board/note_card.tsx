@@ -2,9 +2,7 @@ import { Link2, Pin, Trash2 } from 'lucide-react'
 
 import { useDeleteNote } from '@/context/use_delete_note'
 import { useNotesDispatch } from '@/context/use_notes'
-import { formatDate } from '@/lib/dates'
-import { linkLabel } from '@/lib/links'
-import { PAPER } from '@/lib/paper'
+import { formatDate, linkLabel, PAPER } from '@/lib'
 import type { Note } from '@/types/note'
 
 export type ReorderDirection = 'left' | 'right' | 'up' | 'down' | 'first' | 'last'

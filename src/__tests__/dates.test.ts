@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { formatDate, isISODate, isoFromEpoch, todayISO } from '@/lib/dates'
+import { formatDate, isISODate, isoFromEpoch, todayISO } from '@/lib'
 
 // T38 — the decision this file exists to defend is in lib/dates.ts: nothing constructs a Date
 // from a stored value, because `new Date('2026-09-01')` is parsed as UTC midnight by spec and

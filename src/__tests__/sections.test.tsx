@@ -3,9 +3,8 @@ import { RouterProvider, createMemoryHistory } from '@tanstack/react-router'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { stubMatchMedia } from '@/__tests__/dom_setup'
-import { BOARD_KEY } from '@/lib/board_storage'
-import { SECTIONS, sectionAt } from '@/lib/sections'
+import { seedUser, stubMatchMedia } from '@/__tests__/dom_setup'
+import { BOARD_KEY, sectionAt, SECTIONS } from '@/lib'
 import { createAppRouter } from '@/app/config/router_config'
 import type { Note } from '@/types/note'
 
@@ -80,6 +79,7 @@ beforeEach(() => {
   // unstubbed it prints "Not implemented" through every navigating test in this file.
   window.scrollTo = () => {}
   window.localStorage.clear()
+  seedUser()
 })
 afterEach(cleanup)
 

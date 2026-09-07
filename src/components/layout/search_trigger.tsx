@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react'
 
-import { SHORTCUT_KEY, modifierLabel } from '@/lib/platform'
+import { modifierLabel, SHORTCUT_KEY } from '@/lib'
 
 /**
  * A `<button>`, never an `<input>`.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib'
 
 // T1 — criterion: "an @/ import resolves". If `paths` or `resolve.alias` is missing,
 // this import fails and the suite errors rather than silently passing.

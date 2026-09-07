@@ -4,11 +4,10 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 
 import App from '@/__tests__/test_app'
 import { loadRouter } from '@/__tests__/router_setup'
-import { stubMatchMedia } from '@/__tests__/dom_setup'
+import { seedUser, stubMatchMedia } from '@/__tests__/dom_setup'
 import { NotesProvider } from '@/context/notes_context'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
-import { BOARD_KEY, SIDEBAR_KEY } from '@/lib/board_storage'
-import { createNoteSeed } from '@/lib/note_factory'
+import { BOARD_KEY, createNoteSeed, SIDEBAR_KEY } from '@/lib'
 import type { Note } from '@/types/note'
 
 // P3 replaced the sidebar palette with a dialog, so every note in this file is made through
@@ -87,6 +86,7 @@ beforeAll(loadRouter)
 beforeEach(() => {
   stubMatchMedia()
   window.localStorage.clear()
+  seedUser()
   vi.useFakeTimers({ shouldAdvanceTime: true })
 })
 

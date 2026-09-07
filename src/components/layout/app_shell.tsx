@@ -7,11 +7,12 @@ import { DeleteNoteProvider } from '@/components/layout/delete_note_dialog'
 import { NewNoteDialog } from '@/components/layout/new_note_dialog'
 import { SearchDialog } from '@/components/layout/search_dialog'
 import { Toolbar } from '@/components/layout/toolbar'
+import { UserNameDialog } from '@/components/layout/user_name_dialog'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { NotesProvider } from '@/context/notes_context'
 import { OpenNoteProvider } from '@/context/open_note_context'
-import { SIDEBAR_KEY, parseSidebarOpen } from '@/lib/board_storage'
-import { SHORTCUT_KEY } from '@/lib/platform'
+import { useUser } from '@/hooks/use_user'
+import { parseSidebarOpen, SHORTCUT_KEY, SIDEBAR_KEY } from '@/lib'
 
 export function AppShell() {
   // P1 deleted shadcn's `sidebar_state` cookie and deliberately shipped no replacement, so
@@ -23,6 +24,20 @@ export function AppShell() {
 
   const [creating, setCreating] = useState(false)
   const [searching, setSearching] = useState(false)
+
+  /**
+   * The one question the app asks, asked once.
+   *
+   * Initialised from the store on the first render rather than in an effect — `useLocalStorage`
+   * reads synchronously by default, so a returning user never sees this open for a frame.
+   *
+   * From the name, and **the intro cannot be dismissed without one** — so this is true exactly
+   * once per browser, on the visit that names the board. An earlier build let it be skipped and had
+   * to record the refusal to avoid asking again on every load; with no way to refuse, there is
+   * nothing to record and the name itself is the answer.
+   */
+  const { name } = useUser()
+  const [asking, setAsking] = useState(name === '')
 
   const navigate = useNavigate()
 
@@ -96,7 +111,7 @@ export function AppShell() {
       <OpenNoteProvider>
         <DeleteNoteProvider>
         <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <AppSidebar />
+          <AppSidebar onEditName={() => setAsking(true)} />
           {/* SidebarInset renders the <main> element itself, so nothing here nests another
               landmark inside it. mission.md principle 4: chrome lives in the sidebar, never
               on the board surface. */}
@@ -109,6 +124,7 @@ export function AppShell() {
               <Outlet />
             </div>
           </SidebarInset>
+          <UserNameDialog open={asking} onOpenChange={setAsking} />
           <NewNoteDialog open={creating} onOpenChange={setCreating} />
           <SearchDialog open={searching} onOpenChange={setSearching} />
         </SidebarProvider>

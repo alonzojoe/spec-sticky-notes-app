@@ -13,9 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useNotes, useNotesDispatch } from '@/context/use_notes'
-import { todayISO } from '@/lib/dates'
-import { normalizeLink } from '@/lib/links'
-import { createNoteSeed, topOrder } from '@/lib/note_factory'
+import { createNoteSeed, normalizeLink, todayISO, topOrder } from '@/lib'
 import { NOTE_COLORS, type NoteColor } from '@/types/note'
 /**
  * Creation became a deliberate act in P3, which is a change the constitution had to make

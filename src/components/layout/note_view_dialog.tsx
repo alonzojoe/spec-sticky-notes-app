@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { useDeleteNote } from '@/context/use_delete_note'
 import { useNotesDispatch } from '@/context/use_notes'
-import { normalizeLink } from '@/lib/links'
+import { normalizeLink } from '@/lib'
 import type { Note, NoteColor } from '@/types/note'
 
 const AUTOSAVE_MS = 300

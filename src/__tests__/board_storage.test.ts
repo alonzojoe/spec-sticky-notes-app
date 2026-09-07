@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { BOARD_KEY, SIDEBAR_KEY, hydrate } from '@/lib/board_storage'
-import { isISODate, isoFromEpoch } from '@/lib/dates'
+import { BOARD_KEY, hydrate, isISODate, isoFromEpoch, SIDEBAR_KEY } from '@/lib'
 import { EMPTY_BOARD, type Note } from '@/types/note'
 
 const valid: Note = {

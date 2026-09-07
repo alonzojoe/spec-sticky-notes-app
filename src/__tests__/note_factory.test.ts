@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createNoteSeed, topOrder } from '@/lib/note_factory'
+import { createNoteSeed, topOrder } from '@/lib'
 import { NOTE_COLORS } from '@/types/note'
 
 /**

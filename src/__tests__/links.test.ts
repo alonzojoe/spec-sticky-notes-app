@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { isSafeLink, linkLabel, normalizeLink } from '@/lib/links'
+import { isSafeLink, linkLabel, normalizeLink } from '@/lib'
 
 // T48 — the link helpers are correct, and refuse what they should.
 //

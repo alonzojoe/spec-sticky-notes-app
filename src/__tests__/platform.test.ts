@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { SHORTCUT_KEY, isMac, modifierLabel } from '@/lib/platform'
+import { isMac, modifierLabel, SHORTCUT_KEY } from '@/lib'
 
 /**
  * Both stubs are `configurable` so afterEach can take them back off. `userAgentData` does not

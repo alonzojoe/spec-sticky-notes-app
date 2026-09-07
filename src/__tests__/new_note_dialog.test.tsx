@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 
 import App from '@/__tests__/test_app'
 import { loadRouter } from '@/__tests__/router_setup'
-import { stubMatchMedia } from '@/__tests__/dom_setup'
+import { seedUser, stubMatchMedia } from '@/__tests__/dom_setup'
 
 // The router matches its first location asynchronously; loading it here is what makes a
 // synchronous render produce a board rather than an empty div. See router_setup.ts.
@@ -14,6 +14,7 @@ beforeAll(loadRouter)
 beforeEach(() => {
   stubMatchMedia()
   window.localStorage.clear()
+  seedUser()
 })
 afterEach(cleanup)
 

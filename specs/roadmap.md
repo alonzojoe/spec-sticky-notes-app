@@ -330,6 +330,39 @@ one list, and navigating still writes nothing.
 
 ---
 
+## P13 · A board with your name on it
+
+**Goal:** the app knows whose board this is, and says so once.
+
+- Amend `mission.md`: a **display name is not an account**. The carve-out is narrower than the line
+  it is carved out of — no password, no server, no second user, and **nothing in the board is keyed
+  to it**. An identity that owns data is an account whatever the dialog is called. Principle 4 gains
+  one clause: the sidebar holds one identity, which is neither a control nor a note.
+- **This phase is not on the list below, and was never on it.** It is an insertion, which the list's
+  own preamble allows — *order is a plan, not a commitment*.
+- **The intro.** A visit with no stored name opens the dialog every other dialog uses, written as a
+  welcome rather than a form. **There is no way past it but a name** — no Escape, no backdrop, no ✕,
+  no Skip. An intro that can be waved away is a thing to wave away, and the app then spends the rest
+  of its life asking in the corner instead. The first visit costs a name; every visit after it does
+  not, and `mission.md`'s one-sentence test is about the recurring capture rather than the one-time
+  setup.
+- **The dismissible version shipped first**, with a skip recorded as `{ name: '' }` so it could not
+  become a modal that returns until you comply. Both versions and the argument between them are in
+  the phase's § D2 — the reasoning outlasts the outcome.
+- `lib/user.ts` — the key, the defensive read and `initialsOf`, together. One code point per word,
+  so an astral character is not rendered as half a surrogate pair.
+- **The identity row is in `SidebarHeader`, under the mark.** A square is the app and a circle is a
+  person, and they are deliberately not harmonised. `SidebarFooter` is left empty: it was the first
+  draft, and it belongs to *Dark mode*.
+- **`src/lib/index.ts`** — one barrel, every authored import rewritten to `@/lib`. `lib/`-internal
+  imports and `components/ui/`'s `@/lib/utils` stay deep, both for reasons with precedents.
+
+**Done when:** the app asks once and never again, the sidebar draws the initials and the name, the
+board is byte-identical through naming and renaming, and every module in `lib/` is reachable through
+one barrel.
+
+---
+
 # Planned, in order
 
 No numbers — see P9's last bullet. Order is a plan, not a commitment; inserting work here is an edit
