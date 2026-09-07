@@ -109,7 +109,7 @@ export function AppShell() {
       <OpenNoteProvider>
         <DeleteNoteProvider>
         <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <AppSidebar />
+          <AppSidebar onEditName={() => setAsking(true)} />
           {/* SidebarInset renders the <main> element itself, so nothing here nests another
               landmark inside it. mission.md principle 4: chrome lives in the sidebar, never
               on the board surface. */}

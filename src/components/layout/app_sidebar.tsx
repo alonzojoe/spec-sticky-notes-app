@@ -1,4 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
+import { Plus } from 'lucide-react'
 
 import { StickyMark } from '@/components/layout/sticky_mark'
 import {
@@ -14,6 +15,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { useNotes } from '@/context/use_notes'
+import { useUser } from '@/hooks/use_user'
 import { sectionAt, SECTIONS } from '@/lib'
 
 // P3 moved note creation out of here and into the toolbar's dialog. P10 gave it the second
@@ -24,7 +26,8 @@ import { sectionAt, SECTIONS } from '@/lib'
 // Slots later phases fill, named here so it grows by plan rather than by improvisation:
 //   *Tags* — the tag list, as a SidebarGroup below the nav group (search became a ⌘K palette
 //            in the toolbar in P8, so no field lands here)
-//   *Dark mode* — the theme toggle, in a SidebarFooter
+//   *Dark mode* — the theme toggle, in a SidebarFooter — still unclaimed, and P13 deliberately
+//                 left it that way rather than putting the identity there
 // Nothing is rendered for them now. A control that cannot be used should not be drawn.
 /**
  * How a destination says it is the one you are on.
@@ -49,8 +52,26 @@ import { sectionAt, SECTIONS } from '@/lib'
 const DESTINATION =
   'transition-colors duration-(--duration-hover) ease-out hover:bg-sidebar-accent/50 data-active:text-ink data-active:shadow-[inset_2px_0_0_var(--sidebar-primary)]'
 
-export function AppSidebar() {
+/**
+ * The identity's hover, which is the destinations' hover and nothing more.
+ *
+ * This row is on screen every second the app is open — one of the things you look at dozens of
+ * times a day without meaning to — which puts it in the category to take motion *out* of. Colour
+ * only, at half the sidebar's accent, so it reads as "you are over this" without ever producing
+ * the appearance of a selected destination. No scale on press and no animation when the name
+ * changes.
+ */
+const IDENTITY = 'transition-colors duration-(--duration-hover) ease-out hover:bg-sidebar-accent/50'
+
+/** `size-6` against the destinations' `size-4` glyphs: a person is not an icon. */
+const CIRCLE =
+  'flex size-6 shrink-0 items-center justify-center rounded-full text-[0.625rem] font-medium'
+
+const ADD_YOUR_NAME = 'Add your name'
+
+export function AppSidebar({ onEditName }: { onEditName: () => void }) {
   const { notes } = useNotes()
+  const { name, initials } = useUser()
 
   // Read from the router rather than held here, so the URL is the single answer to "which section
   // is this" and the sidebar cannot disagree with the board.
@@ -69,6 +90,43 @@ export function AppSidebar() {
             Sticky
           </span>
         </div>
+
+        {/* Whose board this is, under the app's own mark rather than beside it. Side by side the
+            two compete; stacked, the row above is the product and this one is whose copy of it you
+            are looking at. mission.md principle 4: the sidebar holds one identity, and it is the
+            only thing in here that is neither a control nor a note.
+
+            An earlier draft put this in a SidebarFooter, on the strength of the convention that
+            every sidebar-shaped app puts a person at the bottom. That is not reason enough to take
+            a slot tech-stack.md promised *Dark mode*, so the bottom of the sidebar is left exactly
+            as it was found. */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={onEditName}
+              tooltip={name === '' ? ADD_YOUR_NAME : name}
+              className={IDENTITY}
+            >
+              {/* aria-hidden: the row is already named by the name, and two letters read aloud on
+                  top of the word they were cut from is noise. */}
+              <span
+                aria-hidden
+                className={
+                  name === ''
+                    ? `${CIRCLE} bg-sidebar-accent text-ink-soft`
+                    : `${CIRCLE} bg-sidebar-primary text-sidebar-primary-foreground`
+                }
+              >
+                {/* rounded-full against the mark's rounded-[5px], and deliberately not harmonised:
+                    a square is the paper this app is made of, a circle is a person. Softening one
+                    toward the other to tidy the corner is what would turn two kinds of thing into
+                    two logos. */}
+                {name === '' ? <Plus className="size-3" /> : initials}
+              </span>
+              <span className="truncate">{name === '' ? ADD_YOUR_NAME : name}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
