@@ -80,8 +80,9 @@ untouched: the four new files are `snake_case` and nothing generates a file.
 ## Gate 2 — Automated assertions (Vitest)
 
 T1–T77 come from P0–P12. **T78–T81 are new.** Baseline **25 suites** and the green count group 0
-records; the phase ends at **27 suites** — `user.test.ts` and `user_name.test.tsx` are new files,
-and T81 lives in `lib_barrel.test.ts`, which makes three new files across two suites plus one.
+records. **The phase ends at 28 suites and 749 assertions** — three new files, `user.test.ts`,
+`user_name.test.tsx` and `lib_barrel.test.ts`, plus the cases `naming_convention.test.ts` gains for
+every file this phase adds.
 
 Two existing counts move for mechanical reasons and no others: `naming_convention.test.ts` is
 parameterised over the file tree and gains a case per new file, and `alias.test.ts` is unaffected —
@@ -186,9 +187,58 @@ cleared.
 8. **Corrupt `sticky-notes:user` by hand** — `{"name": 4}`, then `not json at all`. Both load a
    board that asks for a name, and neither writes to the console.
 
-### Answers — run <date> against a twelve-note board
+### Answers — run 2026-09-07 against a twelve-note board
 
-*(filled in when the phase runs; checks 1 and 4 are written down whatever they say)*
+Twelve notes, three pinned, three linked, one of them both, in a profile with `sticky-notes:user`
+cleared.
+
+1. **It reads as a question, and the copy is what makes it one.** An earlier draft was titled *Who
+   is this board for?* over a field, which is a form and reads like a door — the board is visible
+   behind it and unreachable, and the only visible way past it was a button called Cancel. What
+   ships is the intro: the mark, *Make it yours*, one sentence about what a corkboard is for, and
+   **Skip** named as a way through rather than as an undo. The board behind is dimmed and legible,
+   so the thing being offered is visible while you decide. **Written down**: this is the phase's
+   named risk, and the copy is the whole of the mitigation. If it ever reads as a door again, the
+   dialog is not the thing to fix — the sentence is.
+
+2. **Escape, then `n`, then type — under two seconds, and nothing was stored.** The one-sentence
+   test holds on the first visit, which is the only path it had never been walked on.
+
+3. **Two identities, not two logos, and the circle's size was the finding.** Drawn first at the
+   mark's `size-5` on the argument that the header rows are a pair and a person's badge larger than
+   the app's own mark inverts the corner; on screen that read as timid rather than balanced, and the
+   initials — the thing you actually look for up there — were the smallest text in the sidebar. It
+   went up twice, and settled at `size-7`: the square is the product, the circle is you, and the
+   distinction survives the collapse to the rail, where the two glyphs are all that is left. The
+   header is denser than it was and does not read as cluttered, because the mark row is a wordmark
+   and the row under it is a name — different kinds of thing, stacked, not two badges side by side.
+   **The badge outweighing the mark turned out to be correct**, and the argument against it — that
+   the pair must weigh the same — was the thing that was wrong: the shapes carry the distinction, so
+   the size is free to say which of the two you came to read.
+
+4. **The rule degrades quietly, as § D4 said it would.** `Bartholomew Maximilian
+   Featherstonehaugh-Cholmondeley` gives `BF`, which is right and tells you nothing; a mononym gives
+   one letter and the circle looks deliberate rather than broken; `李明` gives `李`. **Written
+   down**: nothing here is a defect and nothing here is *correct* either — it is the least-wrong
+   rule, and the name is on screen beside it in every case, which is what makes that acceptable.
+
+5. **A very long name truncates and moves nothing.** The row ellipses, the sidebar keeps its width,
+   the `Board` group below does not shift, and the rail still shows two letters.
+
+6. **Renaming is one click and updates immediately.** The row opens the dialog prefilled, saving
+   redraws the initials without a reload — the same-tab sync, seen rather than asserted — and no
+   note moves.
+
+7. **Clearing `sticky-notes:user` by hand asks again, and the board is untouched.** Twelve notes,
+   same order, same pins. The name owns nothing.
+
+8. **A corrupt value is a first visit.** `not json at all` under the key opens the intro over an
+   intact board, and the console stays clean — the custom deserializer, rather than the library's
+   own, which would `console.error` on every load.
+
+**The defect this gate did not have to find**, because T79 found it first: skipping stored nothing,
+so the next load asked again. Recorded in § D2 rather than fixed quietly — the promise was *asked
+once*, and the build was delivering *asked once per visit*.
 
 ---
 
@@ -213,11 +263,12 @@ cleared.
 ## Definition of done
 
 - [x] Gate 0 — the suite is **green before the phase begins**: 25 suites, 708 passed.
-- [ ] Gate 1 clean — build, lint, test, and all five greps.
-- [ ] Gate 2 — T78–T81 pass; T1–T77 still pass, and **group 2 moved no behavioural assertion**.
-- [ ] Gate 3 — eight checks run, and **checks 1, 3 and 4 written down**.
-- [ ] Gate 4 — every row satisfied.
-- [ ] The name can be given, refused, corrected, and deleted, and the board is identical through all
+- [x] Gate 1 clean — build, lint, test, and all six greps.
+- [x] Gate 2 — T78–T81 pass; T1–T77 still pass, and **group 2 moved no behavioural assertion**.
+      **28 suites, 749 assertions.**
+- [x] Gate 3 — eight checks run, and **checks 1, 3 and 4 written down**.
+- [x] Gate 4 — every row satisfied.
+- [x] The name can be given, refused, corrected, and deleted, and the board is identical through all
       four.
-- [ ] Every module in `lib/` is reachable through `@/lib`, and a new one that is not fails the suite.
-- [ ] PR opened against `main`.
+- [x] Every module in `lib/` is reachable through `@/lib`, and a new one that is not fails the suite.
+- [x] PR opened against `main`.

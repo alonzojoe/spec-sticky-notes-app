@@ -106,6 +106,30 @@ until you comply is a modal that was not really dismissible, and being asked onc
 between a question and a nag. Once dismissed, the sidebar is the only thing that still asks
 (**D3**) — quietly, in place, where it can be ignored forever.
 
+**Declining is an answer, and is stored as one.** This was discovered during implementation, by the
+test written for the paragraph above. The first build opened the dialog when the *name* was empty,
+and a skip stored nothing — so the next load saw an empty store, could not tell someone who refused
+from someone who had never been here, and asked again. *Asked once* had quietly become *asked once
+per visit*.
+
+So a skip writes `{ name: '' }`, by every route out of the intro — Skip, the corner ✕, the backdrop
+and Escape — and the shell opens the dialog on **`asked`** rather than on the name. `asked` is
+"there is a well-formed value under this key", which keeps **D5**'s repair honest: a *malformed*
+value is not an answer, so a corrupted key asks again, exactly as a cleared one does.
+
+A rename closed without saving records nothing. The question was answered a while ago.
+
+**It is written as the intro, because that is what it is.** On a first visit this dialog is the
+whole product for a moment, so it carries the mark, a sentence about what a board is for, and a way
+in — *Make it yours*, `Skip` and `Get started` — rather than a title and a field. It deliberately
+does **not** say where the name will end up: on the intro that is an instruction about an interface
+nobody has looked at yet, and the sidebar is two seconds away and explains itself. Opened later from
+the sidebar it is not an intro at all; it is a rename, it says *Your name*, and *there* it does say
+where the name goes, because by then that is the question being asked.
+
+**No tour, no steps, no second screen.** An intro that takes more than one look is onboarding, and
+this app fits in a sentence.
+
 The dialog is Radix's, through the same `components/ui/dialog.tsx` the create dialog, the note view
 and the search palette all use, so its overlay, its blur, its motion and its focus trap are the
 ones already on screen rather than a fourth copy. **No new shadcn component is installed** — the
@@ -229,11 +253,17 @@ shadcn's `avatar` is an image with a fallback. There is no image here and there 
 image upload is out of scope in `mission.md` — so installing it would add a Radix primitive to
 render the fallback state of a picture that does not exist.
 
-The circle is a `div`: `size-6`, `rounded-full`, `bg-sidebar-primary`, `text-sidebar-primary-foreground`,
-the initials centred in `text-[0.625rem]`-class type with `font-medium` and tabular-ish spacing. Two
-letters at that size need the strongest contrast pair the sidebar has, which is the primary the
-active destination's bar is already drawn in — so the one saturated mark in the sidebar and the one
-identity in the sidebar are the same colour rather than two competing accents.
+The circle is a `div`: `size-7`, `rounded-full`, `bg-sidebar-primary`, `text-sidebar-primary-foreground`,
+the initials centred in `text-[0.6875rem]`-class type at `font-semibold`. Two letters at that size
+need the strongest contrast pair the sidebar has, which is the primary the active destination's bar
+is already drawn in — so the one saturated mark in the sidebar and the one identity in the sidebar
+are the same colour rather than two competing accents.
+
+**It is larger than the app's own mark, deliberately.** It was drawn at the mark's size first, on
+the argument that the two header rows are a pair; on screen that made the initials the smallest text
+in the sidebar, which is the wrong thing to shrink — they are what you look at up there. The
+square/round distinction is what separates the app from the person and it holds at any size, so the
+size is free to say which of the two you came to read.
 
 Empty state: the same circle with `bg-sidebar-accent`, `text-ink-soft`, and a `Plus` glyph. It reads
 as a slot for something rather than as a person with no name.

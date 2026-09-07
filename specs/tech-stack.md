@@ -16,7 +16,7 @@ constitution, not a detail — add it deliberately or not at all.
 | Primitives | **`radix-ui`** | Arrives as shadcn's dependency — the unified package, not per-component `@radix-ui/react-*`. Source of a11y for menus, dialogs, popovers, tooltips. |
 | State | **React Context + `useReducer`** | One board reducer. No external state library. |
 | Routing | **`@tanstack/react-router`** + **`@tanstack/router-plugin`** (dev) | Arrives in P10 for the board's two sections; P11 made the routes **file-based** under `src/app/routes/`, mirroring `unicare-booking`. A file's path is its URL, the plugin writes `src/app/routeTree.gen.ts` (committed, exempted from the naming rule), and `_board` is a pathless layout group holding the shell. Three routes — `/`, `/notes`, `/pinned`. A note is not a route; the palette and the card still open it into a dialog. |
-| Persistence | **`usehooks-ts`** | `useLocalStorage` for the board and the theme. |
+| Persistence | **`usehooks-ts`** | `useLocalStorage` for the board, the sidebar's collapse, the user's name and the theme. Three keys today: `sticky-notes:board:v1`, `sticky-notes:sidebar`, `sticky-notes:user` (P13). **Its `useDebounceCallback` does not cancel on unmount** — it builds a second debounced function in an effect and cancels that one — so anything debouncing a write cancels it itself. `notes_context.tsx` does. |
 | Icons | **`lucide-react`** | shadcn's icon set; nothing else. |
 | Drag | **Native pointer events** | Hand-rolled `useDraggable`. See "Decisions" below. |
 | Testing | **Vitest** | devDependency. Shares Vite's config and resolver. See "Decisions" below. |
@@ -33,6 +33,14 @@ constitution, not a detail — add it deliberately or not at all.
   the tokens in `src/app/main.css` are the styling system.
 - **No new runtime dependency without updating this file first**, with a line explaining
   what it replaced and why nothing already here could do the job.
+- **Everything in `src/lib/` is imported through `@/lib`**, its barrel (P13). Two exemptions, both
+  because something else owns the specifier: modules **inside** `lib/` import each other deeply, or
+  a module imports the barrel that imports it and the cycle resolves right up until initialisation
+  order matters; and **`src/components/ui/**` keeps `@/lib/utils`**, because `shadcn add` writes
+  that exact string and a rewritten one conflicts on every future `add` and `diff` — the same
+  reason those files keep their kebab-case names. `src/__tests__/lib_barrel.test.ts` checks the
+  barrel against the directory listing rather than against a list, so a module added without a line
+  in it fails the suite instead of being found at someone's import.
 - **Every color, radius, shadow and duration comes from a token.** No arbitrary hex values
   or one-off `[13px]` utilities in components. Tailwind's stock palette utilities
   (`bg-stone-200`, `text-gray-500`) are as forbidden as a raw hex value — the tokens in
@@ -154,6 +162,7 @@ src/
     use_notes.ts         // the two contexts and their consumer hooks
   hooks/
     use_draggable.ts     // pointer-events drag; owns the gesture, dispatches nothing
+    use_user.ts          // the only reader and writer of the name; `asked` is not `named` (P13)
     use_theme.ts         // light/dark/system, persisted                  (*Dark mode*)
     use-mobile.ts        // shadcn-generated — exempt from snake_case
   components/
@@ -161,8 +170,11 @@ src/
       app_shell.tsx      // NotesProvider + SidebarProvider + AppSidebar + SidebarInset;
                          //   owns the toolbar, the New note button and the `n` shortcut;
                          //   mounted by routes/_board/route.tsx                  (P11)
-      app_sidebar.tsx    // header, the Notes and Pinned notes destinations, slots for
-                         //   *Tags*/*Dark mode*                                      (P10)
+      app_sidebar.tsx    // header: the mark, then the identity row — initials, name, and the
+                         //   way back into the dialog. Then the destinations from the
+                         //   registry. **SidebarFooter is still empty and belongs to
+                         //   *Dark mode***                                     (P10, P13)
+      user_name_dialog.tsx // the intro on a first visit, the rename after it        (P13)
       new_note_dialog.tsx // date + colour + textarea; creates the note      (P3)
       note_view_dialog.tsx // a note opened: title, body, link, colour, date; autosaves (P6)
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
@@ -183,6 +195,8 @@ src/
       empty_state.tsx    //                                               (*Polish*)
     ui/                  // shadcn components — exempt from snake_case
   lib/
+    index.ts             // the barrel. Everything we author imports @/lib          (P13)
+    user.ts              // the name: its key, its defensive read, and initialsOf   (P13)
     grid.ts              // the one column-width the stylesheet cannot infer        (P5)
     dates.ts             // ISO in, MM/DD/YYYY out; never builds a Date from a store (P6)
     notes.ts             // hasContent — what makes a note worth confirming      (P9)

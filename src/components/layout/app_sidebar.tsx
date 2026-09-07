@@ -64,16 +64,17 @@ const DESTINATION =
 const IDENTITY = 'transition-colors duration-(--duration-hover) ease-out hover:bg-sidebar-accent/50'
 
 /**
- * `size-6` — a step above the mark's `size-5`, and well above the destinations' `size-4` glyphs.
+ * `size-7` — well above the mark's `size-5` and the destinations' `size-4` glyphs.
  *
  * It was drawn at the mark's size first, on the argument that the two header rows are a pair and a
- * person's badge larger than the application's own mark inverts the corner's hierarchy. On screen
- * that reads as timid rather than as balanced: the initials are the thing you actually look for up
- * there, and two letters need the room to be legible at a glance. The square/round distinction is
- * what separates the app from the person, and it does that at any size.
+ * person's badge larger than the application's own mark inverts the corner's hierarchy. That was
+ * wrong on screen twice over: the initials are the thing you actually look for up there, and two
+ * letters need room to be legible at a glance. **The square/round distinction is what separates the
+ * app from the person, and it does that at any size** — which is what makes the badge free to be
+ * the larger of the two.
  */
 const CIRCLE =
-  'flex size-6 shrink-0 items-center justify-center rounded-full text-[0.625rem] font-semibold'
+  'flex size-7 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-semibold'
 
 const ADD_YOUR_NAME = 'Add your name'
 
@@ -104,10 +105,10 @@ export function AppSidebar({ onEditName }: { onEditName: () => void }) {
             are looking at. mission.md principle 4: the sidebar holds one identity, and it is the
             only thing in here that is neither a control nor a note.
 
-            An earlier draft put this in a SidebarFooter, on the strength of the convention that
-            every sidebar-shaped app puts a person at the bottom. That is not reason enough to take
-            a slot tech-stack.md promised *Dark mode*, so the bottom of the sidebar is left exactly
-            as it was found. */}
+            An earlier draft put this at the bottom of the sidebar, on the strength of the
+            convention that every sidebar-shaped app puts a person there. That is not reason enough
+            to take a slot tech-stack.md promised *Dark mode*, so the bottom of the sidebar is left
+            exactly as it was found — and Gate 1 greps this file to keep it that way. */}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -129,7 +130,7 @@ export function AppSidebar({ onEditName }: { onEditName: () => void }) {
                     a square is the paper this app is made of, a circle is a person. Softening one
                     toward the other to tidy the corner is what would turn two kinds of thing into
                     two logos. */}
-                {name === '' ? <Plus className="size-3" /> : initials}
+                {name === '' ? <Plus className="size-3.5" /> : initials}
               </span>
               <span className="truncate">{name === '' ? ADD_YOUR_NAME : name}</span>
             </SidebarMenuButton>
