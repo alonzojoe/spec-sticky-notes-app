@@ -29,13 +29,15 @@ export function AppShell() {
    * The one question the app asks, asked once.
    *
    * Initialised from the store on the first render rather than in an effect — `useLocalStorage`
-   * reads synchronously by default, so a returning user never sees this open for a frame. And it is
-   * `useState`, not a derivation: dismissing sets it false and **nothing sets it true again** on a
-   * later render or a later load. Being asked once is the difference between a question and a nag;
-   * after that the sidebar row is the only thing that still asks.
+   * reads synchronously by default, so a returning user never sees this open for a frame.
+   *
+   * From **`asked`**, not from the name. Declining is an answer and is stored as one, so a person
+   * who skipped is not asked again on the next load — the difference between a question and a nag.
+   * After that the sidebar row is the only thing that still asks, in place, where it can be ignored
+   * forever.
    */
-  const { name } = useUser()
-  const [asking, setAsking] = useState(name === '')
+  const { asked } = useUser()
+  const [asking, setAsking] = useState(!asked)
 
   const navigate = useNavigate()
 

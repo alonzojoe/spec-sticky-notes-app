@@ -63,9 +63,17 @@ const DESTINATION =
  */
 const IDENTITY = 'transition-colors duration-(--duration-hover) ease-out hover:bg-sidebar-accent/50'
 
-/** `size-6` against the destinations' `size-4` glyphs: a person is not an icon. */
+/**
+ * `size-6` — a step above the mark's `size-5`, and well above the destinations' `size-4` glyphs.
+ *
+ * It was drawn at the mark's size first, on the argument that the two header rows are a pair and a
+ * person's badge larger than the application's own mark inverts the corner's hierarchy. On screen
+ * that reads as timid rather than as balanced: the initials are the thing you actually look for up
+ * there, and two letters need the room to be legible at a glance. The square/round distinction is
+ * what separates the app from the person, and it does that at any size.
+ */
 const CIRCLE =
-  'flex size-6 shrink-0 items-center justify-center rounded-full text-[0.625rem] font-medium'
+  'flex size-6 shrink-0 items-center justify-center rounded-full text-[0.625rem] font-semibold'
 
 const ADD_YOUR_NAME = 'Add your name'
 
