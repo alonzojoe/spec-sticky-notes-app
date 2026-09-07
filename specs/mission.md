@@ -7,7 +7,8 @@ arrange with your hands — not rows in a list. **Where** a note sits is part of
 means, so the board never rearranges itself behind your back.
 
 Built for one user (me). No accounts, no sync, no collaboration, no server. Everything
-lives in this browser.
+lives in this browser. The app asks your name once and draws it in the sidebar, which is
+how it says *me* — not how it works out *which* user.
 
 ## The one-sentence test
 
@@ -30,7 +31,9 @@ the board rearrange itself, it is wrong regardless of how good it looks.
 3. **Persistent by default.** There is no Save button. State is written as it changes and
    restored exactly on reload — position, stacking, colors, and all.
 4. **Quiet chrome.** The interface is the notes. Global controls live in the sidebar and
-   the toolbar above it, and never on the board surface itself; a card carries **two** per-note
+   the toolbar above it, and never on the board surface itself. The sidebar also holds **one
+   identity** — your initials and your name, under the mark — which is neither a control nor
+   a note, and is the only thing there that is neither. A card carries **two** per-note
    controls — pin and delete — revealed on the note you're touching, not on all of them at once.
    Everything else you can do to a note happens in the note, which is one click away. **A control
    may stay visible when it is also *state*:** a pinned note draws its pin without a hover, because
@@ -87,7 +90,10 @@ These are in the constitution. They ship.
 Named here so they don't creep in later. Each would need a deliberate amendment to this
 document.
 
-- Accounts, auth, multi-user, sharing, real-time collaboration
+- Accounts, auth, multi-user, sharing, real-time collaboration. **A display name is not an
+  account:** one name, typed into this browser and drawn in the sidebar. No password, no
+  server, no second user, and nothing in the board is keyed to it — the name can be changed
+  or deleted at any moment without a single note moving.
 - Any backend, database, or network request — the app must work fully offline
 - Multiple boards / workspaces / folders (one board, one user)
 - Rich-text WYSIWYG editing (markdown source is the format; no contenteditable engine)
