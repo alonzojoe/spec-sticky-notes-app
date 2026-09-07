@@ -25,7 +25,8 @@ import { sectionAt, SECTIONS } from '@/lib'
 //
 // Slots later phases fill, named here so it grows by plan rather than by improvisation:
 //   *Tags* — the tag list, as a SidebarGroup below the nav group (search became a ⌘K palette
-//            in the toolbar in P8, so no field lands here)
+//            in the toolbar in P8, so no field lands here). **A group, not destinations**: the
+//            nav stays at three rows, and a tag is not a place you go — see roadmap.md § Tags.
 //   *Dark mode* — the theme toggle, in a SidebarFooter — still unclaimed, and P13 deliberately
 //                 left it that way rather than putting the identity there
 // Nothing is rendered for them now. A control that cannot be used should not be drawn.
