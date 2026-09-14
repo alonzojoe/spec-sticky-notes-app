@@ -87,8 +87,15 @@ Empty. TanStack Form is heavily generic and `any` is the obvious way out of a ty
 `tech-stack.md` forbids it, and a form library is exactly where it would first appear.
 
 **Dependencies.** `npm ls @tanstack/react-form` resolves; `package.json` gains **one** runtime
-dependency and the lockfile gains **three** packages — `@tanstack/react-form`,
-`@tanstack/form-core`, `@tanstack/react-store` — and no more. **No dev dependency, no schema
+dependency and the lockfile gains **six** packages — `@tanstack/react-form`, `@tanstack/form-core`,
+`@tanstack/store`, `@tanstack/react-store`, `@tanstack/pacer-lite` and
+`@tanstack/devtools-event-client` — and no more.
+
+**Six, where the phase was specified at three.** Corrected in **D1** rather than quietly accepted:
+the package count is the case against this phase, so it is the one number that has to be right.
+`pacer-lite` is TanStack's debouncing primitive and is what makes a field's `onChangeDebounceMs`
+work — which is the note view's autosave, handed to a library rather than hand-rolled a second
+time. **No dev dependency, no schema
 library, no `shadcn add`** (**D1**, **D6**). `EXEMPT` is untouched: this phase adds no file and
 renames none.
 

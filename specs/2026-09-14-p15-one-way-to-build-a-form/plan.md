@@ -26,7 +26,8 @@ it.
   `note_fields.tsx`, `date_field.tsx` and `paper_radiogroup.tsx` are all `value`/`onChange` and none
   of them stores anything. That is what makes four separate commits possible.
 - **`@tanstack/react-router` is already a dependency**, so the TanStack family's cadence is one this
-  project has accepted.
+  project has accepted. It also already brings `@tanstack/store` transitively, which is part of why
+  the install is smaller than six new *names* suggests.
 - **`components/ui/**` is untouched by this phase.** No generated component holds form state.
 
 *Verified against the published types of `@tanstack/form-core@1.33.5` before this plan was written
@@ -85,8 +86,11 @@ it.
 
 2.1 `npm install @tanstack/react-form`. Nothing else. No schema library (**D6**), no `shadcn add`.
 
-2.2 Confirm three packages arrive and no more: `@tanstack/react-form`, `@tanstack/form-core`,
-    `@tanstack/react-store`.
+2.2 Record what actually arrives. **Specified as three and it is six** — `@tanstack/react-form`,
+    `@tanstack/form-core`, `@tanstack/store`, `@tanstack/react-store`, `@tanstack/pacer-lite` and
+    `@tanstack/devtools-event-client`. The correction goes into **D1** in the same commit, because
+    the package count *is* the argument against this phase and it may not be the one number nobody
+    checked.
 
 2.3 Gate. **Nothing imports it yet**, so the suite must be untouched at 29 / 790 — an install that
     moves a test number has done something a package manager should not do.

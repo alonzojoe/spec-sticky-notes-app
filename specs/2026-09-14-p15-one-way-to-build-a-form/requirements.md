@@ -93,11 +93,21 @@ the sixth form copies.
 field**, and a form library for a single text input is overkill measured on its own. It earns its
 place on the fourth — the note view, where it deletes a DOM query and a pair of manually cancelled
 debounces — and on there being exactly one answer to how the fifth form gets written. If that is not
-worth 3 packages, this phase is the one to reject.
+worth six packages, this phase is the one to reject.
 
-**Three packages, one direct dependency.** `@tanstack/react-form` pulls `@tanstack/form-core` and
-`@tanstack/react-store`. `@tanstack/react-router` is already here, so the family and its release
-cadence are ones this project has already accepted.
+**Six packages, one direct dependency — and this was written as three.** The spec said
+`@tanstack/react-form` pulls `@tanstack/form-core` and `@tanstack/react-store`. Installing it pulls
+those plus `@tanstack/store`, `@tanstack/pacer-lite` and `@tanstack/devtools-event-client`. Corrected
+here rather than left to be discovered in review, because **the number is the counter-argument**: the
+case against this phase is cost-for-benefit, and the cost is twice what the case was argued against.
+
+`pacer-lite` is the one worth knowing about rather than merely counting: it is TanStack's
+debouncing primitive, and it is what makes a field's `onChangeDebounceMs` work — so the note view's
+autosave is not being hand-rolled a second time, it is being handed to a library whose job that is.
+`devtools-event-client` is a devtools transport that nothing in this app talks to.
+
+`@tanstack/react-router` is already here, so the family and its release cadence are ones this
+project has already accepted.
 
 **Nothing else is installed.** No schema library (**D6**), no `shadcn add`.
 
@@ -340,6 +350,7 @@ create dialog has five fields and that is already the most this app should ask f
 this phase adds a field, and the next phase that wants to should have to argue for it on the
 mission's terms rather than on how easy it now is.**
 
-**Three packages for four forms, three of which have one field.** Stated as the counter-argument in
-**D1** rather than buried here. It is the reason this phase could reasonably be rejected, and the
+**Six packages for four forms, three of which have one field** — and the phase was specified
+believing it was three. Stated as the counter-argument in **D1** rather than buried here, with the
+correction kept visible. It is the reason this phase could reasonably be rejected, and the
 reason the amendment is deliverable 1.
