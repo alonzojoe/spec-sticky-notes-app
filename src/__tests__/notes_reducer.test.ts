@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { notesReducer } from '@/context/notes_reducer'
+import { hydrate } from '@/lib'
 import { EMPTY_BOARD, type BoardState, type Note, type NoteSeed } from '@/types/note'
 
 const seed = (over: Partial<NoteSeed> = {}): NoteSeed => ({
@@ -427,5 +428,53 @@ describe('T49 · notesReducer · the title and the link', () => {
 
     expect(titled.notes.map((n) => n.order)).toEqual(before)
     expect(linked.notes.map((n) => n.order)).toEqual(before)
+  })
+})
+
+// T82 — P14 D5. The one action that removes every note at once.
+describe('T82 · reset', () => {
+  it('empties a board of notes', () => {
+    const state = frozen(
+      board([
+        note({ id: 'a', order: 2 }),
+        note({ id: 'b', order: 1, pinned: true }),
+        note({ id: 'c', order: 3 }),
+      ]),
+    )
+
+    expect(notesReducer(state, { type: 'reset' })).toEqual(EMPTY_BOARD)
+  })
+
+  /**
+   * The same constant `hydrate` returns for a value it refuses, so a reset board and a first-visit
+   * board are one shape rather than two that happen to look alike.
+   */
+  it('produces exactly what an unreadable stored board produces', () => {
+    const state = frozen(board([note({ id: 'a' })]))
+
+    expect(notesReducer(state, { type: 'reset' })).toEqual(hydrate('not a board'))
+  })
+
+  it('is a no-op on a board that is already empty', () => {
+    expect(notesReducer(frozen(EMPTY_BOARD), { type: 'reset' })).toEqual(EMPTY_BOARD)
+  })
+
+  // The frozen state is the assertion: a reset that spliced the array in place would throw here.
+  it('does not mutate the board it was handed', () => {
+    const notes = [note({ id: 'a' }), note({ id: 'b' })]
+    const state = frozen(board(notes))
+
+    notesReducer(state, { type: 'reset' })
+
+    expect(state.notes).toHaveLength(2)
+    expect(notes).toHaveLength(2)
+  })
+
+  // No clock, no ids, nothing generated: the action carries no `at` because there is nothing left
+  // to stamp.
+  it('is deterministic', () => {
+    const state = frozen(board([note({ id: 'a' })]))
+
+    expect(notesReducer(state, { type: 'reset' })).toEqual(notesReducer(state, { type: 'reset' }))
   })
 })

@@ -42,7 +42,11 @@ describe('the amendments to shadcn sidebar.tsx', () => {
 // this list rather than the list being weakened. `dialog` was never on it — it arrived in P3
 // already in use. P7 woke `input` the same way: the title and link fields in note_fields.tsx
 // are two real uses, shared by both dialogs.
-const DORMANT = ['tooltip', 'sheet', 'skeleton', 'separator']
+//
+// P14 woke `separator`, on the same terms. The settings page puts one line between the things you
+// can change and the one thing you cannot undo, which is the rule a separator exists for: it marks
+// where the safe part of a page ends. One use, and a real one.
+const DORMANT = ['tooltip', 'sheet', 'skeleton']
 
 const sourceFiles = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((item) => {

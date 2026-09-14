@@ -56,7 +56,8 @@ const seedBoard = (notes: Note[] = [note()]) =>
   window.localStorage.setItem(BOARD_KEY, JSON.stringify({ version: 1, notes }))
 
 const storedUser = () => window.localStorage.getItem(USER_KEY)
-const identity = () => screen.getByRole('button', { name: /Joe Alonzo|Add your name/ })
+// A link since P14: the way to change your name is a place now, not a dialog.
+const identity = () => screen.getByRole('link', { name: /Joe Alonzo|Add your name/ })
 
 // T79 — the intro, and the fact that it takes no for an answer.
 describe('T79 · the app asks once', () => {
@@ -169,23 +170,6 @@ describe('T79 · the app asks once', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  // The rename is not the intro and is not forced: there is a name to fall back to.
-  it('lets the rename be dismissed', async () => {
-    const user = userEvent.setup()
-    seedUser()
-    seedBoard()
-    render(<App />)
-    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
-    await user.click(identity())
-    const rename = await screen.findByRole('dialog')
-
-    expect(within(rename).getByRole('button', { name: 'Cancel' })).toBeDefined()
-    await user.keyboard('{Escape}')
-
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    expect(JSON.parse(storedUser() ?? '{}')).toEqual({ name: 'Joe Alonzo' })
-  })
-
   it('stores the submitted name, trimmed, and nowhere else', async () => {
     const user = userEvent.setup()
     seedBoard()
@@ -251,7 +235,7 @@ describe('T79 · the app asks once', () => {
    * that blamed the feature. The claim is now the one that is true and the one that was always
    * meant: **nothing in the board changes.**
    */
-  it('leaves every note untouched through naming and renaming', async () => {
+  it('leaves every note untouched through naming', async () => {
     const user = userEvent.setup()
     seedBoard([note({ id: 'a', order: 2 }), note({ id: 'b', order: 1, pinned: true })])
     const board = () => JSON.parse(window.localStorage.getItem(BOARD_KEY) ?? '{}')
@@ -263,15 +247,6 @@ describe('T79 · the app asks once', () => {
     await user.keyboard('{Enter}')
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(board()).toEqual(before)
-
-    await user.click(identity())
-    const rename = await screen.findByRole('dialog')
-    await user.clear(within(rename).getByLabelText('Name'))
-    await user.type(within(rename).getByLabelText('Name'), 'Jo Alonzo')
-    await user.keyboard('{Enter}')
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-
-    expect(board()).toEqual(before)
     // Belt and braces on the fields a section, a sort or a stray dispatch would disturb.
     expect(board().notes.map((n: Note) => [n.id, n.order, n.pinned, n.updatedAt])).toEqual([
       ['a', 2, false, 1],
@@ -279,20 +254,29 @@ describe('T79 · the app asks once', () => {
     ])
   })
 
-  // Opened from the sidebar it is not an intro. Same component, different copy, and it says so.
-  it('is a rename rather than a welcome once a name exists', async () => {
-    const user = userEvent.setup()
+  /**
+   * **There is no rename in this dialog any more.** P13 had one component doing both jobs and
+   * switching its copy on whether a name existed; P14 moved the rename onto the settings page, so
+   * the only thing this can ever say is the welcome.
+   *
+   * The sidebar row still has to offer a way to change it, and what it offers is a link. Asserted
+   * here rather than in `settings.test.tsx` because the claim is about this dialog: clicking the
+   * row does not reopen it.
+   */
+  it('never reopens as a rename — the row points at the settings page', async () => {
     seedUser()
     seedBoard()
     render(<App />)
     await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
 
-    await user.click(identity())
-
-    const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).getByText('Your name')).toBeDefined()
-    expect(within(dialog).queryByText('Make it yours')).toBeNull()
-    expect(within(dialog).getByLabelText('Name')).toHaveProperty('value', 'Joe Alonzo')
+    // An anchor with an href, not a button with a handler — which is the whole claim. **Not
+    // clicked here:** this file shares the module-level router, and a router matches its first
+    // location once, so a navigation would leave every test after this one on `/settings` with no
+    // board to query. `settings.test.tsx` navigates, over its own memory history.
+    expect(identity().tagName).toBe('A')
+    expect(identity().getAttribute('href')).toBe('/settings')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByText('Make it yours')).toBeNull()
   })
 })
 
@@ -306,30 +290,37 @@ describe('T80 · the identity in the sidebar', () => {
     render(<App />)
     await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
 
-    const row = within(header()).getByRole('button', { name: 'Joe Alonzo' })
+    const row = within(header()).getByRole('link', { name: 'Joe Alonzo' })
     expect(row.textContent).toContain('JA')
     expect(row.textContent).toContain('Joe Alonzo')
   })
 
   /**
    * **Position, not mere presence.** Which end of the sidebar this sits at is the decision D3
-   * reversed — the footer was the first draft and it belongs to *Dark mode* — so the test asserts
-   * the header, and that the bottom of the sidebar stayed empty.
+   * reversed — the footer was the first draft, and at the time it belonged to *Dark mode*.
+   *
+   * **P14 filled the footer**, with a Settings row rather than a theme toggle, and amended the
+   * reservation rather than breaking it (that phase's D2). So the assertion that the bottom of the
+   * sidebar is empty is gone, and what replaces it is the claim that actually matters here and
+   * always did: the identity is in the header, and it is not the thing in the footer.
    */
-  it('sits in the header, under the mark, and leaves the footer alone', async () => {
+  it('sits in the header, under the mark, and is not the row in the footer', async () => {
     seedUser()
     seedBoard()
     render(<App />)
     await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
 
-    expect(within(header()).getByRole('button', { name: 'Joe Alonzo' })).toBeDefined()
+    expect(within(header()).getByRole('link', { name: 'Joe Alonzo' })).toBeDefined()
     expect(header().textContent).toContain('Sticky')
     // The mark's row is written before the identity's, which is what "under the mark" means in a
     // document that has no layout to measure.
     expect(header().textContent?.indexOf('Sticky')).toBeLessThan(
       header().textContent?.indexOf('Joe Alonzo') ?? -1,
     )
-    expect(document.querySelector('[data-sidebar="footer"]')).toBeNull()
+    const footer = document.querySelector('[data-sidebar="footer"]')
+    expect(footer).not.toBeNull()
+    expect(footer?.textContent).not.toContain('Joe Alonzo')
+    expect(footer?.textContent).not.toContain('JA')
   })
 
   /**
@@ -356,7 +347,7 @@ describe('T80 · the identity in the sidebar', () => {
     render(<App />)
     await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
 
-    const row = within(header()).getByRole('button', { name: 'Joe Alonzo' })
+    const row = within(header()).getByRole('link', { name: 'Joe Alonzo' })
     const circle = [...row.querySelectorAll('span')].find((span) => span.textContent === 'JA')
     expect(circle?.getAttribute('aria-hidden')).toBe('true')
   })
@@ -379,7 +370,7 @@ describe('T80 · the identity in the sidebar', () => {
     render(<App />)
     await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
 
-    const row = within(header()).getByRole('button', { name: 'Joe Alonzo' })
+    const row = within(header()).getByRole('link', { name: 'Joe Alonzo' })
     expect(row.className).toContain('group-data-[collapsible=icon]:p-0!')
     expect(row.className).toContain('group-data-[collapsible=icon]:justify-center')
 
@@ -389,7 +380,7 @@ describe('T80 · the identity in the sidebar', () => {
     expect(label?.className).toContain('group-data-[collapsible=icon]:hidden')
   })
 
-  it('is a button in the tab order, before the destinations', async () => {
+  it('is a link in the tab order, before the destinations', async () => {
     seedUser()
     seedBoard()
     render(<App />)
@@ -398,35 +389,14 @@ describe('T80 · the identity in the sidebar', () => {
     const focusable = [
       ...document.querySelectorAll('[data-slot="sidebar"] button, [data-slot="sidebar"] a'),
     ]
-    const row = within(header()).getByRole('button', { name: 'Joe Alonzo' })
+    const row = within(header()).getByRole('link', { name: 'Joe Alonzo' })
     const notes = screen.getByRole('link', { name: /Notes/ })
     expect(focusable.indexOf(row)).toBeGreaterThanOrEqual(0)
     expect(focusable.indexOf(row)).toBeLessThan(focusable.indexOf(notes))
   })
 
-  /**
-   * The row updates without a reload. Two `useLocalStorage` callers on one key — the dialog writes,
-   * this reads — kept in step by the `local-storage` event the library dispatches. Verified in
-   * groundwork; asserted here so a library change that drops it fails loudly rather than showing a
-   * stale name until someone refreshes.
-   */
-  it('follows the name without a reload', async () => {
-    const user = userEvent.setup()
-    seedUser()
-    seedBoard()
-    render(<App />)
-    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
-
-    await user.click(within(header()).getByRole('button', { name: 'Joe Alonzo' }))
-    const dialog = await screen.findByRole('dialog')
-    await user.clear(within(dialog).getByLabelText('Name'))
-    await user.type(within(dialog).getByLabelText('Name'), 'Ada Lovelace')
-    await user.keyboard('{Enter}')
-
-    await waitFor(() =>
-      expect(within(header()).getByRole('button', { name: 'Ada Lovelace' }).textContent).toContain(
-        'AL',
-      ),
-    )
-  })
+  // **The row following a rename without a reload moved to `settings.test.tsx` with the rename
+  // itself** (T83). The claim it pins — two `useLocalStorage` callers on one key kept in step by
+  // the library's own `local-storage` event — is the same claim; it is just asserted from the page
+  // that now does the writing.
 })

@@ -35,9 +35,12 @@ the board rearrange itself, it is wrong regardless of how good it looks.
    identity** — your initials and your name, under the mark — which is neither a control nor
    a note, and is the only thing there that is neither. A card carries **two** per-note
    controls — pin and delete — revealed on the note you're touching, not on all of them at once.
-   Everything else you can do to a note happens in the note, which is one click away. **A control
-   may stay visible when it is also *state*:** a pinned note draws its pin without a hover, because
-   otherwise nothing on the board explains why it sorts first. The sidebar can be collapsed to a
+   Everything else you can do to a note happens in the note, which is one click away. **Chrome
+   never sits *on* the board, and a route that *replaces* the board is not sitting on it** — the
+   settings page renders where the board would be, with the board not rendered at all, which is
+   what makes it a place rather than a panel over one (P14). **A control may stay visible when it
+   is also *state*:** a pinned note draws its pin without a hover, because otherwise nothing on the
+   board explains why it sorts first. The sidebar can be collapsed to a
    rail, and the board stays fully usable with it collapsed.
 5. **Keyboard-reachable.** Anything the mouse can do — including moving a note — has a
    keyboard path. Beauty that excludes the keyboard isn't finished.
