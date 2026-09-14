@@ -27,10 +27,24 @@ export default defineConfig({
     // Splitting the dependencies out is the fix rather than raising the limit: React, Radix and
     // the router change on an npm install, and our own code changes every commit, so a returning
     // visitor re-downloads the half that actually moved.
+    //
+    // P15 added a form library and pushed `vendor` itself past 500kB, so the same argument applies
+    // one level deeper — and it is the same fix, not a new one. The limit is still not raised.
+    // These four move on different schedules: React almost never, Radix when a component is added,
+    // TanStack on its own fast cadence, and everything else rarely. One npm install no longer
+    // invalidates all of it.
+    //
+    // Ordered: the first matching group wins, so `vendor` is last and catches what the three
+    // named ones do not.
     rolldownOptions: {
       output: {
         codeSplitting: {
-          groups: [{ name: 'vendor', test: /node_modules/ }],
+          groups: [
+            { name: 'react', test: /node_modules\/(react|react-dom|scheduler)\// },
+            { name: 'radix', test: /node_modules\/(radix-ui|@radix-ui)\// },
+            { name: 'tanstack', test: /node_modules\/@tanstack\// },
+            { name: 'vendor', test: /node_modules/ },
+          ],
         },
       },
     },

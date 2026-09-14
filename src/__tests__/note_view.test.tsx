@@ -335,3 +335,96 @@ describe('T53 · the note view carries the title and the link', () => {
     expect(screen.queryByRole('button', { name: /save/i })).toBeNull()
   })
 })
+
+/**
+ * T90 — P15. The autosave is the field's own business now, and it has to behave exactly as the
+ * hand-rolled pair did.
+ *
+ * **Asserted through the store, never through a DOM query.** The DOM query is the thing this phase
+ * deleted — `closeFromDOM` read `[data-slot="note-body"]` and `#note-view-title` by selector — so a
+ * test that reached for it would be pinning the implementation that went away.
+ */
+describe('T90 · the note view autosaves on its own debounce', () => {
+  it('writes once for a burst of typing, not once per keystroke', () => {
+    seed([note({ id: 'a', body: 'start' })])
+    render(<App />)
+    fireEvent.click(opener())
+
+    const body = screen.getByRole('textbox', { name: 'Note text' })
+    fireEvent.change(body, { target: { value: 'st' } })
+    fireEvent.change(body, { target: { value: 'sto' } })
+    fireEvent.change(body, { target: { value: 'stop' } })
+
+    // Nothing yet: the debounce has not elapsed.
+    expect(readNotes()[0].body).toBe('start')
+
+    // Twice, because two debounces chain and nothing dismissed the dialog to short-circuit the
+    // first: the field coalesces keystrokes into a dispatch at AUTOSAVE_MS, and only then does the
+    // provider start its own 300ms before writing. The tests that close the dialog need one flush
+    // because closing dispatches synchronously.
+    flush()
+    flush()
+
+    expect(readNotes()[0].body).toBe('stop')
+    // One write, so one timestamp bump — not three.
+    expect(readNotes()[0].updatedAt).toBeGreaterThan(1)
+  })
+
+  /**
+   * **The flush on close**, which is the property `closeFromDOM` existed to provide and
+   * `form.state.values` provides now. Typing and leaving before the debounce elapses must not lose
+   * the last keystroke — and this is the single most likely thing to have broken silently.
+   */
+  it.each([
+    ['Done', () => fireEvent.click(screen.getByRole('button', { name: 'Done' }))],
+    ['Escape', () => fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })],
+  ])('keeps the last keystroke when closed with %s', (_name, dismiss) => {
+    seed([note({ id: 'a', body: 'start' })])
+    render(<App />)
+    fireEvent.click(opener())
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Note text' }), {
+      target: { value: 'the last thing typed' },
+    })
+    // Closed before the debounce could have run.
+    act(() => {
+      dismiss()
+    })
+    flush()
+
+    expect(readNotes()[0].body).toBe('the last thing typed')
+  })
+
+  it('does the same for the title, on its own field and its own listener', () => {
+    seed([note({ id: 'a', title: 'Standup' })])
+    render(<App />)
+    fireEvent.click(opener())
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Retro' } })
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    })
+    flush()
+
+    expect(readNotes()[0].title).toBe('Retro')
+  })
+
+  /**
+   * The link is the one field whose raw draft and committed value differ: it keeps what you typed
+   * and commits what `normalizeLink` makes of it. Unchanged behaviour, asserted here because the
+   * draft moved from a `useState` in the dialog into the form.
+   */
+  it('commits the link through normalizeLink on close', () => {
+    seed([note({ id: 'a', link: '' })])
+    render(<App />)
+    fireEvent.click(opener())
+
+    fireEvent.change(screen.getByLabelText('Link'), { target: { value: 'meet.google.com/abc' } })
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    })
+    flush()
+
+    expect(readNotes()[0].link).toBe('https://meet.google.com/abc')
+  })
+})

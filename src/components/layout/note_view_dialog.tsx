@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useDebounceCallback } from 'usehooks-ts'
+import { useForm } from '@tanstack/react-form'
 
 import { DateField } from '@/components/layout/date_field'
 import { NoteControls } from '@/components/layout/note_controls'
@@ -60,18 +59,26 @@ function NoteView({
   const dispatch = useNotesDispatch()
   const { requestDelete } = useDeleteNote()
 
-  // The link's raw draft lives here rather than in the field, so closing the dialog can still
-  // reach it — a dismissal does not reliably blur the input first.
-  const [link, setLink] = useState(note.link)
-
-  const saveBody = useDebounceCallback(
-    (body: string) => dispatch({ type: 'edit_body', id: note.id, body, at: Date.now() }),
-    AUTOSAVE_MS,
-  )
-  const saveTitle = useDebounceCallback(
-    (title: string) => dispatch({ type: 'edit_title', id: note.id, title, at: Date.now() }),
-    AUTOSAVE_MS,
-  )
+  /**
+   * P15. Three fields, each carrying its own autosave, and **the DOM reads are gone.**
+   *
+   * What this replaced was a `useDebounceCallback` pair plus a `closeFromDOM` that queried
+   * `[data-slot="note-body"]` and `#note-view-title` by CSS selector for values the program
+   * already had — with a fallback on each, because a selector can stop matching. That existed for
+   * a real reason: *read from the DOM at dismissal rather than mirrored into state on every
+   * keystroke, which is what keeps typing in a note from re-rendering the board behind it.*
+   *
+   * The reason is answered rather than ignored. TanStack Form's subscriptions are **per field**, so
+   * a keystroke re-renders that field's subtree and neither this dialog nor the board. The board
+   * was already protected by the debounce, which is unchanged at `AUTOSAVE_MS`.
+   *
+   * Closing now reads `form.state.values`, which is current by construction — so *the last
+   * keystroke before Escape is never the one that is lost* stops depending on a selector finding a
+   * node.
+   */
+  const form = useForm({
+    defaultValues: { title: note.title, body: note.body, link: note.link },
+  })
 
   const commitLink = (value: string) =>
     dispatch({ type: 'set_link', id: note.id, link: value, at: Date.now() })
@@ -89,28 +96,27 @@ function NoteView({
    * and P6 established those change with the view open.
    */
   const askToDelete = () => {
-    saveBody.cancel()
-    saveTitle.cancel()
+    // **No autosave to cancel any more, and none needed.** The old pair was cancelled here so a
+    // body was not written to a note about to be removed. A field's debounced listener has no
+    // public cancel — so a pending write can land after the delete, and it lands nowhere:
+    // `edit_body` and `edit_title` map over `state.notes` and touch only the matching id, so a
+    // write aimed at a note that no longer exists returns a board with the same contents.
+    //
+    // That is the reducer's existing behaviour rather than something P15 added, which is exactly
+    // why T91 pins it — the property is load-bearing now, and a future reducer change that made a
+    // stray write *create* something would be a bug with nothing between it and the board.
     requestDelete(note)
   }
 
-  const close = (body: string, title: string) => {
-    // Cancel the pending debounces and write now, so the last keystroke before closing is never
-    // the one that is lost.
-    saveBody.cancel()
-    saveTitle.cancel()
+  const close = () => {
+    // Write now, so the last keystroke before closing is never the one that is lost. A pending
+    // debounced listener may still fire afterwards with the same value, which is harmless: it
+    // dispatches an identical body to the same note.
+    const { title, body, link } = form.state.values
     dispatch({ type: 'edit_body', id: note.id, body, at: Date.now() })
     dispatch({ type: 'edit_title', id: note.id, title, at: Date.now() })
     commitLink(normalizeLink(link))
     onOpenChange(false)
-  }
-
-  // Both are read from the DOM at dismissal rather than mirrored into state on every keystroke,
-  // which is what keeps typing in a note from re-rendering the board behind it.
-  const closeFromDOM = (root: Element | Document) => {
-    const body = root.querySelector<HTMLTextAreaElement>('[data-slot="note-body"]')
-    const title = root.querySelector<HTMLInputElement>('#note-view-title')
-    close(body?.value ?? note.body, title?.value ?? note.title)
   }
 
   return (
@@ -121,7 +127,7 @@ function NoteView({
         if (next) return
         // Escape and the close control land here rather than on the Done button, so every
         // dismissal saves through the same path.
-        closeFromDOM(document)
+        close()
       }}
     >
       <DialogContent>
@@ -144,33 +150,70 @@ function NoteView({
             }
           />
 
-          <LocalTitle
-            defaultValue={note.title}
-            onChange={saveTitle}
-            id="note-view-title"
-          />
+          {/* The autosave is the field's own business now: a listener per field, debounced by the
+              library rather than by a hand-rolled pair this file had to remember to cancel in
+              three places. `AUTOSAVE_MS` is unchanged — the debounce is behaviour, and P15
+              changes none. */}
+          <form.Field
+            name="title"
+            listeners={{
+              onChange: ({ value }) =>
+                dispatch({ type: 'edit_title', id: note.id, title: value, at: Date.now() }),
+              onChangeDebounceMs: AUTOSAVE_MS,
+            }}
+          >
+            {(field) => (
+              <TitleField
+                id="note-view-title"
+                value={field.state.value}
+                onChange={field.handleChange}
+              />
+            )}
+          </form.Field>
 
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="note-view-body">Note</FieldLabel>
-            <textarea
-              id="note-view-body"
-              autoFocus
-              data-slot="note-body"
-              defaultValue={note.body}
-              aria-label="Note text"
-              rows={10}
-              placeholder="Write the note…"
-              className="field-sizing-content max-h-96 min-h-40 w-full resize-none rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-ink outline-none placeholder:text-ink-soft/60 focus-visible:ring-2 focus-visible:ring-ring"
-              onChange={(event) => saveBody(event.target.value)}
-            />
-          </div>
+          <form.Field
+            name="body"
+            listeners={{
+              onChange: ({ value }) =>
+                dispatch({ type: 'edit_body', id: note.id, body: value, at: Date.now() }),
+              onChangeDebounceMs: AUTOSAVE_MS,
+            }}
+          >
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <FieldLabel htmlFor="note-view-body">Note</FieldLabel>
+                <textarea
+                  id="note-view-body"
+                  autoFocus
+                  // Kept as a styling and test hook. **Nothing reads a value through it any more**
+                  // — that was `closeFromDOM`, and it is gone.
+                  data-slot="note-body"
+                  value={field.state.value}
+                  onChange={(event) => field.handleChange(event.target.value)}
+                  aria-label="Note text"
+                  rows={10}
+                  placeholder="Write the note…"
+                  className="field-sizing-content max-h-96 min-h-40 w-full resize-none rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-ink outline-none placeholder:text-ink-soft/60 focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+            )}
+          </form.Field>
 
-          <LinkField
-            value={link}
-            onChange={setLink}
-            onCommit={commitLink}
-            id="note-view-link"
-          />
+          {/* The link keeps its raw draft while you type and commits what `normalizeLink` makes of
+              it on blur — `note_fields.tsx` owns that, unchanged. The field holds the draft now
+              instead of a `useState` in this file, which is the same arrangement for the same
+              reason: closing must be able to reach it, because a dismissal does not reliably blur
+              the input first. */}
+          <form.Field name="link">
+            {(field) => (
+              <LinkField
+                value={field.state.value}
+                onChange={field.handleChange}
+                onCommit={commitLink}
+                id="note-view-link"
+              />
+            )}
+          </form.Field>
         </div>
 
         {/* Pin and delete on the left, Done pushed right by the layout rather than sitting
@@ -181,10 +224,7 @@ function NoteView({
           <NoteControls note={note} onDelete={askToDelete} />
           <Button
             type="button"
-            onClick={(event) => {
-              const dialog = event.currentTarget.closest('[data-slot="dialog-content"]')
-              closeFromDOM(dialog ?? document)
-            }}
+            onClick={close}
           >
             Done
           </Button>
@@ -193,32 +233,5 @@ function NoteView({
       </Dialog>
 
     </>
-  )
-}
-
-/**
- * The title's keystrokes are held here rather than in the dialog above, so typing a title
- * re-renders one input instead of the whole view. The store still gets the value through the
- * debounced dispatch, and `close()` reads the DOM node for the final flush.
- */
-function LocalTitle({
-  defaultValue,
-  onChange,
-  id,
-}: {
-  defaultValue: string
-  onChange: (title: string) => void
-  id: string
-}) {
-  const [value, setValue] = useState(defaultValue)
-  return (
-    <TitleField
-      id={id}
-      value={value}
-      onChange={(next) => {
-        setValue(next)
-        onChange(next)
-      }}
-    />
   )
 }

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
@@ -367,5 +367,73 @@ describe('T52 · the create dialog carries the title and the link', () => {
 
     expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('')
     expect((screen.getByLabelText('Link') as HTMLInputElement).value).toBe('')
+  })
+})
+
+/**
+ * T88 — P15. The reset is the library's now, and it has to hold on **every** way out.
+ *
+ * `form.reset()` in `close()` replaced a five-line hand-rolled reset that every exit path had to
+ * remember to call, and a `wasOpen` resync that recomputed the date during render. T26 already
+ * covers Cancel; this covers Escape, the title and the link that T26 does not type into, and the
+ * date, which is the one nobody would notice was stale.
+ */
+describe('T88 · the draft resets on every way out', () => {
+  it('clears the title and the link on Escape, not just the body', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await open(user)
+
+    await user.type(screen.getByLabelText('Title'), 'Standup')
+    await user.type(screen.getByLabelText('Link'), 'meet.google.com/abc')
+    await user.type(noteText(), 'never mind')
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+
+    await open(user)
+    expect(screen.getByLabelText('Title')).toHaveProperty('value', '')
+    expect(screen.getByLabelText('Link')).toHaveProperty('value', '')
+    expect(noteText()).toHaveProperty('value', '')
+  })
+
+  it('clears the title and the link on Cancel too', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await open(user)
+
+    await user.type(screen.getByLabelText('Title'), 'Standup')
+    await user.type(screen.getByLabelText('Link'), 'meet.google.com/abc')
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+
+    await open(user)
+    expect(screen.getByLabelText('Title')).toHaveProperty('value', '')
+    expect(screen.getByLabelText('Link')).toHaveProperty('value', '')
+  })
+
+  /**
+   * **A tab left open overnight must not offer yesterday.** That sentence is why the `wasOpen`
+   * resync existed, and `form.reset({ …, date: todayISO() })` is where the rule lives now.
+   *
+   * Asserted by advancing a fake clock across a day boundary between two opens: the date the
+   * second dialog offers is the later one. A reset that reused the mounted default would show the
+   * first date forever, and nothing else in the suite would notice.
+   */
+  it('offers the new date after the clock crosses a day, not the one it mounted with', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date('2026-09-14T12:00:00'))
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<App />)
+
+    await open(user)
+    expect(screen.getByRole('button', { name: 'Note date' }).textContent).toContain('09/14/2026')
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+
+    vi.setSystemTime(new Date('2026-09-15T12:00:00'))
+
+    await open(user)
+    expect(screen.getByRole('button', { name: 'Note date' }).textContent).toContain('09/15/2026')
+    vi.useRealTimers()
   })
 })

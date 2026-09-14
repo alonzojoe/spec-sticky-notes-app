@@ -14,6 +14,7 @@ constitution, not a detail — add it deliberately or not at all.
 | Components | **shadcn/ui** | Copied into `src/components/ui/`, owned and edited by us. |
 | Dates | **`react-day-picker`** | Arrives with shadcn's `calendar` in P6. The first dependency that is not a shadcn primitive — a real component library with its own cadence. If its styling proves hard to keep warm, the fallback is a native `<input type="date">`. |
 | Primitives | **`radix-ui`** | Arrives as shadcn's dependency — the unified package, not per-component `@radix-ui/react-*`. Source of a11y for menus, dialogs, popovers, tooltips. |
+| Forms | **`@tanstack/react-form`** | Arrives in P15. **One way to hold what somebody typed, replacing four.** What it replaced: four hand-rolled field containers, two open-and-reset resyncs driven by `useState`, one hand-rolled dirty check, one dismissal path that read values back out of the DOM by CSS selector, and a `useDebounceCallback` pair whose cancel-on-unmount is broken in the library that ships it. Why nothing already here could do the job: `usehooks-ts` has no form primitive and React has no form state, so the alternative was a fifth hand-rolled container written a fifth way. **Six packages, one direct dependency** — `form-core`, `store`, `react-store`, `pacer-lite` and `devtools-event-client` come with it, and `pacer-lite` is what makes a field's debounced listener work. The TanStack cadence is one this project already accepts through the router. **The counter-argument, kept rather than answered:** three of the four forms have one field, six packages is more than this was scoped at, and a form library for a single text input is overkill measured on its own — it earns its place on the note view, and on there being one answer for the next form. |
 | State | **React Context + `useReducer`** | One board reducer. No external state library. |
 | Routing | **`@tanstack/react-router`** + **`@tanstack/router-plugin`** (dev) | Arrives in P10 for the board's two sections; P11 made the routes **file-based** under `src/app/routes/`, mirroring `unicare-booking`. A file's path is its URL, the plugin writes `src/app/routeTree.gen.ts` (committed, exempted from the naming rule), and `_board` is a pathless layout group holding the shell. Five routes — `/`, `/notes`, `/pinned`, `/linked` (P12) and `/settings` (P14). A note is not a route; the palette and the card still open it into a dialog. **`/settings` is the first route under `_board` that draws no notes** — it replaces the board rather than filtering it, which is why it is not a row in `lib/sections.ts`. |
 | Persistence | **`usehooks-ts`** | `useLocalStorage` for the board, the sidebar's collapse, the user's name and the theme. Three keys today: `sticky-notes:board:v1`, `sticky-notes:sidebar`, `sticky-notes:user` (P13). **Its `useDebounceCallback` does not cancel on unmount** — it builds a second debounced function in an effect and cancels that one — so anything debouncing a write cancels it itself. `notes_context.tsx` does. |
@@ -25,6 +26,14 @@ constitution, not a detail — add it deliberately or not at all.
 
 ## Hard rules
 
+- **Forms are built with `@tanstack/react-form`** (P15). Every place that collects values and
+  commits them goes through it — there is one way, and the next form does not get to invent a
+  fifth. **The shared field components stay form-agnostic**: `note_fields.tsx`, `date_field.tsx` and
+  `paper_radiogroup.tsx` take `value` and `onChange`, import no form library, and are renderable
+  outside a form; the wiring lives at the call site, in a `form.Field` render prop. That second half
+  is the part most likely to be undone by somebody being helpful, so `validation.md` greps for it.
+  A surface that collects nothing is not a form — the search palette filters as you type, has no
+  submit, and stays as it is.
 - **No Zustand, Redux, Jotai, Recoil, MobX, or any other state library.** Board state is
   a `useReducer` behind Context. If that becomes painful, the fix is better reducer
   structure or context splitting — not a new dependency.
@@ -184,10 +193,17 @@ src/
       intro_dialog.tsx   // the intro on a first visit, and nothing else. The rename
                          //   moved onto the settings page in P14              (P13, P14)
       new_note_dialog.tsx // date + colour + textarea; creates the note      (P3)
+                         //   five form fields; submits synchronously, because handleSubmit
+                         //   is async and the note must reach the board exactly one
+                         //   macrotask after the click                          (P15)
       note_view_dialog.tsx // a note opened: title, body, link, colour, date; autosaves (P6)
+                         //   autosave is a field listener now, and nothing reads a value
+                         //   out of the DOM                                     (P15)
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
       paper_radiogroup.tsx // the six swatches, shared by both dialogs        (P6)
       note_fields.tsx    // the title and link inputs, shared by both dialogs (P7)
+                         //   **form-agnostic on purpose** — value/onChange, no form
+                         //   library, renderable outside a form. Greped for      (P15)
       note_controls.tsx  // pin and delete, in the note's own view              (P9)
       delete_note_dialog.tsx // one confirmation for the whole board            (P9)
       toolbar.tsx        // sidebar toggle + search trigger + New note        (P8)

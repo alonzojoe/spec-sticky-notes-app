@@ -32,7 +32,15 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P14 (*a place for the things that are not notes*) is complete: `/settings` is a route with a door at
+P15 (*one way to build a form*) is complete: every form in the app — the intro, the settings name,
+the create dialog and the note's own view — is built with **`@tanstack/react-form`**, where before
+there were four different hand-rolled ways of holding what somebody typed. Nothing a user can see
+changed; all 790 assertions that passed before it still pass, unedited. What went is machinery: a
+`wasOpen` resync, a five-line reset every exit path had to remember, a hand-rolled dirty check, and
+— in the note view — a pair of debounced autosaves and a dismissal path that read the title and body
+back out of the DOM by CSS selector. The shared field components stayed form-agnostic on purpose.
+
+Before it, P14 (*a place for the things that are not notes*): `/settings` is a route with a door at
 the bottom of the sidebar. The name is changed there rather than in a dialog — the dialog is the
 intro and nothing else now — and one button, behind one sentence carrying a real note count, returns
 the browser to the state it was in before it ever met this app. It resets the board, the name and
@@ -41,7 +49,7 @@ a raw removal notifies nothing in the tab and the board's debounced mirror would
 straight back. A second button puts P1's three original notes back on an empty board — the words
 they were written with, as real notes you can edit and throw away.
 
-Before it, P13 (*a board with your name on it*): the app asks for a name once, on the first visit,
+Before that, P13 (*a board with your name on it*): the app asks for a name once, on the first visit,
 as an intro rather than a form — and there is no way past it but a name. It is asked exactly once
 per browser, on the visit that names the board. The name draws as a circle of initials under the
 mark, at the top of the sidebar. It lives in one key, `sticky-notes:user`, and **owns nothing** —
@@ -49,7 +57,7 @@ the stored board is unchanged before a name exists, after one is stored, and aft
 changed, which is what makes it a label rather than an account. `mission.md` carries the amendment
 that says so. `src/lib/` also gained a barrel: every import we author reads `@/lib`.
 
-Before that, P12 (*the notes that point somewhere*): the sidebar has three destinations — `Notes`,
+And P12 (*the notes that point somewhere*): the sidebar has three destinations — `Notes`,
 `Pinned notes` and `Linked notes` — and `/linked` shows the notes carrying a URL. What a section
 *is* lives in one list, `lib/sections.ts`: a path, a label, an icon, a predicate and the copy for an
 empty one, which the sidebar and the board both read, so neither of them names a section. A note is

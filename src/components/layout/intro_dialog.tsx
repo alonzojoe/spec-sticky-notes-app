@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useForm } from '@tanstack/react-form'
 
 import { FieldLabel } from '@/components/layout/note_fields'
 import { StickyMark } from '@/components/layout/sticky_mark'
@@ -50,12 +50,23 @@ import { useUser } from '@/hooks/use_user'
  */
 export function IntroDialog({ open }: { open: boolean }) {
   const { setName } = useUser()
-  const [draft, setDraft] = useState('')
 
-  const submit = () => {
-    if (draft.trim() === '') return
-    setName(draft)
-  }
+  /**
+   * P15. One field, and **one** definition of what an empty name is.
+   *
+   * It was two: `draft.trim() === ''` on the button's `disabled` and the same expression as an
+   * early return in the submit handler. Two expressions that have to agree, in the one dialog a
+   * person cannot leave any other way — the duplication was harmless and it was the kind that stops
+   * being harmless the moment somebody edits one of them.
+   *
+   * The validator is the definition now, and `canSubmit` is what the button reads. Nothing renders
+   * the message: this app has no error UI anywhere (requirements § D6), and the string exists
+   * because the API takes one.
+   */
+  const form = useForm({
+    defaultValues: { name: '' },
+    onSubmit: ({ value }) => setName(value.name),
+  })
 
   return (
     // No `onOpenChange`. Every route out of a Radix dialog funnels through it, and this dialog has
@@ -86,33 +97,52 @@ export function IntroDialog({ open }: { open: boolean }) {
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            submit()
+            void form.handleSubmit()
           }}
           className="flex flex-col gap-4"
         >
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="user-name">Name</FieldLabel>
-            <Input
-              id="user-name"
-              autoFocus
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              // No placeholder. A field labelled `Name` on a dialog that is asking for your name
-              // needs no example, and a greyed-out name in the box is one more thing to read past
-              // on the first screen the app ever shows.
-              //
-              // No maxLength either, following `note_fields.tsx`: a limit enforced by the input is
-              // a rule you discover by hitting it. A name too long for the row truncates in the row.
-              autoComplete="name"
-            />
-          </div>
+          <form.Field
+            name="name"
+            validators={{
+              // A space is not a name. The one place that is decided.
+              onChange: ({ value }) => (value.trim() === '' ? 'A name is required' : undefined),
+            }}
+          >
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <FieldLabel htmlFor="user-name">Name</FieldLabel>
+                <Input
+                  id="user-name"
+                  autoFocus
+                  value={field.state.value}
+                  onChange={(event) => field.handleChange(event.target.value)}
+                  onBlur={field.handleBlur}
+                  // No placeholder. A field labelled `Name` on a dialog that is asking for your
+                  // name needs no example, and a greyed-out name in the box is one more thing to
+                  // read past on the first screen the app ever shows.
+                  //
+                  // No maxLength either, following `note_fields.tsx`: a limit enforced by the input
+                  // is a rule you discover by hitting it. A name too long for the row truncates in
+                  // the row.
+                  autoComplete="name"
+                />
+              </div>
+            )}
+          </form.Field>
 
           <DialogFooter>
             {/* No Cancel — there is nothing to cancel into. Inert on whitespace: a space is not a
-                name, and a disabled button says so before you press it rather than after. */}
-            <Button type="submit" disabled={draft.trim() === ''}>
-              Get started
-            </Button>
+                name, and a disabled button says so before you press it rather than after.
+
+                Subscribed rather than read off `form.state`, so the button re-renders when
+                `canSubmit` changes and the rest of the dialog does not. */}
+            <form.Subscribe selector={(state) => state.canSubmit}>
+              {(canSubmit) => (
+                <Button type="submit" disabled={!canSubmit}>
+                  Get started
+                </Button>
+              )}
+            </form.Subscribe>
           </DialogFooter>
         </form>
       </DialogContent>

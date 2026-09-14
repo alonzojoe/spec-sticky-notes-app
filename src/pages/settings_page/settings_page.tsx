@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useForm } from '@tanstack/react-form'
 
 import { FieldLabel } from '@/components/layout/note_fields'
 import {
@@ -98,42 +98,80 @@ function Setting({
  */
 function NameSetting() {
   const { name, setName } = useUser()
-  const [draft, setDraft] = useState(name)
 
-  const trimmed = draft.trim()
-  const unchanged = trimmed === name
+  /**
+   * P15. The form holds the value; **the *has it changed* question is still asked by comparing.**
+   *
+   * `state.isDirty` was the obvious fit and it is the wrong one: it means *the user has modified
+   * this field*, and it is **sticky** — type a character, delete it, and the form is still dirty
+   * while the value is back where it started. The hand-rolled check this replaced read
+   * `draft.trim() === name`, which goes inert again, and a test written for this phase caught the
+   * difference (T89). `state.isDefaultValue` is closer and still not it: it compares raw values, so
+   * a trailing space would read as a change that saving cannot produce.
+   *
+   * So the comparison stays, and it is exact rather than approximately right. What the form
+   * contributes is that there is one place the value lives.
+   *
+   * `canSubmit` covers the other half: a whitespace-only name is not a name, decided by the same
+   * validator `intro_dialog.tsx` uses, for the same reason.
+   */
+  const form = useForm({
+    defaultValues: { name },
+    onSubmit: ({ value }) => {
+      setName(value.name)
+      // The saved name is the new baseline, so the button goes inert again. Reset to the trimmed
+      // value rather than the raw draft, because that is what was stored — `use_user.ts` trims.
+      form.reset({ name: value.name.trim() })
+    },
+  })
 
   return (
     <Setting title="Your name" hint="It goes in the sidebar and nowhere else.">
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          if (trimmed === '' || unchanged) return
-          setName(draft)
+          void form.handleSubmit()
         }}
         className="flex items-end gap-2"
       >
-        <div className="flex flex-1 flex-col gap-1.5">
-          <FieldLabel htmlFor="user-name">Name</FieldLabel>
-          {/* No placeholder and no maxLength, both inherited from the dialog this moved out of: a
-              field labelled Name needs no example, and a limit enforced by the input is a rule you
-              discover by hitting it. A name too long for the sidebar truncates in the sidebar. */}
-          <Input
-            id="user-name"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            autoComplete="name"
-          />
-        </div>
+        <form.Field
+          name="name"
+          validators={{
+            onChange: ({ value }) => (value.trim() === '' ? 'A name is required' : undefined),
+          }}
+        >
+          {(field) => (
+            <div className="flex flex-1 flex-col gap-1.5">
+              <FieldLabel htmlFor="user-name">Name</FieldLabel>
+              {/* No placeholder and no maxLength, both inherited from the dialog this moved out of:
+                  a field labelled Name needs no example, and a limit enforced by the input is a
+                  rule you discover by hitting it. A name too long for the sidebar truncates in the
+                  sidebar. */}
+              <Input
+                id="user-name"
+                value={field.state.value}
+                onChange={(event) => field.handleChange(event.target.value)}
+                onBlur={field.handleBlur}
+                autoComplete="name"
+              />
+            </div>
+          )}
+        </form.Field>
         {/* The toolbar's press feedback. A button pressed occasionally may answer when it is
             pressed; the sidebar rows, which are on screen every second, deliberately do not. */}
-        <Button
-          type="submit"
-          disabled={trimmed === '' || unchanged}
-          className="transition-transform duration-(--duration-press) ease-out active:scale-[0.97]"
+        <form.Subscribe
+          selector={(state) => state.canSubmit && state.values.name.trim() !== name}
         >
-          Save
-        </Button>
+          {(ready) => (
+            <Button
+              type="submit"
+              disabled={!ready}
+              className="transition-transform duration-(--duration-press) ease-out active:scale-[0.97]"
+            >
+              Save
+            </Button>
+          )}
+        </form.Subscribe>
       </form>
     </Setting>
   )
