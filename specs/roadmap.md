@@ -398,6 +398,39 @@ it left behind with the three notes this app was first drawn around.
 
 ---
 
+## P15 · One way to build a form
+
+**Goal:** there is one answer to *how do I add a form to this app*.
+
+- There were four places somebody fills something in and **four different ways of holding what they
+  typed** — none wrong, each the right amount of machinery written alone in the phase that needed
+  it. **`@tanstack/react-form`** replaces all four.
+- **The amendment is deliverable 1.** `tech-stack.md`'s hard rule says a new runtime dependency is
+  named in that file first. The counter-argument is kept rather than answered: three of the four
+  forms have **one field**, and it turned out to be six packages rather than three.
+- **The note view is the reason.** It read `title` and `body` back out of the DOM by CSS selector at
+  dismissal, and autosaved through two debounces it had to remember to cancel in three places. Both
+  are gone: a field listener per value, and `form.state.values` on close.
+- **The shared field components stay form-agnostic.** `note_fields.tsx`, `date_field.tsx` and
+  `paper_radiogroup.tsx` take `value`/`onChange` and import nothing; the wiring is at the call site.
+  `validation.md` greps for it, because it is the decision most likely to be undone by somebody
+  being helpful.
+- **Nothing a user can see changes, and all 790 existing assertions pass unedited.** Three of the
+  library's conveniences turned out to be near-misses — `handleSubmit` is async, a field listener
+  cannot be cancelled, `isDirty` is sticky — and **all three were caught by tests rather than by
+  reading**. Each was resolved by keeping the library as the place values live rather than the thing
+  that decides what they mean.
+- **The dependency pushed the bundle past rollup's 500 kB warning**, so the vendor chunk splits four
+  ways — `react`, `radix`, `tanstack`, `vendor` — which is the fix P10's own comment says to prefer
+  over raising the limit.
+- **This phase is an insertion**, like P13 and P14 — *order is a plan, not a commitment*.
+
+**Done when:** every form in this app is built the same way, the four hand-rolled containers are
+gone rather than rewritten, the note view no longer reads its own values out of the DOM, and all 790
+assertions that passed before the phase still pass without one of them being edited.
+
+---
+
 # Planned, in order
 
 No numbers — see P9's last bullet. Order is a plan, not a commitment; inserting work here is an edit

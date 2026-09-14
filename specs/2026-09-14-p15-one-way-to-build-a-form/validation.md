@@ -40,9 +40,16 @@ grep -rn "useState" src/components/layout/intro_dialog.tsx \
   src/components/layout/note_view_dialog.tsx | eval $NO_COMMENTS
 ```
 
-Empty. **The four hand-rolled containers are gone rather than rewritten** (**D7**). `settings_page.tsx`
-is not in this list on purpose — it is checked separately below, because the file holds three
-sections and only one of them is a form.
+**One hit, and it is a comment.** `note_view_dialog.tsx` explains that the link's draft lives in the
+field now *instead of a `useState` in this file* — and the hit is a continuation line of a JSX
+`{/* … */}` block, which `NO_COMMENTS` does not catch because the line begins with prose rather than
+with `//` or `*`. **This repo has hit that before**: a Gate 1 grep for a forbidden string matching
+the comment that explains its absence, teaching the next phase to delete its own rationale. The
+comment stays. Everything else is empty, which is the claim: **the four hand-rolled containers are
+gone rather than rewritten** (**D7**).
+
+`settings_page.tsx` is not in this list on purpose — it is checked separately below, because the
+file holds three sections and only one of them is a form.
 
 ```
 grep -n "useState" src/pages/settings_page/settings_page.tsx | eval $NO_COMMENTS
@@ -52,7 +59,7 @@ Empty. `NameSetting` was the only thing in that file holding a value; `SampleSet
 `ResetSetting` dispatch and hold nothing.
 
 ```
-grep -rn "closeFromDOM\|data-slot=\"note-body\"\]\|querySelector.*note-view-title" src | eval $NO_COMMENTS
+grep -rn "closeFromDOM\|querySelector.*note-view-title" src | eval $NO_COMMENTS
 ```
 
 Empty. **D5**, and the single clearest statement of what this phase bought: the note view no longer

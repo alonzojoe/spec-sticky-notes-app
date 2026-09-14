@@ -193,10 +193,17 @@ src/
       intro_dialog.tsx   // the intro on a first visit, and nothing else. The rename
                          //   moved onto the settings page in P14              (P13, P14)
       new_note_dialog.tsx // date + colour + textarea; creates the note      (P3)
+                         //   five form fields; submits synchronously, because handleSubmit
+                         //   is async and the note must reach the board exactly one
+                         //   macrotask after the click                          (P15)
       note_view_dialog.tsx // a note opened: title, body, link, colour, date; autosaves (P6)
+                         //   autosave is a field listener now, and nothing reads a value
+                         //   out of the DOM                                     (P15)
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
       paper_radiogroup.tsx // the six swatches, shared by both dialogs        (P6)
       note_fields.tsx    // the title and link inputs, shared by both dialogs (P7)
+                         //   **form-agnostic on purpose** — value/onChange, no form
+                         //   library, renderable outside a form. Greped for      (P15)
       note_controls.tsx  // pin and delete, in the note's own view              (P9)
       delete_note_dialog.tsx // one confirmation for the whole board            (P9)
       toolbar.tsx        // sidebar toggle + search trigger + New note        (P8)
