@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useForm } from '@tanstack/react-form'
 
 import { FieldLabel } from '@/components/layout/note_fields'
 import {
@@ -98,42 +98,73 @@ function Setting({
  */
 function NameSetting() {
   const { name, setName } = useUser()
-  const [draft, setDraft] = useState(name)
 
-  const trimmed = draft.trim()
-  const unchanged = trimmed === name
+  /**
+   * P15. `isDirty` is what the hand-rolled check was approximating.
+   *
+   * It read `trimmed === name` on every render — correct, and a comparison this file had to keep
+   * making. The default value is the stored name, so *dirty* means **different from what is saved**,
+   * which is the question the button was asking all along. It resets against the new baseline when
+   * a save lands, without the field being re-mounted.
+   *
+   * `canSubmit` covers the other half: a whitespace-only name is not a name, decided by the same
+   * validator `intro_dialog.tsx` uses, for the same reason.
+   */
+  const form = useForm({
+    defaultValues: { name },
+    onSubmit: ({ value }) => {
+      setName(value.name)
+      // The saved name is the new baseline, so the button goes inert again. Reset to the trimmed
+      // value rather than the raw draft, because that is what was stored — `use_user.ts` trims.
+      form.reset({ name: value.name.trim() })
+    },
+  })
 
   return (
     <Setting title="Your name" hint="It goes in the sidebar and nowhere else.">
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          if (trimmed === '' || unchanged) return
-          setName(draft)
+          void form.handleSubmit()
         }}
         className="flex items-end gap-2"
       >
-        <div className="flex flex-1 flex-col gap-1.5">
-          <FieldLabel htmlFor="user-name">Name</FieldLabel>
-          {/* No placeholder and no maxLength, both inherited from the dialog this moved out of: a
-              field labelled Name needs no example, and a limit enforced by the input is a rule you
-              discover by hitting it. A name too long for the sidebar truncates in the sidebar. */}
-          <Input
-            id="user-name"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            autoComplete="name"
-          />
-        </div>
+        <form.Field
+          name="name"
+          validators={{
+            onChange: ({ value }) => (value.trim() === '' ? 'A name is required' : undefined),
+          }}
+        >
+          {(field) => (
+            <div className="flex flex-1 flex-col gap-1.5">
+              <FieldLabel htmlFor="user-name">Name</FieldLabel>
+              {/* No placeholder and no maxLength, both inherited from the dialog this moved out of:
+                  a field labelled Name needs no example, and a limit enforced by the input is a
+                  rule you discover by hitting it. A name too long for the sidebar truncates in the
+                  sidebar. */}
+              <Input
+                id="user-name"
+                value={field.state.value}
+                onChange={(event) => field.handleChange(event.target.value)}
+                onBlur={field.handleBlur}
+                autoComplete="name"
+              />
+            </div>
+          )}
+        </form.Field>
         {/* The toolbar's press feedback. A button pressed occasionally may answer when it is
             pressed; the sidebar rows, which are on screen every second, deliberately do not. */}
-        <Button
-          type="submit"
-          disabled={trimmed === '' || unchanged}
-          className="transition-transform duration-(--duration-press) ease-out active:scale-[0.97]"
-        >
-          Save
-        </Button>
+        <form.Subscribe selector={(state) => state.canSubmit && state.isDirty}>
+          {(ready) => (
+            <Button
+              type="submit"
+              disabled={!ready}
+              className="transition-transform duration-(--duration-press) ease-out active:scale-[0.97]"
+            >
+              Save
+            </Button>
+          )}
+        </form.Subscribe>
       </form>
     </Setting>
   )
