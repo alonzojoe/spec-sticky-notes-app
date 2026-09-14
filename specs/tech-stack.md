@@ -15,7 +15,7 @@ constitution, not a detail — add it deliberately or not at all.
 | Dates | **`react-day-picker`** | Arrives with shadcn's `calendar` in P6. The first dependency that is not a shadcn primitive — a real component library with its own cadence. If its styling proves hard to keep warm, the fallback is a native `<input type="date">`. |
 | Primitives | **`radix-ui`** | Arrives as shadcn's dependency — the unified package, not per-component `@radix-ui/react-*`. Source of a11y for menus, dialogs, popovers, tooltips. |
 | State | **React Context + `useReducer`** | One board reducer. No external state library. |
-| Routing | **`@tanstack/react-router`** + **`@tanstack/router-plugin`** (dev) | Arrives in P10 for the board's two sections; P11 made the routes **file-based** under `src/app/routes/`, mirroring `unicare-booking`. A file's path is its URL, the plugin writes `src/app/routeTree.gen.ts` (committed, exempted from the naming rule), and `_board` is a pathless layout group holding the shell. Three routes — `/`, `/notes`, `/pinned`. A note is not a route; the palette and the card still open it into a dialog. |
+| Routing | **`@tanstack/react-router`** + **`@tanstack/router-plugin`** (dev) | Arrives in P10 for the board's two sections; P11 made the routes **file-based** under `src/app/routes/`, mirroring `unicare-booking`. A file's path is its URL, the plugin writes `src/app/routeTree.gen.ts` (committed, exempted from the naming rule), and `_board` is a pathless layout group holding the shell. Five routes — `/`, `/notes`, `/pinned`, `/linked` (P12) and `/settings` (P14). A note is not a route; the palette and the card still open it into a dialog. **`/settings` is the first route under `_board` that draws no notes** — it replaces the board rather than filtering it, which is why it is not a row in `lib/sections.ts`. |
 | Persistence | **`usehooks-ts`** | `useLocalStorage` for the board, the sidebar's collapse, the user's name and the theme. Three keys today: `sticky-notes:board:v1`, `sticky-notes:sidebar`, `sticky-notes:user` (P13). **Its `useDebounceCallback` does not cancel on unmount** — it builds a second debounced function in an effect and cancels that one — so anything debouncing a write cancels it itself. `notes_context.tsx` does. |
 | Icons | **`lucide-react`** | shadcn's icon set; nothing else. |
 | Drag | **Native pointer events** | Hand-rolled `useDraggable`. See "Decisions" below. |
@@ -152,10 +152,12 @@ src/
         notes/index.tsx  //     /notes
         pinned/index.tsx //     /pinned
         linked/index.tsx //     /linked                                       (P12)
+        settings/index.tsx //   /settings — not a section: no notes, no count   (P14)
   pages/                 // what a route renders; a route file names one       (P11)
     notes_page/          //   the whole board
     pinned_page/         //   the pinned section
     linked_page/         //   the notes carrying a link                       (P12)
+    settings_page/       //   the name, and the one way to erase everything    (P14)
   context/
     notes_context.tsx    // the provider component only — nothing else exported
     notes_reducer.ts     // pure reducer — unit-testable, no React imports
@@ -163,18 +165,24 @@ src/
   hooks/
     use_draggable.ts     // pointer-events drag; owns the gesture, dispatches nothing
     use_user.ts          // the only reader and writer of the name; `asked` is not `named` (P13)
-    use_theme.ts         // light/dark/system, persisted                  (*Dark mode*)
+    use_reset.ts         // one destructive action: the board, the name and the sidebar,
+                         //   each through the hook that owns it — never localStorage
+                         //   directly, which notifies nothing in-tab            (P14)
+    use_theme.ts         // light/dark/system, persisted; the toggle is a row on the
+                         //   settings page, not a control in the sidebar  (*Dark mode*)
     use-mobile.ts        // shadcn-generated — exempt from snake_case
   components/
     layout/
       app_shell.tsx      // NotesProvider + SidebarProvider + AppSidebar + SidebarInset;
                          //   owns the toolbar, the New note button and the `n` shortcut;
                          //   mounted by routes/_board/route.tsx                  (P11)
-      app_sidebar.tsx    // header: the mark, then the identity row — initials, name, and the
-                         //   way back into the dialog. Then the destinations from the
-                         //   registry. **SidebarFooter is still empty and belongs to
-                         //   *Dark mode***                                     (P10, P13)
-      user_name_dialog.tsx // the intro on a first visit, the rename after it        (P13)
+      app_sidebar.tsx    // header: the mark, then the identity row — initials, name, and a
+                         //   link to /settings. Then the destinations from the registry,
+                         //   then a **SidebarFooter holding one row: Settings**. It is a
+                         //   door rather than a control, which is why it can sit there
+                         //   without ever needing to move again          (P10, P13, P14)
+      intro_dialog.tsx   // the intro on a first visit, and nothing else. The rename
+                         //   moved onto the settings page in P14              (P13, P14)
       new_note_dialog.tsx // date + colour + textarea; creates the note      (P3)
       note_view_dialog.tsx // a note opened: title, body, link, colour, date; autosaves (P6)
       date_field.tsx     // calendar in a popover; owns the ISO boundary      (P6)
