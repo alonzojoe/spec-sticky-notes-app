@@ -166,6 +166,18 @@ other way.
 `trimmed === name` check was approximating. The button is live when the form can submit *and*
 something actually changed.
 
+**`isDirty` was the obvious fit for the settings button and it is the wrong one.** It means *the
+user has modified this field*, and it is **sticky**: type a character, delete it, and the form is
+still dirty while the value is back where it started. The check it replaced read
+`draft.trim() === name` and went inert again. `isDefaultValue` is closer and still not it — it
+compares raw values, so a trailing space reads as a change that saving cannot produce.
+
+So the settings button subscribes to the value and compares it, exactly as before:
+`canSubmit && state.values.name.trim() !== name`. **What the form contributes is that there is one
+place the value lives**, not that it answers every question about the value. Found by T89, which was
+written for this phase — the existing coverage would not have caught it, because nothing asserted
+the type-it-and-take-it-back case.
+
 **Neither dialog gains a validator that rejects anything a user could not already fail to submit.**
 The button is inert in exactly the cases it is inert today. **D6** is why there is no message under
 the field saying so.
@@ -405,12 +417,16 @@ already here. A reader who wants to know what the form library costs can now rea
 
 ## Risks
 
-**The library wants to own control flow, and twice it should not.** **D10** is one instance, found
-by the suite. The pattern to watch for is any place where a form API is asynchronous and the code it
-replaced was not — `handleSubmit` is the obvious one, and a field's debounced listener (**D5**) is
-the other, because it cannot be cancelled. Both were resolved by keeping the library as a value
-container. **A third instance should be read as a sign the dependency is a worse fit than this phase
-concluded**, not as a third workaround.
+**The library's conveniences are near-misses more often than expected, and all three were caught by
+tests rather than by reading.** `handleSubmit` is async where the code it replaced was synchronous
+(**D10**). A field's debounced listener cannot be cancelled (**D5**). And `isDirty` answers *was
+this modified* where the question is *is it different* (**D3**). Each was resolved the same way — by
+keeping the library as the place the values live and not as the thing that decides what they mean.
+
+**That is the honest summary of what was bought**: one value container and one reset, in four places
+instead of four different ones. It is worth the dependency, and it is less than the dependency
+advertises. **A fourth near-miss should be read as a sign the fit is worse than this phase
+concluded**, not as a fourth workaround.
 
 **This is the largest diff-to-visible-change ratio of any phase so far.** Four files rewritten,
 nothing on screen different. That is the definition of a refactor and it is also how a real

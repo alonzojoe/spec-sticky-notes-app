@@ -478,3 +478,47 @@ describe('T82 · reset', () => {
     expect(notesReducer(state, { type: 'reset' })).toEqual(notesReducer(state, { type: 'reset' }))
   })
 })
+
+/**
+ * T91 — P15 D5. A write aimed at a note that is gone lands nowhere.
+ *
+ * **This is a property the reducer already had**, tested here for the first time because the note
+ * view now *leans* on it. A field's debounced listener has no public cancel, so the dialog can no
+ * longer cancel a pending autosave before opening the delete confirmation — which makes a write
+ * arriving after a note is removed a real event rather than a hypothetical, and safe only for as
+ * long as this stays true.
+ *
+ * Without this test, a future reducer change that made a stray write *create* something would be a
+ * bug with nothing between it and the board.
+ */
+describe('T91 · a write aimed at a note that is gone', () => {
+  it.each([
+    ['edit_body', { type: 'edit_body', id: 'deleted', body: 'a thought', at: 900 }] as const,
+    ['edit_title', { type: 'edit_title', id: 'deleted', title: 'Standup', at: 900 }] as const,
+  ])('%s is a no-op, and creates nothing', (_name, action) => {
+    const state = frozen(board([note({ id: 'a' }), note({ id: 'b' })]))
+
+    const next = notesReducer(state, action)
+
+    expect(next.notes).toHaveLength(2)
+    expect(next).toEqual(state)
+  })
+
+  // The sequence the note view can actually produce: delete, then a debounced write that was
+  // already in flight.
+  it('leaves the board alone when the write follows the delete', () => {
+    const state = frozen(board([note({ id: 'a', body: 'keep me' }), note({ id: 'gone' })]))
+
+    const deleted = notesReducer(state, { type: 'delete', id: 'gone' })
+    const after = notesReducer(deleted, {
+      type: 'edit_body',
+      id: 'gone',
+      body: 'typed just before the delete',
+      at: 900,
+    })
+
+    expect(after.notes).toHaveLength(1)
+    expect(after.notes[0].id).toBe('a')
+    expect(after.notes[0].body).toBe('keep me')
+  })
+})

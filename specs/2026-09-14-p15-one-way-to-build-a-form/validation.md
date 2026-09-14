@@ -158,6 +158,11 @@ not exercise them would not mean much:
 - **`note_view.test.tsx` / `note_editing.test.tsx`** — autosave, the flush on close, and the three
   routes out of the dialog.
 
+**Two behaviours were nearly changed and neither was.** The second: the settings button was
+refactored onto `state.isDirty`, which is sticky, so typing a character and deleting it left the
+button live where the hand-rolled check went inert. T89 caught it and the selector became an exact
+value comparison.
+
 **One existing behaviour was nearly changed and was not.** Group 5 first used `form.handleSubmit()`
 in the create dialog, and `persistence.test.tsx` and `note_view.test.tsx` went red with no note on
 the board — `handleSubmit` is async, and those tests advance a timer synchronously. **No assertion
@@ -182,11 +187,12 @@ near miss to be embarrassed about.
 - Inert on arrival, with the stored name in the field.
 - Inert on whitespace.
 - Live the moment the value differs from the stored name.
-- **Inert again once saved**, without the page being re-rendered or the field being re-mounted —
-  which is `isDirty` resetting against the new baseline rather than a stale comparison against the
-  old one. The hand-rolled check got this right by comparing against `name` on every render; this
-  asserts the library does too.
-- Typing a change and then typing it back leaves the button inert.
+- **Inert again once saved**, without the field being re-mounted — the same DOM node throughout, so
+  the baseline moved rather than the field being rebuilt around it.
+- **Typing a change and then typing it back leaves the button inert.** This is the assertion that
+  rejected `isDirty`: the library's flag means *was modified* and is sticky, so it stayed live with
+  the value back where it started. **Written for this phase and it failed on the first run**, which
+  is the whole reason it exists — the existing coverage did not cover taking a change back.
 
 ### T90 · The note view autosaves on its own debounce, and loses nothing on the way out — `note_view.test.tsx`
 

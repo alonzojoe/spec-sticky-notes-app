@@ -507,3 +507,48 @@ describe('T87 · sample notes', () => {
     })
   })
 })
+
+/**
+ * T89 — P15. `isDirty` is what the hand-rolled `trimmed === name` check was approximating.
+ *
+ * T83's *"is inert on whitespace and on a name that has not changed"* already proves the two agree
+ * on arrival. What it does not cover is the baseline **moving**: after a save, the new name is what
+ * *unchanged* means, and a stale comparison against the old one would leave the button live forever.
+ */
+describe('T89 · Save knows whether anything actually changed', () => {
+  const save = () => screen.getByRole('button', { name: 'Save' })
+
+  it('goes inert again after a save, without the field being re-mounted', async () => {
+    const user = userEvent.setup()
+    seedUser()
+    seedBoard()
+    await renderAt('/settings')
+
+    const field = screen.getByLabelText('Name')
+    await user.clear(field)
+    await user.type(field, 'Ada Lovelace')
+    expect(save()).toHaveProperty('disabled', false)
+
+    await user.click(save())
+
+    await waitFor(() => expect(save()).toHaveProperty('disabled', true))
+    // The same node throughout: the baseline moved, the field did not remount around it.
+    expect(screen.getByLabelText('Name')).toBe(field)
+    expect(field).toHaveProperty('value', 'Ada Lovelace')
+  })
+
+  it('is inert again when a change is typed and then typed back', async () => {
+    const user = userEvent.setup()
+    seedUser()
+    seedBoard()
+    await renderAt('/settings')
+
+    const field = screen.getByLabelText('Name')
+    await user.type(field, 'x')
+    expect(save()).toHaveProperty('disabled', false)
+
+    await user.keyboard('{Backspace}')
+
+    expect(save()).toHaveProperty('disabled', true)
+  })
+})

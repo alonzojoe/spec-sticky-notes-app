@@ -100,12 +100,17 @@ function NameSetting() {
   const { name, setName } = useUser()
 
   /**
-   * P15. `isDirty` is what the hand-rolled check was approximating.
+   * P15. The form holds the value; **the *has it changed* question is still asked by comparing.**
    *
-   * It read `trimmed === name` on every render — correct, and a comparison this file had to keep
-   * making. The default value is the stored name, so *dirty* means **different from what is saved**,
-   * which is the question the button was asking all along. It resets against the new baseline when
-   * a save lands, without the field being re-mounted.
+   * `state.isDirty` was the obvious fit and it is the wrong one: it means *the user has modified
+   * this field*, and it is **sticky** — type a character, delete it, and the form is still dirty
+   * while the value is back where it started. The hand-rolled check this replaced read
+   * `draft.trim() === name`, which goes inert again, and a test written for this phase caught the
+   * difference (T89). `state.isDefaultValue` is closer and still not it: it compares raw values, so
+   * a trailing space would read as a change that saving cannot produce.
+   *
+   * So the comparison stays, and it is exact rather than approximately right. What the form
+   * contributes is that there is one place the value lives.
    *
    * `canSubmit` covers the other half: a whitespace-only name is not a name, decided by the same
    * validator `intro_dialog.tsx` uses, for the same reason.
@@ -154,7 +159,9 @@ function NameSetting() {
         </form.Field>
         {/* The toolbar's press feedback. A button pressed occasionally may answer when it is
             pressed; the sidebar rows, which are on screen every second, deliberately do not. */}
-        <form.Subscribe selector={(state) => state.canSubmit && state.isDirty}>
+        <form.Subscribe
+          selector={(state) => state.canSubmit && state.values.name.trim() !== name}
+        >
           {(ready) => (
             <Button
               type="submit"
