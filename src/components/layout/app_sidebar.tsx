@@ -1,10 +1,11 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { Plus, Settings } from 'lucide-react'
 
 import { StickyMark } from '@/components/layout/sticky_mark'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarHeader,
@@ -27,8 +28,11 @@ import { sectionAt, SECTIONS } from '@/lib'
 //   *Tags* — the tag list, as a SidebarGroup below the nav group (search became a ⌘K palette
 //            in the toolbar in P8, so no field lands here). **A group, not destinations**: the
 //            nav stays at three rows, and a tag is not a place you go — see roadmap.md § Tags.
-//   *Dark mode* — the theme toggle, in a SidebarFooter — still unclaimed, and P13 deliberately
-//                 left it that way rather than putting the identity there
+//   *Dark mode* — the theme toggle, as a row on the settings page. P13 left the SidebarFooter
+//                 empty for it; P14 took the slot and amended the reservation rather than
+//                 breaking it — see that phase's D2. What Dark mode was promised was a home for
+//                 the theme control, and a labelled row beside the other things you set is a
+//                 better one than a toggle in a corner.
 // Nothing is rendered for them now. A control that cannot be used should not be drawn.
 /**
  * How a destination says it is the one you are on.
@@ -95,6 +99,9 @@ const CIRCLE =
 
 const ADD_YOUR_NAME = 'Add your name'
 
+/** Named once, because three things in this file point at it. */
+const SETTINGS_PATH = '/settings'
+
 export function AppSidebar({ onEditName }: { onEditName: () => void }) {
   const { notes } = useNotes()
   const { name, initials } = useUser()
@@ -103,6 +110,23 @@ export function AppSidebar({ onEditName }: { onEditName: () => void }) {
   // is this" and the sidebar cannot disagree with the board.
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const active = sectionAt(pathname)
+
+  /**
+   * Whether a board destination may claim to be the current one at all.
+   *
+   * `sectionAt` falls back to the first row for any path it does not recognise, which is correct
+   * for what it is for — deciding which notes `/` draws — and wrong as an answer to *which row is
+   * lit*. On `/settings` the fallback would light `Notes` while the board is not even rendered.
+   *
+   * So the sidebar asks a second question the registry does not: does the active row's path
+   * actually match where we are? `/` is the one path that is deliberately unmatched and still on
+   * the board — P10 chose that over a redirect, because a redirect resolves asynchronously and the
+   * app would paint an empty frame first — so it is named here rather than inferred.
+   *
+   * **The registry is untouched.** Teaching `sectionAt` about a page that has no notes is how a
+   * section list learns about things that are not sections.
+   */
+  const onBoard = pathname === '/' || active.path === pathname
 
   return (
     <Sidebar collapsible="icon">
@@ -170,7 +194,7 @@ export function AppSidebar({ onEditName }: { onEditName: () => void }) {
               {/* One row per registry entry. A section added to `lib/sections.ts` appears here
                   without this file being edited, which is the whole point of the list. */}
               {SECTIONS.map((row) => {
-                const current = row.section === active.section
+                const current = onBoard && row.section === active.section
                 const Icon = row.icon
 
                 return (
@@ -202,6 +226,35 @@ export function AppSidebar({ onEditName }: { onEditName: () => void }) {
           </SidebarGroup>
         </nav>
       </SidebarContent>
+
+      {/* The one row at the bottom of the sidebar, and the first thing this app has ever put
+          there. It is a **door, not a control** — which is the whole of P14's D2 and the reason it
+          can sit in the slot `tech-stack.md` reserved for the theme toggle without ever needing to
+          move again. A control in a corner gets outgrown; a way to the page where the controls
+          live does not.
+
+          No `SidebarMenuBadge`. A count here would be a number about settings, and there is no
+          such number. */}
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === SETTINGS_PATH}
+              tooltip="Settings"
+              className={DESTINATION}
+            >
+              <Link
+                to={SETTINGS_PATH}
+                aria-current={pathname === SETTINGS_PATH ? 'page' : undefined}
+              >
+                <Settings aria-hidden />
+                <span>Settings</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

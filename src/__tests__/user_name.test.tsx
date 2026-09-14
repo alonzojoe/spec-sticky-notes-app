@@ -313,10 +313,14 @@ describe('T80 · the identity in the sidebar', () => {
 
   /**
    * **Position, not mere presence.** Which end of the sidebar this sits at is the decision D3
-   * reversed — the footer was the first draft and it belongs to *Dark mode* — so the test asserts
-   * the header, and that the bottom of the sidebar stayed empty.
+   * reversed — the footer was the first draft, and at the time it belonged to *Dark mode*.
+   *
+   * **P14 filled the footer**, with a Settings row rather than a theme toggle, and amended the
+   * reservation rather than breaking it (that phase's D2). So the assertion that the bottom of the
+   * sidebar is empty is gone, and what replaces it is the claim that actually matters here and
+   * always did: the identity is in the header, and it is not the thing in the footer.
    */
-  it('sits in the header, under the mark, and leaves the footer alone', async () => {
+  it('sits in the header, under the mark, and is not the row in the footer', async () => {
     seedUser()
     seedBoard()
     render(<App />)
@@ -329,7 +333,10 @@ describe('T80 · the identity in the sidebar', () => {
     expect(header().textContent?.indexOf('Sticky')).toBeLessThan(
       header().textContent?.indexOf('Joe Alonzo') ?? -1,
     )
-    expect(document.querySelector('[data-sidebar="footer"]')).toBeNull()
+    const footer = document.querySelector('[data-sidebar="footer"]')
+    expect(footer).not.toBeNull()
+    expect(footer?.textContent).not.toContain('Joe Alonzo')
+    expect(footer?.textContent).not.toContain('JA')
   })
 
   /**
