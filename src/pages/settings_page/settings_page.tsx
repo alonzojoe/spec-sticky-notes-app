@@ -15,9 +15,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { useNotes } from '@/context/use_notes'
+import { useNotes, useNotesDispatch } from '@/context/use_notes'
 import { useReset } from '@/hooks/use_reset'
 import { useUser } from '@/hooks/use_user'
+import { createNoteSeed, SAMPLE_NOTES, topOrder } from '@/lib'
 
 /**
  * The place for the things that are not notes.
@@ -47,6 +48,7 @@ export function SettingsPage() {
       <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-6 py-8">
         <h1 className="text-lg font-medium">Settings</h1>
         <NameSetting />
+        <SampleSetting />
         <Separator />
         <ResetSetting />
       </div>
@@ -133,6 +135,55 @@ function NameSetting() {
           Save
         </Button>
       </form>
+    </Setting>
+  )
+}
+
+/**
+ * The other half of an empty board.
+ *
+ * P1 wrote three notes to prove the visual language and P2 deleted them when the board became
+ * real. This puts them back — see `lib/sample_notes.ts` for why the words came back and the fields
+ * did not — as real notes, through the same `createNoteSeed` the create dialog uses.
+ *
+ * **Dispatched in reverse**, so `SAMPLE_NOTES[0]` takes the highest stamp and therefore the first
+ * slot. The board sorts `order` descending; without the reverse the list lands upside down and
+ * nothing else about it looks wrong.
+ *
+ * **Inert unless the board is empty**, and the hint says so. Nothing in this app can be undone, so
+ * a control that appends three notes to a board of forty is a control that can bury what you wrote
+ * — and the guard that costs nothing is the one that makes that impossible rather than the one that
+ * asks. It is also why this needs no confirmation: it destroys nothing, and reset stays the only
+ * irreversible act on the page rather than one of two.
+ */
+function SampleSetting() {
+  const { notes } = useNotes()
+  const dispatch = useNotesDispatch()
+
+  const empty = notes.length === 0
+
+  return (
+    <Setting
+      title="Sample notes"
+      hint="The three notes this app was first drawn around. Available on an empty board."
+    >
+      <Button
+        variant="secondary"
+        disabled={!empty}
+        className="self-start transition-transform duration-(--duration-press) ease-out active:scale-[0.97]"
+        onClick={() => {
+          const base = topOrder(notes)
+          // Reversed: the last one dispatched carries the highest stamp and sorts first.
+          ;[...SAMPLE_NOTES].reverse().forEach((sample, index) => {
+            dispatch({
+              type: 'add',
+              seed: createNoteSeed(sample.color, base + index, sample.body, undefined, sample.title),
+            })
+          })
+        }}
+      >
+        Load sample notes
+      </Button>
     </Setting>
   )
 }
