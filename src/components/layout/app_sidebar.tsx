@@ -102,7 +102,7 @@ const ADD_YOUR_NAME = 'Add your name'
 /** Named once, because three things in this file point at it. */
 const SETTINGS_PATH = '/settings'
 
-export function AppSidebar({ onEditName }: { onEditName: () => void }) {
+export function AppSidebar() {
   const { notes } = useNotes()
   const { name, initials } = useUser()
 
@@ -156,30 +156,35 @@ export function AppSidebar({ onEditName }: { onEditName: () => void }) {
             exactly as it was found — and Gate 1 greps this file to keep it that way. */}
         <SidebarMenu>
           <SidebarMenuItem>
+            {/* A link rather than a button with a handler, since P14: the way to change your name
+                is a place now, not a dialog. Everything else about the row is unchanged — the
+                circle, the initials, the tooltip, the hover. */}
             <SidebarMenuButton
-              onClick={onEditName}
+              asChild
               tooltip={name === '' ? ADD_YOUR_NAME : name}
               className={IDENTITY}
             >
-              {/* aria-hidden: the row is already named by the name, and two letters read aloud on
-                  top of the word they were cut from is noise. */}
-              <span
-                aria-hidden
-                className={
-                  name === ''
-                    ? `${CIRCLE} bg-sidebar-accent text-ink-soft`
-                    : `${CIRCLE} bg-sidebar-primary text-sidebar-primary-foreground`
-                }
-              >
-                {/* rounded-full against the mark's rounded-[5px], and deliberately not harmonised:
-                    a square is the paper this app is made of, a circle is a person. Softening one
-                    toward the other to tidy the corner is what would turn two kinds of thing into
-                    two logos. */}
-                {name === '' ? <Plus className="size-3.5" /> : initials}
-              </span>
-              <span className="truncate group-data-[collapsible=icon]:hidden">
-                {name === '' ? ADD_YOUR_NAME : name}
-              </span>
+              <Link to={SETTINGS_PATH}>
+                {/* aria-hidden: the row is already named by the name, and two letters read aloud
+                    on top of the word they were cut from is noise. */}
+                <span
+                  aria-hidden
+                  className={
+                    name === ''
+                      ? `${CIRCLE} bg-sidebar-accent text-ink-soft`
+                      : `${CIRCLE} bg-sidebar-primary text-sidebar-primary-foreground`
+                  }
+                >
+                  {/* rounded-full against the mark's rounded-[5px], and deliberately not
+                      harmonised: a square is the paper this app is made of, a circle is a person.
+                      Softening one toward the other to tidy the corner is what would turn two
+                      kinds of thing into two logos. */}
+                  {name === '' ? <Plus className="size-3.5" /> : initials}
+                </span>
+                <span className="truncate group-data-[collapsible=icon]:hidden">
+                  {name === '' ? ADD_YOUR_NAME : name}
+                </span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
