@@ -24,16 +24,19 @@ Six greps.
 ```
 NO_COMMENTS='grep -vE ":[[:space:]]*(\*|//|/\*)"'
 
-grep -rn "localStorage\.\(clear\|removeItem\)" src --include='*.ts' --include='*.tsx' | eval $NO_COMMENTS
+grep -rn "localStorage\.\(clear\|removeItem\)" src --include='*.ts' --include='*.tsx' \
+  | grep -v '__tests__' | eval $NO_COMMENTS
 ```
 
-Empty. **D4**, and the most important grep in this phase. A raw removal notifies nothing inside the
+Empty. **D4**, and the most important grep in this phase. `__tests__` is excluded because a suite
+clearing the store in `beforeEach` is the correct use of the API this forbids in the app — twelve
+files do it and predate this phase. A raw removal notifies nothing inside the
 tab: every React state would keep the value it already had, and `notes_context.tsx`'s 300 ms
 debounced mirror would write the whole board back to the key that had just been emptied. Every key
 is cleared by the hook that owns it.
 
 ```
-grep -rn "sticky-notes:" src --include='*.tsx' | eval $NO_COMMENTS
+grep -rn "sticky-notes:" src --include='*.tsx' | grep -v '__tests__' | eval $NO_COMMENTS
 ```
 
 Empty, unchanged from P13. `use_reset.ts` reaches `SIDEBAR_KEY` through `@/lib` like every other
@@ -43,7 +46,7 @@ caller; no component knows what any key is called.
 grep -rn "SidebarFooter" src/components/layout/app_sidebar.tsx | eval $NO_COMMENTS
 ```
 
-**One hit.** This inverts P13's Gate 1, which required the same grep to be **empty**, and the
+**Three hits** — the import, and the element's open and close tags. This inverts P13's Gate 1, which required the same grep to be **empty**, and the
 inversion is deliberate and argued in **D2** — *Dark mode* was promised a home for the theme
 control, not a specific div, and it gets a labelled row on the settings page instead. **P13's grep
 is retired by this line**, so the next person to run that phase's validation finds the argument
@@ -73,7 +76,8 @@ truth that can disagree with the key. This is also the grep that proves the rese
 bug cannot come back.
 
 ```
-grep -rn "id:\|order:\|createdAt\|tilt\|x:\|y:" src/lib/sample_notes.ts | eval $NO_COMMENTS
+grep -nE "\b(id|order|createdAt|updatedAt|pinned|tilt|x|y)[[:space:]]*:" src/lib/sample_notes.ts \
+  | eval $NO_COMMENTS
 ```
 
 Empty. **D7**: the samples are content, not notes. An id in a fixture is a fixture that ships the
@@ -88,14 +92,16 @@ five new files, all `snake_case`, and `routeTree.gen.ts` keeps the exemption P11
 ## Gate 2 — Automated assertions (Vitest)
 
 T1–T81 come from P0–P13. **T82–T87 are new.** Baseline **28 suites, 753 passed**. The phase ends at
-**29 suites** and the count group 5 records — one new file, `settings.test.tsx`, plus the cases
+**29 suites and 790 passed** — one new file, `settings.test.tsx`, plus the cases
 `naming_convention.test.ts` gains for every file this phase adds and the one it renames, and the one
 `lib_barrel.test.ts` gains for `sample_notes.ts`.
 
-**Two existing files move, and only for stated reasons.** `naming_convention.test.ts` is
+**Three existing files move, and only for stated reasons.** `naming_convention.test.ts` is
 parameterised over the file tree, so it gains a case per new file. `user_name.test.tsx` loses its
 rename assertions, which move to `settings.test.tsx` — the rename did not stop being tested, it
-stopped being in that file.
+stopped being in that file. And `sidebar_amendments.test.ts`'s `DORMANT` list loses `separator`:
+the page puts one line between the things you can change and the one thing you cannot undo, which
+is a real use, on exactly the terms P3 took `button` off that list and P7 took `input`.
 
 **Nothing else may move.** `app_shell.test.tsx` and `sections.test.tsx` are the two that could, via
 group 2's change to how a destination decides it is active. If a count in either moves, that change

@@ -32,16 +32,24 @@ Per-phase requirements, plans, and validation gates live alongside them in `spec
 
 ## Status
 
-P13 (*a board with your name on it*) is complete: the app asks for a name once, on the first visit,
+P14 (*a place for the things that are not notes*) is complete: `/settings` is a route with a door at
+the bottom of the sidebar. The name is changed there rather than in a dialog — the dialog is the
+intro and nothing else now — and one button, behind one sentence carrying a real note count, returns
+the browser to the state it was in before it ever met this app. It resets the board, the name and
+the sidebar **through the hooks that own those keys** rather than clearing storage directly, because
+a raw removal notifies nothing in the tab and the board's debounced mirror would write every note
+straight back. A second button puts P1's three original notes back on an empty board — the words
+they were written with, as real notes you can edit and throw away.
+
+Before it, P13 (*a board with your name on it*): the app asks for a name once, on the first visit,
 as an intro rather than a form — and there is no way past it but a name. It is asked exactly once
 per browser, on the visit that names the board. The name draws as a circle of initials under the
-mark, at the top of the sidebar, and clicking that
-row is also how it is corrected. It lives in one key, `sticky-notes:user`, and **owns nothing** —
-the stored board is byte-identical before a name exists, after one is stored, and after it is
+mark, at the top of the sidebar. It lives in one key, `sticky-notes:user`, and **owns nothing** —
+the stored board is unchanged before a name exists, after one is stored, and after it is
 changed, which is what makes it a label rather than an account. `mission.md` carries the amendment
 that says so. `src/lib/` also gained a barrel: every import we author reads `@/lib`.
 
-Before it, P12 (*the notes that point somewhere*): the sidebar has three destinations — `Notes`,
+Before that, P12 (*the notes that point somewhere*): the sidebar has three destinations — `Notes`,
 `Pinned notes` and `Linked notes` — and `/linked` shows the notes carrying a URL. What a section
 *is* lives in one list, `lib/sections.ts`: a path, a label, an icon, a predicate and the copy for an
 empty one, which the sidebar and the board both read, so neither of them names a section. A note is

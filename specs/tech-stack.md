@@ -205,6 +205,7 @@ src/
   lib/
     index.ts             // the barrel. Everything we author imports @/lib          (P13)
     user.ts              // the name: its key, its defensive read, and initialsOf   (P13)
+    sample_notes.ts      // P1's three notes, as content. No id, no order, no x/y     (P14)
     grid.ts              // the one column-width the stylesheet cannot infer        (P5)
     dates.ts             // ISO in, MM/DD/YYYY out; never builds a Date from a store (P6)
     notes.ts             // hasContent — what makes a note worth confirming      (P9)

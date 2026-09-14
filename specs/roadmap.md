@@ -353,13 +353,48 @@ one list, and navigating still writes nothing.
   so an astral character is not rendered as half a surrogate pair.
 - **The identity row is in `SidebarHeader`, under the mark.** A square is the app and a circle is a
   person, and they are deliberately not harmonised. `SidebarFooter` is left empty: it was the first
-  draft, and it belongs to *Dark mode*.
+  draft, and at the time it belonged to *Dark mode*. **P14 filled it, with a `Settings` row rather
+  than a theme toggle**, and amended the reservation rather than breaking it — see that phase's D2.
 - **`src/lib/index.ts`** — one barrel, every authored import rewritten to `@/lib`. `lib/`-internal
   imports and `components/ui/`'s `@/lib/utils` stay deep, both for reasons with precedents.
 
 **Done when:** the app asks once and never again, the sidebar draws the initials and the name, the
 board is byte-identical through naming and renaming, and every module in `lib/` is reachable through
 one barrel.
+
+---
+
+## P14 · A place for the things that are not notes
+
+**Goal:** the two things you can do that are not about a note have somewhere to live.
+
+- **`/settings`**, a route under `_board` — the shell stays, the board area renders the page where
+  the cork usually is. **Not a section:** no `keep` predicate, no count, no row in
+  `lib/sections.ts`, and the nav group stays at three.
+- **One row in `SidebarFooter`**, which is the slot `tech-stack.md` promised *Dark mode*. The
+  amendment (D2) is that the promise was a home for the theme control, not a specific div, and a
+  labelled row on a settings page is a better one. *Dark mode* now ships a row there and touches
+  `app_sidebar.tsx` not at all.
+- **The rename moves onto the page**, which leaves `user_name_dialog.tsx` as the intro it always
+  was — renamed `intro_dialog.tsx`, with the rename copy, Cancel, the ✕ toggle and `onOpenChange`
+  all gone. The intro's open state becomes **derived** from the name rather than held in state,
+  which is what makes the reset below able to reopen it.
+- **Reset everything** — the board, the name and the sidebar, each **through the hook that owns its
+  key**. Never `localStorage.clear()`: a raw removal notifies nothing in-tab, and the board's 300 ms
+  debounced mirror would write every note straight back to the key that had just been emptied.
+- **The confirmation counts.** *Deletes all 8 notes and your name from this browser* — your board in
+  the sentence, not the feature. Cancel holds focus; the action names the act.
+- **The mock notes come back.** P1's three, the words and not the fields, as a sample board you can
+  load onto an **empty** board — the guard that makes it unable to bury anything you wrote, and the
+  reason it needs no confirmation of its own.
+- `mission.md` principle 4 gains one clause: chrome never sits *on* the board, and a route that
+  *replaces* the board is not sitting on it.
+- **This phase is an insertion**, like P13 — *order is a plan, not a commitment*.
+
+**Done when:** the sidebar has a door at the bottom, `/settings` is a place you can bookmark, the
+name is changed where it is read, one button behind one sentence with a real number in it returns
+the browser to the state it was in before it ever met this app, and the next button fills the board
+it left behind with the three notes this app was first drawn around.
 
 ---
 
@@ -451,7 +486,11 @@ in a note body is escaped rather than rendered.
 - `useTheme` with light / dark / system; persisted under `sticky-notes:theme`.
 - Dark tokens for cork, paper, shadow, and text — the six papers get dark-mode variants,
   not filters or opacity hacks.
-- shadcn `dropdown-menu` toggle in the toolbar.
+- **The toggle is a row on the settings page**, beside the other things you set — P14 built that
+  page and took the `SidebarFooter` this phase had been promised, on the argument that what it was
+  owed was a home for the control rather than a particular div. This phase therefore touches
+  `app_sidebar.tsx` not at all, and needs no `dropdown-menu`: three options in a row of settings is
+  a radiogroup, and `paper_radiogroup.tsx` is the precedent.
 - No flash of the wrong theme on load.
 
 **Done when:** both themes look designed, paper colors stay distinguishable in dark mode,
