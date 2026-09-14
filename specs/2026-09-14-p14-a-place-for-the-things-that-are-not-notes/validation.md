@@ -72,16 +72,25 @@ Empty. **D3**: the intro's open state is derived from the name, and there is no 
 truth that can disagree with the key. This is also the grep that proves the reset-does-not-reopen
 bug cannot come back.
 
+```
+grep -rn "id:\|order:\|createdAt\|tilt\|x:\|y:" src/lib/sample_notes.ts | eval $NO_COMMENTS
+```
+
+Empty. **D7**: the samples are content, not notes. An id in a fixture is a fixture that ships the
+same note twice; `x`, `y` and `tilt` are P1 fields the data model dropped in P5 and they do not come
+back with the writing.
+
 `npm ls` gains nothing, runtime or dev — **no `shadcn add` in this phase**. `EXEMPT` is untouched:
-four new files, all `snake_case`, and `routeTree.gen.ts` keeps the exemption P11 gave it.
+five new files, all `snake_case`, and `routeTree.gen.ts` keeps the exemption P11 gave it.
 
 ---
 
 ## Gate 2 — Automated assertions (Vitest)
 
-T1–T81 come from P0–P13. **T82–T86 are new.** Baseline **28 suites, 753 passed**. The phase ends at
+T1–T81 come from P0–P13. **T82–T87 are new.** Baseline **28 suites, 753 passed**. The phase ends at
 **29 suites** and the count group 5 records — one new file, `settings.test.tsx`, plus the cases
-`naming_convention.test.ts` gains for every file this phase adds and the one it renames.
+`naming_convention.test.ts` gains for every file this phase adds and the one it renames, and the one
+`lib_barrel.test.ts` gains for `sample_notes.ts`.
 
 **Two existing files move, and only for stated reasons.** `naming_convention.test.ts` is
 parameterised over the file tree, so it gains a case per new file. `user_name.test.tsx` loses its
@@ -160,6 +169,23 @@ reached further than it should have and the fix is there rather than in the expe
 - Escape closes it, and changes nothing.
 - The confirmation's action says **`Reset everything`**, never `OK`.
 
+### T87 · The sample board — `settings.test.tsx`
+
+- On an **empty** board, `Load sample notes` is live; pressing it puts **three** notes on the board.
+- They are **real notes**: distinct `crypto.randomUUID` ids, a `createdAt`, today's `date`, and they
+  survive a round trip through `hydrate` unchanged. Nothing about them says *sample* once they land.
+- **The order is right way up.** `SAMPLE_NOTES[0]` — *Where it sits is what it means* — is the note
+  in the first slot, which is the assertion that pins the reverse dispatch. Without it the board
+  renders the list upside down and nothing else fails.
+- On a board with **any** note on it, the button is `disabled`. This is the guard that makes the
+  control unable to bury what you wrote (**D7**), and it is asserted from both sides: disabled with
+  one note, live again after that note is deleted.
+- **Pressing it twice is not possible**, because loading three notes disables it. Asserted rather
+  than reasoned about — it is the whole of why there is no confirmation.
+- `sample_notes.ts` exports **content only**: no `id`, no `order`, no `createdAt`, no `x`, `y` or
+  `tilt` on any entry. A unit assertion in the same file, because a fixture that grows an id is a
+  fixture that ships duplicate notes.
+
 ---
 
 ## Gate 3 — Manual checks, in a browser
@@ -191,7 +217,13 @@ the intro arriving, and whether the intro's *A corkboard for the thoughts you wa
 reads as absurd to somebody who has just used the app for a week. § Risks predicts it is *slightly*
 wrong and the right kind of wrong. Confirm that or contradict it.
 
-**5 · The name, changed on the page, watched in the sidebar.** The row updates as the save lands —
+**5 · The sample notes, loaded onto an empty board, and then read.** Not skimmed — read, as
+somebody who does not already know what this app is. They were written in P1 to describe a freeform
+board and this one is a grid: *the board stays where you left it* now promises an order rather than
+a position. Does that still describe the app you are looking at? **If it does not, the fix is the
+copy in `sample_notes.ts`** and nothing else in the phase moves.
+
+**6 · The name, changed on the page, watched in the sidebar.** The row updates as the save lands —
 no animation, by design (**D6**). Confirm that the absence of motion reads as instant rather than as
 broken, which is the thing that is only ever decided by looking.
 
@@ -209,7 +241,7 @@ broken, which is the thing that is only ever decided by looking.
 | `mission.md` § out of scope — accounts, multi-user | Unchanged. The name is still a label that owns nothing (P13 **D1**), which is exactly why deleting it deletes a string and not a board. |
 | `tech-stack.md` — no new dependency | None. No `shadcn add`; `alert-dialog`, `input`, `button` and `separator` are all here. |
 | `tech-stack.md` — one reducer, no state library | The reset is one reducer action (**D5**). |
-| `tech-stack.md` — everything in `lib/` through `@/lib` | Nothing new lands in `lib/`; the barrel is unchanged. |
+| `tech-stack.md` — everything in `lib/` through `@/lib` | `sample_notes.ts` lands in `lib/` and the barrel gains one line; `lib_barrel.test.ts` would fail otherwise. |
 | `tech-stack.md` — `snake_case` for files we author | Four new files and one `git mv`, all conforming. `EXEMPT` untouched. |
 | `tech-stack.md` — every colour and duration from a token | `--background`, `--ink-soft`, `--border`, `--destructive`, `--duration-hover`, `--duration-press`, `--ease-out`. Nothing added to `@theme`. |
 | `roadmap.md` — no phase leaves the app broken | Group 2 lands a reachable empty page; every group after it ends on a full green gate. |

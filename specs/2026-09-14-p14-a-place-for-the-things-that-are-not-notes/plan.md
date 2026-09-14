@@ -6,7 +6,8 @@ A groundwork step and six task groups. Scope and rationale live in
 Test-first where a test is possible. Groups end with `npm run build && npm run lint && npm test`.
 Commits are split by concern — `docs`, `feat`, `refactor`, `test`.
 
-**Ordering note.** The amendments are group 1 and land before any code, so rejecting the claim on
+**Ordering note.** Group 4b was added mid-phase and is numbered rather than renumbering what
+follows it — the same courtesy `roadmap.md` extends to itself. The amendments are group 1 and land before any code, so rejecting the claim on
 the `SidebarFooter` kills the phase while the cost is two files. Group 2 builds the destination and
 leaves it deliberately empty — a route, a page and the row that reaches it, with nothing on the page
 — so that the two controls arrive into a place that already works rather than inventing the place
@@ -173,9 +174,33 @@ where the rename happens.**
 
 ---
 
+## 4b. The sample board — `feat`
+
+**The other half of an empty board.** It lands after the reset rather than before it, because the
+reset is what makes the empty board reachable and therefore what makes this control's `disabled`
+state something you can actually see.
+
+4b.1 `src/lib/sample_notes.ts` — P1's three notes, the same words, as content only: colour, title,
+     body. No id, no order, no date, no `x`/`y`/`tilt` (**D7**). Recovered from `ac01d8e^`, which is
+     the commit that deleted them.
+
+4b.2 `src/lib/index.ts` gains one line. `lib_barrel.test.ts` fails first if it does not — run it
+     before adding the line, and watch it fail for the right reason.
+
+4b.3 `settings_page.tsx` gains the block, between the name and the reset: the heading, the hint, and
+     a button that is `disabled` while `notes.length > 0`. It dispatches `add` once per sample
+     through `createNoteSeed`, **in reverse**, with `topOrder(notes) + i` so the list lands the right
+     way up. No confirmation: it destroys nothing.
+
+4b.4 Gate.
+
+4b.5 Commit: `feat(settings): bring P1's three notes back as a sample board`.
+
+---
+
 ## 5. Coverage — `test`
 
-5.1 `src/__tests__/settings.test.tsx` — T83, T84, T85, T86. `seedUser()` and a seeded board in
+5.1 `src/__tests__/settings.test.tsx` — T83, T84, T85, T86, T87. `seedUser()` and a seeded board in
     `beforeEach`, a memory-history router at `/settings` (`createAppRouter(createMemoryHistory(...))`
     — a router matches once and cannot be re-loaded), `stubMatchMedia` and `stubResizeObserver`, and
     the `data-scroll-locked` strip in `afterEach` because a test can end with the confirmation open.
@@ -192,9 +217,10 @@ where the rename happens.**
 
 ## 6. The rest of the documents — `docs`
 
-6.1 `tech-stack.md` — the routing row names four routes; the tree gains `pages/settings_page/`,
-    `routes/_board/settings/`, `hooks/use_reset.ts`, and renames `user_name_dialog.tsx`. The
-    persistence row is **unchanged**: three keys, and this phase adds none.
+6.1 `tech-stack.md` — the routing row names five routes; the tree gains `pages/settings_page/`,
+    `routes/_board/settings/`, `hooks/use_reset.ts`, `lib/sample_notes.ts`, and renames
+    `user_name_dialog.tsx`. The persistence row is **unchanged**: three keys, and this phase adds
+    none.
 
 6.2 `roadmap.md` — P14 written down above *Planned, in order*, with its Done-when. *Dark mode*'s
     entry gains the line about where its toggle lands.
@@ -208,5 +234,6 @@ where the rename happens.**
 ## Done when
 
 The sidebar has a door at the bottom, `/settings` is a place you can bookmark, the name is changed
-where it is read, and one button — behind one sentence with a real number in it — returns the browser
-to the state it was in before it ever met this app.
+where it is read, one button — behind one sentence with a real number in it — returns the browser to
+the state it was in before it ever met this app, and the next button fills the board it left behind
+with the three notes this app was first drawn around.

@@ -22,8 +22,15 @@ app at all. The route is DevTools, `localStorage`, and knowing that the key is c
 `sticky-notes:board:v1` — which is a thing the author of this app knows and nobody else ever will.
 A board built to hold the thoughts you want back tomorrow should be able to say *not these ones*.
 
-Two controls, neither of which is a note and neither of which belongs on the board. That is a
-settings page, and this is the phase that admits it.
+And once a board can be emptied, it needs the other half: **a way to put something back on it.**
+P1 built three mock notes to prove the visual language and P2 deleted them the moment the board
+became real. They are the only notes this app has ever shipped with, they say what the app is
+better than the intro's one sentence does, and an empty board is exactly the moment you want to see
+them. So they come back, as a sample board you can load rather than a fixture the app renders
+(**D7**).
+
+Three controls, none of which is a note and none of which belongs on the board. That is a settings
+page, and this is the phase that admits it.
 
 **The thing to be careful about here is not the feature, it is the slot.** `tech-stack.md` promised
 the `SidebarFooter` to *Dark mode*, and P13 went out of its way not to take it — it put the identity
@@ -34,7 +41,7 @@ exists.
 
 ## Scope
 
-Eight deliverables.
+Nine deliverables.
 
 1. **The amendments** — the `SidebarFooter` reservation, and one clause in principle 4 (**D2**,
    **D6**).
@@ -46,13 +53,17 @@ Eight deliverables.
 6. **`reset` in the reducer**, and **`hooks/use_reset.ts`** — one destructive action that goes
    through the hooks that own the keys (**D4**, **D5**).
 7. **The confirmation** — P9's `alert-dialog`, a real note count, and no new component (**D4**).
-8. The documents this invalidates (**D7**).
+8. **`lib/sample_notes.ts`** — P1's three notes, brought back as content rather than as a
+   fixture, and the control that loads them (**D7**).
+9. The documents this invalidates (**D8**).
 
 ## Out of scope
 
-- **Anything on the settings page that is not these two controls.** No export, no import, no board
-  size, no font, no density. *Dark mode* gets its row when *Dark mode* is built (**D2**), and a
-  settings page that ships with slots for features that do not exist is a menu of promises.
+- **Anything on the settings page that is not these three controls.** No export, no import, no
+  board size, no font, no density. *Dark mode* gets its row when *Dark mode* is built (**D2**), and
+  a settings page that ships with slots for features that do not exist is a menu of promises.
+- **Sample notes on a board that has notes on it.** The control is inert unless the board is empty
+  (**D7**). Nothing this phase ships can bury something you wrote.
 - **Per-key reset.** One button, everything, once — **D4**. Two buttons is the option that was
   considered and rejected there, with the reasoning.
 - **Undo, a trash, or an export-before-you-reset.** `mission.md` has no undo anywhere and this is
@@ -284,7 +295,47 @@ toolbar's `active:scale-[0.97]` at `--duration-press`: a button pressed occasion
 pressed. The page does not fade in, the fields do not stagger, and nothing animates when the name
 changes.
 
-### D7 · Documents corrected in the same phase
+### D7 · The mock notes come back, as a sample board
+
+`src/lib/sample_notes.ts` holds P1's three notes — **the same words**, which is the point:
+
+| Colour | Title | Body |
+| --- | --- | --- |
+| `butter` | Where it sits is what it means | *Where a note sits is part of what it means.* |
+| `sky` | Pick it up, put it down | *Pick it up, move it, put it down. The board stays where you left it.* |
+| `rose` | No save button | *No save button.* |
+
+**Content only.** No id, no `order`, no `createdAt`, no `date`. P1's fixture carried `x`, `y` and a
+literal `tilt`, and all three are fields the data model no longer has — P5 replaced the freeform
+board with a grid and `board_storage.ts` drops them on read. What survives a phase is the writing,
+so what comes back is the writing.
+
+Each one becomes a real note through `createNoteSeed`, exactly as the create dialog makes one: an
+id from `crypto.randomUUID`, a clock reading, today's date, and a stamp above every existing note.
+**They are notes, not a demo mode** — editable, pinnable, draggable, deletable, and indistinguishable
+from anything you write yourself the moment they land.
+
+**Dispatched in reverse**, so `SAMPLE_NOTES[0]` takes the highest stamp and therefore the first
+slot. The board sorts `order` descending; without the reverse, the list would land upside down.
+
+**The control is inert unless the board is empty**, and the hint says why: *Available on an empty
+board.* Two reasons, and the first is the one that matters. Nothing in this app can be undone, so a
+control that appends three notes to a board of forty is a control that can bury what you wrote — and
+the guard that costs nothing is the one that makes it impossible rather than the one that asks. The
+second is that a sample board is a thing you want at the exact moment there is nothing else to look
+at, which is the same moment the button is live.
+
+**It needs no confirmation**, because it destroys nothing. Reset is the only irreversible act on this
+page, and keeping the confirmation attached to exactly that is what stops it becoming furniture.
+
+**It sits between the name and the reset**, so the destructive control stays at the bottom where a
+person scrolling past it is scrolling past the end.
+
+**`lib/`, not `components/`**, and therefore through the barrel like everything else (P13's **D7**).
+It is data with no React in it, the way `sections.ts` is, and `lib_barrel.test.ts` will require the
+export by construction the moment the file exists.
+
+### D8 · Documents corrected in the same phase
 
 - **`mission.md`** — principle 4 gains the clause in **D6**. Nothing else: settings is not core
   scope, it is where the things that are not the board ended up.
@@ -296,6 +347,8 @@ changes.
   explicitly allows: *"Order is a plan, not a commitment; inserting work here is an edit to this
   list."* *Dark mode*'s entry gains a line saying its toggle has a home.
 - **`README.md`** — status to P14.
+- **`lib/index.ts`** — one line for `sample_notes.ts` (**D7**). `lib_barrel.test.ts` fails without
+  it, which is the point of that test.
 
 ## Constraints inherited from the constitution
 
@@ -314,8 +367,8 @@ changes.
   carve-out P3 made for creation and P13 reused for the name. A name is a value you commit. The
   reset is not a Save either: it is a thing that stands between you and destroying what you wrote,
   which `mission.md` puts in scope by name for delete.
-- **Every import we author goes through `@/lib`** (P13's barrel rule). Nothing new lands in `lib/`
-  this phase, so the barrel is unchanged.
+- **Every import we author goes through `@/lib`** (P13's barrel rule). One module lands in `lib/`
+  this phase — `sample_notes.ts` — and the barrel gains one line for it (**D7**).
 
 ## Risks
 
@@ -346,6 +399,13 @@ kind of wrong: the alternative is copy that branches on whether you have ever na
 before, which is a second intro to maintain for a moment nobody will see twice. Gate 3 looks at it
 and writes down what it says.
 
-**The settings page is one route with two controls and it will attract more.** Every app's settings
+**The sample board is three notes that will age.** They were written in P1 to describe an app that
+did not exist yet, and they are about position — *where a note sits is part of what it means* — on a
+board that has since become a grid with a swap. The words are still true and the second one is the
+one to watch: *the board stays where you left it* is now a promise about order rather than about
+coordinates. **If Gate 3 reads them as describing a different app, the fix is the copy in
+`sample_notes.ts`**, and it is one file with no logic in it.
+
+**The settings page is one route with three controls and it will attract more.** Every app's settings
 page began as this one. The defence is in § Out of scope and in **D2**: a row lands here when the
 feature behind it exists, and never before.
