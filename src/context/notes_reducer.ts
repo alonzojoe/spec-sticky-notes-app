@@ -1,4 +1,4 @@
-import type { BoardState, Note, NoteColor, NoteSeed } from '@/types/note'
+import { EMPTY_BOARD, type BoardState, type Note, type NoteColor, type NoteSeed } from '@/types/note'
 
 export type NoteAction =
   | { type: 'add'; seed: NoteSeed }
@@ -10,6 +10,13 @@ export type NoteAction =
   | { type: 'toggle_pin'; id: string; at: number }
   | { type: 'swap_order'; a: string; b: string; at: number }
   | { type: 'delete'; id: string }
+  /**
+   * P14. Every note, at once, and nothing else.
+   *
+   * **It carries no `at`.** Every other mutating action stamps `updatedAt` because it changes a
+   * note; this one changes the absence of notes, and there is nothing left to stamp.
+   */
+  | { type: 'reset' }
 
 export function notesReducer(state: BoardState, action: NoteAction): BoardState {
   switch (action.type) {
@@ -111,5 +118,17 @@ export function notesReducer(state: BoardState, action: NoteAction): BoardState 
     // Nothing renumbers. See the `order` comment in types/note.ts.
     case 'delete':
       return { ...state, notes: state.notes.filter((note) => note.id !== action.id) }
+
+    /**
+     * `EMPTY_BOARD` itself — the same constant `hydrate` returns for a stored value it refuses — so
+     * a reset board and a board this browser has never written are one shape rather than two that
+     * happen to look alike.
+     *
+     * In the reducer rather than by remounting the provider or reloading the page: the reducer is
+     * the source of truth and `localStorage` is its mirror, and a reset that went around it would
+     * be the one write in this app that works the other way round. See `hooks/use_reset.ts`.
+     */
+    case 'reset':
+      return EMPTY_BOARD
   }
 }
