@@ -98,6 +98,14 @@ it.
 2.4 Commit: `chore(deps): add @tanstack/react-form`. Lockfile and `package.json` only, and never
     mixed with a code change.
 
+2.5 **The gate is not silent.** The library pushes `vendor` from 449 kB to 512 kB and rollup's
+    500 kB chunk warning fires — which every phase's Gate 1 forbids. Split the one `vendor` group
+    into four in `vite.config.ts`, the way P10's own comment says to (**D9**), and **do not touch
+    `chunkSizeWarningLimit`**. Its own commit, `build(vite): …`, because a build-config change is
+    its own concern.
+
+2.6 Gate again, and confirm the warning is gone and no test moved.
+
 ---
 
 ## 3. The intro — `refactor`

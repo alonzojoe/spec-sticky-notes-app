@@ -15,7 +15,17 @@ npm run lint      # eslint . — no new warnings
 npm test          # vitest run
 ```
 
-Warning-free, chunk warning included.
+Warning-free, **chunk warning included — and this phase had to work for that.** Adding the library
+pushed `vendor` from 449 kB to 512 kB and the 500 kB warning fired. **D9** split the one vendor
+group into four (`react`, `radix`, `tanstack`, `vendor`), which is the fix P10's own comment in
+`vite.config.ts` says to prefer. Largest chunk after: **190 kB**.
+
+```
+grep -n "chunkSizeWarningLimit" vite.config.ts
+```
+
+Empty. **The warning is gone because the bundle is split, not because the threshold moved.** This
+grep is the whole of **D9** in one line, and it is the thing a future phase in a hurry would undo.
 
 **The baseline is green.** `npm test` on `main` reports **29 suites, 790 passed**. Every count below
 is measured against it.
@@ -238,4 +248,5 @@ This is **D5**'s argument, performed rather than reasoned about.
 | `tech-stack.md` — one reducer, no state library | A form library holds what is being typed; the board is still a `useReducer` behind Context and the reducer gains nothing. |
 | `tech-stack.md` — `snake_case` | No file added, none renamed. |
 | `tech-stack.md` — every colour and duration from a token | No styling change at all. |
+| `roadmap.md` — `npm run build` passes before a phase is called done | **D9**. The phase caused the chunk warning and the phase fixes it, by splitting rather than by raising the limit — a refactor that leaves the build noisier than it found it has not finished. |
 | `roadmap.md` — no phase leaves the app broken | Seven groups, each ending on a full green gate at 29 / 790. |

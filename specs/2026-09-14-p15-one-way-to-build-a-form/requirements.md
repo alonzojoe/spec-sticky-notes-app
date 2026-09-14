@@ -304,6 +304,41 @@ with the element that moved and why.
 | `trimmed === '' \|\| unchanged` (settings) | `canSubmit`, `isDirty` |
 | `closeFromDOM` + two `useDebounceCallback`s + three `.cancel()`s | field `listeners`, `form.state.values` |
 
+### D9 · The bundle warning the dependency caused, fixed the way P10 fixed it
+
+**Adding the library pushed the build past rollup's 500 kB chunk warning**, which every phase's
+Gate 1 has required to be silent — *warning-free, chunk warning included*. `vendor` went from 449 kB
+to 512 kB. Discovered while running the gate, not predicted, and recorded here rather than fixed
+quietly.
+
+**P10 hit this exact wall and wrote down which fix is correct.** Its comment in `vite.config.ts`:
+
+> Splitting the dependencies out is the fix rather than raising the limit: React, Radix and the
+> router change on an npm install, and our own code changes every commit, so a returning visitor
+> re-downloads the half that actually moved.
+
+So the same argument applies one level deeper, and it is the same fix rather than a new one. The one
+`vendor` group becomes four, ordered so the first match wins:
+
+| Group | What is in it | When it changes |
+| --- | --- | --- |
+| `react` | `react`, `react-dom`, `scheduler` | almost never |
+| `radix` | `radix-ui`, `@radix-ui/*` | when a component is added |
+| `tanstack` | `@tanstack/*` — router, form, store, pacer | its own fast cadence |
+| `vendor` | everything else in `node_modules` | rarely |
+
+Largest chunk after the split: **190 kB**. The warning is gone because the bundle is split, not
+because the threshold moved — **`chunkSizeWarningLimit` is not touched**, and that is the whole
+point of doing it this way.
+
+**This is scope this phase did not ask for**, and it is in rather than deferred for one reason: the
+phase caused it. A refactor that leaves the build noisier than it found it has not finished, and the
+next phase would inherit a warning with no note saying which commit produced it.
+
+**It also makes the dependency's real cost visible**, which the package count in **D1** only
+gestures at: `@tanstack/*` is now a 139 kB chunk of its own, most of which is the router that was
+already here. A reader who wants to know what the form library costs can now read it off a build.
+
 ### D8 · Documents corrected in the same phase
 
 - **`tech-stack.md`** — the Forms row (**D1**), the hard rule about what a form is built with, and
@@ -312,6 +347,8 @@ with the element that moved and why.
 - **`roadmap.md`** — P15 written down above the *Planned, in order* list, which the list's own
   preamble allows.
 - **`README.md`** — status to P15.
+- **`vite.config.ts`** — the four code-splitting groups and the comment saying why (**D9**). Not a
+  document, but it carries the same argument and it is edited in the same phase.
 - **`mission.md`** — **untouched.** No principle is affected: nothing about the interface changes,
   and principle 3's *no Save button* carve-out for committed values is exactly as P3 left it.
 
@@ -343,6 +380,11 @@ four simple forms land smallest-first rather than together.
 timing behaviour, its dismissal has three routes into it, and its current implementation reaches
 into the DOM. T90 and T91 are new because the existing coverage would not catch a debounce that
 fired twice or a flush that dropped the last keystroke.
+
+**The dependency is visible in the bundle, and now it is visible in the build output too.** **D9**
+split the vendor chunk rather than raise the warning threshold, which means the next dependency that
+pushes a group past 500 kB gets the same conversation rather than a silent pass. That is the
+intended consequence.
 
 **A form library is a floor, not a ceiling.** Once it is here, the cost of adding a field is low
 enough that fields get added — and `mission.md`'s one-sentence test is about capture being fast. The
