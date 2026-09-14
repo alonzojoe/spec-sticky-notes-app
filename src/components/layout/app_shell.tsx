@@ -4,10 +4,10 @@ import { useLocalStorage } from 'usehooks-ts'
 
 import { AppSidebar } from '@/components/layout/app_sidebar'
 import { DeleteNoteProvider } from '@/components/layout/delete_note_dialog'
+import { IntroDialog } from '@/components/layout/intro_dialog'
 import { NewNoteDialog } from '@/components/layout/new_note_dialog'
 import { SearchDialog } from '@/components/layout/search_dialog'
 import { Toolbar } from '@/components/layout/toolbar'
-import { UserNameDialog } from '@/components/layout/user_name_dialog'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { NotesProvider } from '@/context/notes_context'
 import { OpenNoteProvider } from '@/context/open_note_context'
@@ -28,16 +28,20 @@ export function AppShell() {
   /**
    * The one question the app asks, asked once.
    *
-   * Initialised from the store on the first render rather than in an effect — `useLocalStorage`
-   * reads synchronously by default, so a returning user never sees this open for a frame.
+   * **Derived, not held.** P13 kept this in a `useState` initialised from the store, because two
+   * things could open the dialog: an unnamed first visit, and the sidebar row asking for a rename.
+   * P14 moved the rename onto the settings page, so one thing opens it and it is not an action — it
+   * is a condition. *There is no name, so there is an intro.*
    *
-   * From the name, and **the intro cannot be dismissed without one** — so this is true exactly
-   * once per browser, on the visit that names the board. An earlier build let it be skipped and had
-   * to record the refusal to avoid asking again on every load; with no way to refuse, there is
-   * nothing to record and the name itself is the answer.
+   * That removes the only way the app could disagree with the key, and it is what makes reset work:
+   * erasing the name reopens the intro with nothing having to remember to. A `useState` initialised
+   * once at mount would have stayed `false` and left a person on an empty, nameless board with no
+   * way back in.
+   *
+   * `useLocalStorage` reads synchronously by default, so a returning user never sees this open for
+   * a frame.
    */
   const { name } = useUser()
-  const [asking, setAsking] = useState(name === '')
 
   const navigate = useNavigate()
 
@@ -111,7 +115,7 @@ export function AppShell() {
       <OpenNoteProvider>
         <DeleteNoteProvider>
         <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <AppSidebar onEditName={() => setAsking(true)} />
+          <AppSidebar />
           {/* SidebarInset renders the <main> element itself, so nothing here nests another
               landmark inside it. mission.md principle 4: chrome lives in the sidebar, never
               on the board surface. */}
@@ -124,7 +128,7 @@ export function AppShell() {
               <Outlet />
             </div>
           </SidebarInset>
-          <UserNameDialog open={asking} onOpenChange={setAsking} />
+          <IntroDialog open={name === ''} />
           <NewNoteDialog open={creating} onOpenChange={setCreating} />
           <SearchDialog open={searching} onOpenChange={setSearching} />
         </SidebarProvider>
