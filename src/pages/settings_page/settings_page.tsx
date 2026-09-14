@@ -1,8 +1,22 @@
 import { useState } from 'react'
 
 import { FieldLabel } from '@/components/layout/note_fields'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { useNotes } from '@/context/use_notes'
+import { useReset } from '@/hooks/use_reset'
 import { useUser } from '@/hooks/use_user'
 
 /**
@@ -33,6 +47,8 @@ export function SettingsPage() {
       <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-6 py-8">
         <h1 className="text-lg font-medium">Settings</h1>
         <NameSetting />
+        <Separator />
+        <ResetSetting />
       </div>
     </div>
   )
@@ -117,6 +133,66 @@ function NameSetting() {
           Save
         </Button>
       </form>
+    </Setting>
+  )
+}
+
+/**
+ * The only irreversible act on this page, and the only one behind a confirmation.
+ *
+ * Nothing in this app can be undone — `mission.md` rules out an undo history and a trash by name —
+ * so the confirmation is the entire safety story, and it is one sentence with a real number in it.
+ *
+ * **The count is real, and that is the decision.** *Deletes all your notes* is a sentence about a
+ * feature; *deletes all 8 notes* is a sentence about your board, and that is the difference between
+ * a confirmation someone reads and one they click through.
+ *
+ * `Cancel` holds the default focus and the action says what it does rather than `OK` — both
+ * straight from `delete_note_dialog.tsx`, for the reasons written there. The dialog is local to
+ * this page rather than a provider in the shell: that one is a provider because a hundred cards
+ * would otherwise mount a hundred Radix layers, and exactly one place can raise this one.
+ */
+function ResetSetting() {
+  const { notes } = useNotes()
+  const reset = useReset()
+
+  const count = notes.length
+  const noun = count === 1 ? 'note' : 'notes'
+
+  return (
+    <Setting
+      title="Reset everything"
+      hint="Deletes the board and your name from this browser. There is no undo."
+    >
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="destructive"
+            className="self-start transition-transform duration-(--duration-press) ease-out active:scale-[0.97]"
+          >
+            Reset everything
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset everything?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {/* Your board, in the sentence — not the feature. An empty board still says so
+                  plainly rather than hiding the zero, because a person who resets an empty board
+                  is a person who wants their name gone. */}
+              Deletes all {count} {noun} and your name from this browser. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            {/* Enter on a dialog you did not read cancels rather than erases. That is the
+                difference between a guard and a speed bump. */}
+            <AlertDialogCancel autoFocus>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={reset}>
+              Reset everything
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Setting>
   )
 }
