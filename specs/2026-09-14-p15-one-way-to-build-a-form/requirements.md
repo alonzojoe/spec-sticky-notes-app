@@ -304,6 +304,41 @@ with the element that moved and why.
 | `trimmed === '' \|\| unchanged` (settings) | `canSubmit`, `isDirty` |
 | `closeFromDOM` + two `useDebounceCallback`s + three `.cancel()`s | field `listeners`, `form.state.values` |
 
+### D10 · The create dialog submits synchronously, and does not use `form.handleSubmit()`
+
+**Found by the suite, which is what the suite is for.** The create dialog was refactored to submit
+through `form.handleSubmit()` like the other two, and three assertions went red —
+`persistence.test.tsx`'s *"survives an unmount and remount"* and *"loses nothing when several notes
+are made in a row"*, and `note_view.test.tsx`'s T41. All three failed the same way: **no note on the
+board at all.**
+
+`handleSubmit` is **async**. It awaits the validation lifecycle before it calls anything, so the
+dispatch lands a microtask after the click rather than in it. Those three tests are synchronous —
+`fireEvent.click`, then `vi.advanceTimersByTime(0)` — so the macrotask they advanced had not been
+scheduled yet.
+
+**This is exactly the case D7 exists to catch, and it resolves the way D7 says.** An assertion that
+has to be edited is a behaviour that changed. The tests are asserting a real property — *clicking
+Add note puts a note on the board, one macrotask later* — and that macrotask is load-bearing: it is
+what puts the note on a board with nothing competing for focus, which P3 wrote and this phase
+promised not to touch. So the refactor moved.
+
+`submit()` reads `form.state.values` directly and stays synchronous.
+
+**Nothing is given up.** This form has **no validators**: every field is optional, an empty note is a
+legitimate note that P6 opens for you, and the Add button is never disabled. The lifecycle
+`handleSubmit` runs would be an empty ceremony bought at the cost of the ordering. The form is still
+the one container for the five values and the one reset — it is simply not the thing that sequences
+the submit.
+
+**The intro and the settings forms keep `handleSubmit`**, because they have a validator to run and
+their timing is nobody's business. The asymmetry is the point rather than an inconsistency: *use the
+lifecycle where there is a lifecycle.*
+
+**What this says about the phase.** The library is a value container and a reset, and the places
+where it wanted to own control flow are the places it had to be told not to. That is worth knowing
+about a dependency in the phase that adds it rather than in the phase that trips over it.
+
 ### D9 · The bundle warning the dependency caused, fixed the way P10 fixed it
 
 **Adding the library pushed the build past rollup's 500 kB chunk warning**, which every phase's
@@ -369,6 +404,13 @@ already here. A reader who wants to know what the form library costs can now rea
   debounce; the three committing forms keep the carve-out P3 made and P13 and P14 reused.
 
 ## Risks
+
+**The library wants to own control flow, and twice it should not.** **D10** is one instance, found
+by the suite. The pattern to watch for is any place where a form API is asynchronous and the code it
+replaced was not — `handleSubmit` is the obvious one, and a field's debounced listener (**D5**) is
+the other, because it cannot be cancelled. Both were resolved by keeping the library as a value
+container. **A third instance should be read as a sign the dependency is a worse fit than this phase
+concluded**, not as a third workaround.
 
 **This is the largest diff-to-visible-change ratio of any phase so far.** Four files rewritten,
 nothing on screen different. That is the definition of a refactor and it is also how a real

@@ -87,6 +87,15 @@ grep -rn "@tanstack/react-form" src/components/layout/search_dialog.tsx | eval $
 Empty. **D2**: a filter with no submit is not a form.
 
 ```
+grep -n "form.handleSubmit" src/components/layout/new_note_dialog.tsx | eval $NO_COMMENTS
+```
+
+Empty. **D10.** The create dialog submits synchronously, because `handleSubmit` is async and the
+note must reach the board exactly one macrotask after the click — the ordering P3 wrote and three
+existing assertions pin. `intro_dialog.tsx` and `settings_page.tsx` **do** call it, and should: they
+have a validator to run and their timing is nobody's business.
+
+```
 grep -rn "\bany\b" src/components/layout/intro_dialog.tsx \
   src/components/layout/new_note_dialog.tsx \
   src/components/layout/note_view_dialog.tsx \
@@ -148,6 +157,12 @@ not exercise them would not mean much:
   a constitutional gate rather than only a regression one.
 - **`note_view.test.tsx` / `note_editing.test.tsx`** — autosave, the flush on close, and the three
   routes out of the dialog.
+
+**One existing behaviour was nearly changed and was not.** Group 5 first used `form.handleSubmit()`
+in the create dialog, and `persistence.test.tsx` and `note_view.test.tsx` went red with no note on
+the board — `handleSubmit` is async, and those tests advance a timer synchronously. **No assertion
+was edited.** The refactor was, and the reasoning is **D10**. This is the bar working rather than a
+near miss to be embarrassed about.
 
 ### T88 · The create dialog resets, and it resets on every way out — `new_note_dialog.test.tsx`
 
